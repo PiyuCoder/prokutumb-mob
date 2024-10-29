@@ -83,9 +83,9 @@ exports.editProfile = async (req, res) => {
     // Handle profile picture update if a new file is uploaded
     if (req.file) {
       // Construct the new profile picture URL
-      const newProfilePicture = `${req.protocol}://${req.get(
-        "host"
-      )}/uploads/dp/${req.file.filename}`;
+      const newProfilePicture = `https://${req.get("host")}/uploads/dp/${
+        req.file.filename
+      }`;
 
       // Delete the old profile picture from the server if it exists
       if (user.profilePicture && user.profilePicture.includes("/uploads/dp/")) {
