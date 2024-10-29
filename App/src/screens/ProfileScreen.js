@@ -302,6 +302,7 @@ const ProfileScreen = () => {
               multiline
               numberOfLines={4}
               placeholder="Edit About"
+              placeholderTextColor={'gray'}
               style={styles.input}
               autoFocus={true} // Auto-focus on the TextInput when the modal opens
             />
@@ -334,6 +335,7 @@ const ProfileScreen = () => {
               <TextInput
                 value={newProfilePicture}
                 onChangeText={setNewProfilePicture}
+                placeholderTextColor={'gray'}
                 placeholder="New Profile Picture URL"
                 style={styles.input}
               />
@@ -356,6 +358,7 @@ const ProfileScreen = () => {
                 value={editedName}
                 onChangeText={setEditedName}
                 placeholder="Edit Name"
+                placeholderTextColor={'gray'}
                 style={styles.input}
               />
 
@@ -364,6 +367,7 @@ const ProfileScreen = () => {
                 value={editedState}
                 onChangeText={setEditedState}
                 placeholder="Edit State"
+                placeholderTextColor={'gray'}
                 style={styles.input}
               />
 
@@ -372,6 +376,7 @@ const ProfileScreen = () => {
                 value={editedCountry}
                 onChangeText={setEditedCountry}
                 placeholder="Edit Country"
+                placeholderTextColor={'gray'}
                 style={styles.input}
               />
 

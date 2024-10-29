@@ -90,7 +90,7 @@ const DiscoverScreen = () => {
 
   return (
     <View className="flex-1 justify-center items-center">
-      <Text>Discover Nearby People</Text>
+      <Text style={{color: 'black'}}>Discover Nearby People</Text>
 
       {/* Display loading or error */}
       {loading && <ActivityIndicator size="large" color="#0000ff" />}
@@ -122,15 +122,15 @@ const DiscoverScreen = () => {
         {nearbyUsers.length ? (
           nearbyUsers.map(user => (
             <View key={user._id} style={{marginVertical: 10}}>
-              <Text>{user.name}</Text>
-              <Text>{user.skills.join(', ')}</Text>
+              <Text style={{color: 'black'}}>{user.name}</Text>
+              <Text style={{color: 'black'}}>{user.skills.join(', ')}</Text>
               <Text>
                 {user.location.state}, {user.location.country}
               </Text>
             </View>
           ))
         ) : (
-          <Text>No users found</Text>
+          <Text style={{color: 'black'}}>No users found</Text>
         )}
       </ScrollView>
     </View>

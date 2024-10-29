@@ -1,15 +1,24 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, Image, Alert, StyleSheet} from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  Alert,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch} from 'react-redux';
 import {loginSuccess} from '../store/slices/authSlice';
 import {axiosInstance} from '../api/axios';
 import GoogleSignInButton from '../components/GoogleSignInButton';
+import Loader from '../components/Loader';
 
 const LoginScreen = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -45,6 +54,7 @@ const LoginScreen = ({navigation}) => {
   return (
     <View className="flex-1 justify-center items-center bg-gray-200">
       {/* Circular Image Layout */}
+      <Loader isLoading={isLoading} />
       <View className="relative justify-center items-center mb-10">
         {/* Dashed Circle */}
         <View
@@ -106,7 +116,7 @@ const LoginScreen = ({navigation}) => {
         Welcome to the {'\n'} world of {'\n'} Networking
       </Text>
 
-      <GoogleSignInButton />
+      <GoogleSignInButton setIsLoading={setIsLoading} />
 
       {/* <Text className="mt-4" onPress={() => navigation.navigate('Signup')}>
         Don't have an account? Signup

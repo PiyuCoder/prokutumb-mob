@@ -22,13 +22,14 @@ GoogleSignin.configure({
   ],
 });
 
-const GoogleSignInButton = () => {
+const GoogleSignInButton = ({setIsLoading}) => {
   const [error, setError] = useState(null);
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
   const handleGoogleLogin = async () => {
     try {
+      setIsLoading(true);
       await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
 
       const userInfo = await GoogleSignin.signIn();
@@ -50,11 +51,12 @@ const GoogleSignInButton = () => {
 
           // Dispatch the loginSuccess action to update Redux state
           dispatch(loginSuccess({token, user}));
-
+          setIsLoading(false);
           // Navigate to DashboardScreen
           navigation.navigate('Dashboard');
         } else {
           setError(action.payload.message || 'Login failed');
+          setIsLoading(false);
         }
       });
     } catch (err) {

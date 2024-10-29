@@ -99,6 +99,7 @@ const ExperienceModal = ({isVisible, onClose}) => {
             <TextInput
               style={styles.input}
               placeholder="Company"
+              placeholderTextColor={'gray'}
               value={newExperience.company}
               onChangeText={text =>
                 setNewExperience({...newExperience, company: text})
@@ -106,6 +107,7 @@ const ExperienceModal = ({isVisible, onClose}) => {
             />
             <TextInput
               style={styles.input}
+              placeholderTextColor={'gray'}
               placeholder="Role"
               value={newExperience.role}
               onChangeText={text =>
@@ -117,6 +119,7 @@ const ExperienceModal = ({isVisible, onClose}) => {
             <TouchableOpacity onPress={() => setStartDatePickerVisible(true)}>
               <TextInput
                 style={styles.input}
+                placeholderTextColor={'gray'}
                 placeholder="Start Date"
                 value={newExperience.startDate.toISOString().split('T')[0]}
                 editable={false}
@@ -153,6 +156,7 @@ const ExperienceModal = ({isVisible, onClose}) => {
                 <TouchableOpacity onPress={() => setEndDatePickerVisible(true)}>
                   <TextInput
                     style={styles.input}
+                    placeholderTextColor={'gray'}
                     placeholder="End Date"
                     value={newExperience.endDate.toISOString().split('T')[0]}
                     editable={false}
@@ -177,6 +181,7 @@ const ExperienceModal = ({isVisible, onClose}) => {
             <TextInput
               style={styles.input}
               placeholder="Description"
+              placeholderTextColor={'gray'}
               value={newExperience.description}
               onChangeText={text =>
                 setNewExperience({...newExperience, description: text})
@@ -208,10 +213,10 @@ const ExperienceModal = ({isVisible, onClose}) => {
                   {item.description}
                 </Text>
                 {/* Delete button */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   onPress={() => handleDeleteExperience(item._id)}>
                   <Text style={styles.deleteButton}>Delete</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             )}
           />
@@ -246,6 +251,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
     borderRadius: 5,
+    color: 'black',
   },
   presentSwitch: {
     flexDirection: 'row',

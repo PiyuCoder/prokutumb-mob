@@ -18,6 +18,7 @@ import {launchImageLibrary} from 'react-native-image-picker'; // Use react-nativ
 import {addNewPost, fetchPosts} from '../store/slices/postSlice';
 import QRCode from 'react-native-qrcode-svg';
 import LinearGradient from 'react-native-linear-gradient';
+import Loader from '../components/Loader';
 
 const likeIcon = require('../assets/icons/like.png');
 const commentIcon = require('../assets/icons/comment.png');
@@ -29,6 +30,7 @@ const HomeScreen = ({navigation}) => {
   const {user} = useSelector(state => state.auth);
   const posts = useSelector(state => state.posts.posts);
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility
   const [newPostContent, setNewPostContent] = useState(''); // Content of new post
   const [selectedMedia, setSelectedMedia] = useState(null); // Selected media for the post
@@ -50,19 +52,23 @@ const HomeScreen = ({navigation}) => {
 
   const loadMorePosts = async () => {
     console.log('onEndReached triggered, page:', page);
+    setIsLoading(true);
     if (!isFetching && (page <= totalPages || totalPages === 0)) {
       setIsFetching(true);
       await dispatch(fetchPosts({page}));
       setPage(prevPage => prevPage + 1);
       setIsFetching(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     // Filter posts to get only the user's posts
     if (user && posts) {
+      setIsFetching(true);
       const filteredPosts = posts.filter(post => post.user?._id === user?._id);
       setUserPosts(filteredPosts);
+      setIsFetching(false);
     }
   }, [posts, user]);
 
@@ -182,7 +188,7 @@ const HomeScreen = ({navigation}) => {
       </View>
 
       {/* Post Content */}
-      <Text style={{marginTop: 10}}>{item.content}</Text>
+      <Text style={{marginTop: 10, color: '#141414'}}>{item.content}</Text>
 
       {/* Display media if it exists */}
       {item.mediaUrl && item.mediaType === 'image' && (
@@ -242,6 +248,7 @@ const HomeScreen = ({navigation}) => {
         // paddingBottom: 80,
         backgroundColor: '#FDF7FD',
       }}>
+      <Loader isLoading={isLoading} />
       <FlatList
         data={isFeedView ? posts : userPosts}
         keyExtractor={item => item._id}
