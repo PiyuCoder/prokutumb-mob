@@ -407,7 +407,13 @@ const HomeScreen = ({navigation}) => {
               elevation: 5,
               alignItems: 'center',
             }}>
-            <Text style={{fontSize: 22, fontWeight: 'bold', marginBottom: 15}}>
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: 'bold',
+                marginBottom: 15,
+                color: 'black',
+              }}>
               Create New Post
             </Text>
             <TextInput
@@ -424,6 +430,7 @@ const HomeScreen = ({navigation}) => {
                 marginBottom: 15,
                 width: '100%',
                 textAlignVertical: 'top',
+                color: 'black',
               }}
             />
             <View
@@ -442,7 +449,7 @@ const HomeScreen = ({navigation}) => {
                 }}>
                 <Text style={{color: '#fff'}}>Add Image</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() => pickMedia('video')}
                 style={{
                   backgroundColor: '#DD88CF',
@@ -451,7 +458,7 @@ const HomeScreen = ({navigation}) => {
                   borderRadius: 20,
                 }}>
                 <Text style={{color: '#fff'}}>Add Video</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
             {selectedMedia && (
               <View style={{marginTop: 15}}>

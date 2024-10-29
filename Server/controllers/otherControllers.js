@@ -9,7 +9,13 @@ exports.getNearbyUsers = async (req, res) => {
       return res.status(400).json({ message: "Location is required" });
     }
 
+    // Update the user's live location
     const test = await updateUserLocation(userId, latitude, longitude);
+    if (!test) {
+      return res
+        .status(500)
+        .json({ message: "Failed to update user location" });
+    }
     console.log(test.name);
 
     // Ensure interests is an array
@@ -30,7 +36,7 @@ exports.getNearbyUsers = async (req, res) => {
       {
         $match: {
           skills: { $in: interestsArray },
-          friends: { $nin: [new mongoose.Types.ObjectId(req.userId)] }, // Exclude friends
+          friends: { $nin: [new mongoose.Types.ObjectId(userId)] }, // Exclude friends
         },
       },
       {
@@ -52,12 +58,8 @@ exports.getNearbyUsers = async (req, res) => {
 
 const updateUserLocation = async (userId, latitude, longitude) => {
   try {
-    // const { latitude, longitude } = req.body;
-
     if (!latitude || !longitude) {
-      return res
-        .status(400)
-        .json({ message: "Latitude and Longitude are required" });
+      return null; // Handle missing latitude and longitude
     }
 
     const updatedUser = await Member.findByIdAndUpdate(
@@ -74,5 +76,6 @@ const updateUserLocation = async (userId, latitude, longitude) => {
     return updatedUser;
   } catch (error) {
     console.error("Error updating location:", error);
+    return null; // Handle error in case the update fails
   }
 };

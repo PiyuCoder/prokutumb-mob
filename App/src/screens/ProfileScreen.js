@@ -213,7 +213,8 @@ const ProfileScreen = () => {
         />
         <Text style={styles.userName}>{user.name}</Text>
         <Text style={styles.userLocation}>
-          {user.location?.state}, {user.location?.country}
+          {user.location?.state || 'State'},{' '}
+          {user.location?.country || 'Country'}
         </Text>
       </View>
 
@@ -524,6 +525,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginBottom: 15,
     borderRadius: 5,
+    color: 'black',
   },
   title: {
     fontSize: 18,

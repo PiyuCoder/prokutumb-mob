@@ -24,11 +24,9 @@ const memberSchema = new mongoose.Schema({
     type: {
       type: String, // 'Point'
       enum: ["Point"], // Define the type
-      required: true,
     },
     coordinates: {
       type: [Number], // [longitude, latitude]
-      required: true,
     },
   },
   location: {
