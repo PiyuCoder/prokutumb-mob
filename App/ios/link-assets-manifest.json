@@ -1,0 +1,17 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/fonts/AlfaSlabOne-Regular.ttf",
+      "sha1": "3379279f774fdb42b7e4bb027efb64337d791f1c"
+    },
+    {
+      "path": "src/assets/fonts/BalooTamma2-Bold.ttf",
+      "sha1": "c62e8e54b0b132c67c25e20df633cecf0486ccbe"
+    },
+    {
+      "path": "src/assets/fonts/BalooTamma2-VariableFont_wght.ttf",
+      "sha1": "b1e7a4945b4df0bb43cac6a65388a884ded4f547"
+    }
+  ]
+}
