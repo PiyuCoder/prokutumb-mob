@@ -59,7 +59,7 @@ exports.getNearbyUsers = async (req, res) => {
             coordinates: [parseFloat(longitude), parseFloat(latitude)],
           },
           distanceField: "distance",
-          maxDistance: 100000, // Adjust this for testing
+          maxDistance: 30000000, // Adjust this for testing
           spherical: true,
         },
       },
@@ -79,6 +79,7 @@ exports.getNearbyUsers = async (req, res) => {
       },
     ]);
 
+    console.log("Found users: ", nearbyUsers.length);
     res.status(200).json(nearbyUsers);
   } catch (error) {
     console.error("Error fetching nearby users:", error);
