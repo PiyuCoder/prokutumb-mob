@@ -51,33 +51,20 @@ exports.getNearbyUsers = async (req, res) => {
     // Ensure interests is an array
     const interestsArray = Array.isArray(interests) ? interests : [interests];
 
-    const nearbyUsers = await Member.aggregate([
-      {
-        $geoNear: {
-          near: {
+    const nearbyUsers = await Member.find({
+      liveLocation: {
+        $near: {
+          $geometry: {
             type: "Point",
             coordinates: [parseFloat(longitude), parseFloat(latitude)],
           },
-          distanceField: "distance",
-          maxDistance: 30000000, // Adjust this for testing
-          spherical: true,
+          $minDistance: 0, // Adjust as needed
+          $maxDistance: 50000, // For example, 50 km
         },
       },
-      {
-        $match: {
-          skills: { $in: interestsArray },
-          friends: { $nin: [new mongoose.Types.ObjectId(userId)] }, // Exclude friends
-        },
-      },
-      {
-        $project: {
-          name: 1,
-          location: 1,
-          skills: 1,
-          profilePicture: 1,
-        },
-      },
-    ]);
+      skills: { $in: interestsArray }, // Filter by skills
+      friends: { $nin: [new mongoose.Types.ObjectId(userId)] }, // Exclude friends
+    });
 
     console.log("Found users: ", nearbyUsers.length);
     res.status(200).json(nearbyUsers);
