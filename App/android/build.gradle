@@ -20,4 +20,10 @@ buildscript {
     }
 }
 
+allprojects {
+    repositories {
+        google() // Make sure this is included
+        mavenCentral()
+    }
+}
 apply plugin: "com.facebook.react.rootproject"

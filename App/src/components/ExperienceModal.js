@@ -141,7 +141,7 @@ const ExperienceModal = ({isVisible, onClose}) => {
 
             {/* Checkbox for 'Present' job */}
             <View style={styles.presentSwitch}>
-              <Text>Currently Working Here</Text>
+              <Text style={{color: 'black'}}>Currently Working Here</Text>
               <Switch
                 value={newExperience.isPresent}
                 onValueChange={value =>
@@ -268,6 +268,7 @@ const styles = StyleSheet.create({
   experienceTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: 'black',
   },
   experienceDates: {
     fontSize: 14,

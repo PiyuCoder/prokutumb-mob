@@ -117,6 +117,7 @@ const authSlice = createSlice({
         state.status = 'succeeded';
         console.log(action.payload);
         state.user = action.payload.user; // Update "About" in user data
+        updateAsyncStorage(action.payload.user);
       })
       .addCase(editAbout.rejected, (state, action) => {
         state.status = 'failed';
@@ -143,7 +144,8 @@ const authSlice = createSlice({
       .addCase(editUserExperience.fulfilled, (state, action) => {
         state.status = 'succeeded';
         console.log(action.payload);
-        state.user = action.payload.user; // Update "About" in user data
+        state.user = action.payload.user;
+        updateAsyncStorage(action.payload.user);
       })
       .addCase(editUserExperience.rejected, (state, action) => {
         state.status = 'failed';

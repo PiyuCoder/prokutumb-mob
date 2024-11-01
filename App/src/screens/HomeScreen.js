@@ -253,7 +253,7 @@ const HomeScreen = ({navigation}) => {
         data={isFeedView ? posts : userPosts}
         keyExtractor={item => item._id}
         renderItem={renderPost}
-        onEndReached={loadMorePosts}
+        // onEndReached={loadMorePosts}
         onEndReachedThreshold={0.2}
         ListFooterComponent={
           isFetching ? <ActivityIndicator size="large" /> : null

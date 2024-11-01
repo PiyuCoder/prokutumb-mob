@@ -30,6 +30,7 @@ const LoginScreen = ({navigation}) => {
         dispatch(loginSuccess({token, user: JSON.parse(user)}));
         navigation.replace('Dashboard');
       }
+      setIsLoading(false);
     };
 
     checkLoginStatus();
