@@ -34,20 +34,23 @@ exports.getNearbyUsers = async (req, res) => {
       return res.status(400).json({ message: "Location is required" });
     }
 
-    // Update user location
+    // Log the coordinates
+    console.log("Fetching nearby users for coordinates:", {
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+    });
+
+    // Update the user's live location
     const updatedUser = await updateUserLocation(userId, latitude, longitude);
     if (!updatedUser) {
       return res
         .status(500)
         .json({ message: "Failed to update user location" });
     }
-    console.log(`Location updated for user: ${updatedUser.name}`);
 
     // Ensure interests is an array
     const interestsArray = Array.isArray(interests) ? interests : [interests];
-    console.log("Interests array:", interestsArray);
 
-    // Fetch nearby users
     const nearbyUsers = await Member.aggregate([
       {
         $geoNear: {
@@ -56,14 +59,14 @@ exports.getNearbyUsers = async (req, res) => {
             coordinates: [parseFloat(longitude), parseFloat(latitude)],
           },
           distanceField: "distance",
-          maxDistance: 50000,
+          maxDistance: 100000, // Adjust this for testing
           spherical: true,
         },
       },
       {
         $match: {
           skills: { $in: interestsArray },
-          friends: { $nin: [new mongoose.Types.ObjectId(userId)] },
+          friends: { $nin: [new mongoose.Types.ObjectId(userId)] }, // Exclude friends
         },
       },
       {
@@ -76,7 +79,6 @@ exports.getNearbyUsers = async (req, res) => {
       },
     ]);
 
-    console.log("Nearby users found:", nearbyUsers.length);
     res.status(200).json(nearbyUsers);
   } catch (error) {
     console.error("Error fetching nearby users:", error);

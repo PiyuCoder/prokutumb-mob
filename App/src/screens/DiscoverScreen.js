@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,9 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Platform,
+  RefreshControl,
 } from 'react-native';
-import Geolocation from '@react-native-community/geolocation'; // Use the installed package
-import axios from 'axios';
+import Geolocation from '@react-native-community/geolocation';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {axiosInstance} from '../api/axios';
 import {useSelector} from 'react-redux';
@@ -17,16 +17,15 @@ const DiscoverScreen = () => {
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
   const [nearbyUsers, setNearbyUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Initial loading state
+  const [refreshing, setRefreshing] = useState(false); // Pull-to-refresh loading state
   const [error, setError] = useState('');
-  const [selectedInterest, setSelectedInterest] = useState(''); // Selected interest for filtering
-  const [permissionGranted, setPermissionGranted] = useState(false); // For permission handling
+  const [selectedInterest, setSelectedInterest] = useState('');
+  const [permissionGranted, setPermissionGranted] = useState(false);
   const {user} = useSelector(state => state.auth);
 
-  // Interests for filtering
   const interests = ['Finance', 'Science', 'Management', 'Startup'];
 
-  // Function to request location permission
   const fetchLocationPermission = async () => {
     const result = await request(
       Platform.OS === 'ios'
@@ -36,32 +35,35 @@ const DiscoverScreen = () => {
 
     if (result === RESULTS.GRANTED) {
       setPermissionGranted(true);
-      fetchLocation(); // Fetch location if permission granted
+      fetchLocation();
     } else {
       setError('Location permission was not granted');
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  // Function to get live location
   const fetchLocation = () => {
+    console.log('Fetching location');
     Geolocation.getCurrentPosition(
       position => {
         setLatitude(position.coords.latitude);
         setLongitude(position.coords.longitude);
         setLoading(false);
+        setRefreshing(false); // Stop refreshing when location is set
       },
       error => {
         setError(error.message);
         setLoading(false);
+        setRefreshing(false);
       },
       {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
     );
   };
 
-  // Fetch nearby people from the backend using location and interest
   const fetchNearbyPeople = async () => {
     try {
+      // console.log(latitude);
       const response = await axiosInstance.get('/api/nearby', {
         params: {
           latitude,
@@ -70,33 +72,43 @@ const DiscoverScreen = () => {
           userId: user?._id,
         },
       });
+      console.log(response.data);
       setNearbyUsers(response.data);
+      setError(''); // Clear error on successful fetch
     } catch (error) {
       setError('Error fetching nearby users');
+    } finally {
+      setLoading(false);
+      setRefreshing(false); // Ensure refreshing stops in all cases
     }
   };
 
-  // Fetch permission and live location on mount
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // console.log('Refreshing');
+    // setLoading(false); // Make sure main loading spinner is off during pull-to-refresh
+    fetchLocationPermission();
+  }, []);
+
   useEffect(() => {
     fetchLocationPermission();
   }, []);
 
-  // Fetch nearby users when location changes or interest is selected
   useEffect(() => {
     if (latitude && longitude) {
       fetchNearbyPeople();
     }
-  }, [latitude, longitude, selectedInterest]);
+  }, [latitude, longitude, selectedInterest, refreshing]);
 
   return (
     <View className="flex-1 justify-center items-center">
       <Text style={{color: 'black'}}>Discover Nearby People</Text>
 
-      {/* Display loading or error */}
-      {loading && <ActivityIndicator size="large" color="#0000ff" />}
+      {loading && !refreshing && (
+        <ActivityIndicator size="large" color="#0000ff" />
+      )}
       {error && <Text>{error}</Text>}
 
-      {/* Interest Filter */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {interests.map(interest => (
           <TouchableOpacity
@@ -104,34 +116,34 @@ const DiscoverScreen = () => {
             onPress={() => setSelectedInterest(interest)}
             style={{
               margin: 5,
-              paddingVertical: 8, // Reduced vertical padding
-              paddingHorizontal: 20, // Horizontal padding for width
+              paddingVertical: 8,
+              paddingHorizontal: 20,
               backgroundColor: selectedInterest === interest ? 'blue' : 'gray',
-              borderRadius: 25, // Rounded corners
-              alignItems: 'center', // Center text
-              justifyContent: 'center', // Center content
-              height: 40, // Set a fixed height for uniformity
+              borderRadius: 25,
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 40,
             }}>
             <Text style={{color: 'white', fontWeight: 'bold'}}>{interest}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {/* Nearby People List */}
-      <ScrollView>
-        {nearbyUsers.length ? (
-          nearbyUsers.map(user => (
-            <View key={user._id} style={{marginVertical: 10}}>
-              <Text style={{color: 'black'}}>{user.name}</Text>
-              <Text style={{color: 'black'}}>{user.skills.join(', ')}</Text>
-              <Text>
-                {user.location.state}, {user.location.country}
-              </Text>
-            </View>
-          ))
-        ) : (
-          <Text style={{color: 'black'}}>No users found</Text>
-        )}
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
+        {nearbyUsers.length
+          ? nearbyUsers.map(user => (
+              <View key={user._id} style={{marginVertical: 10}}>
+                <Text style={{color: 'black'}}>{user.name}</Text>
+                <Text style={{color: 'black'}}>{user.skills.join(', ')}</Text>
+                <Text>
+                  {user.location.state}, {user.location.country}
+                </Text>
+              </View>
+            ))
+          : !loading && <Text style={{color: 'black'}}>No users found</Text>}
       </ScrollView>
     </View>
   );
