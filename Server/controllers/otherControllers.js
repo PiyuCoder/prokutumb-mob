@@ -34,7 +34,6 @@ exports.getNearbyUsers = async (req, res) => {
       return res.status(400).json({ message: "Location is required" });
     }
 
-    // Log the coordinates
     console.log("Fetching nearby users for coordinates:", {
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
@@ -48,23 +47,38 @@ exports.getNearbyUsers = async (req, res) => {
         .json({ message: "Failed to update user location" });
     }
 
-    // Ensure interests is an array
     const interestsArray = Array.isArray(interests) ? interests : [interests];
 
-    const nearbyUsers = await Member.find({
-      liveLocation: {
-        $near: {
-          $geometry: {
+    const nearbyUsers = await Member.aggregate([
+      {
+        $geoNear: {
+          near: {
             type: "Point",
             coordinates: [parseFloat(longitude), parseFloat(latitude)],
           },
-          $minDistance: 0, // Adjust as needed
-          $maxDistance: 50000, // For example, 50 km
+          distanceField: "distance",
+          maxDistance: 1000, // 1 km radius
+          spherical: true,
+          query: {
+            friends: { $nin: [new mongoose.Types.ObjectId(userId)] },
+            _id: { $ne: new mongoose.Types.ObjectId(userId) },
+            ...(interestsArray.length > 0 && interestsArray[0]
+              ? { skills: { $in: interestsArray } }
+              : {}),
+          },
         },
       },
-      // skills: { $in: interestsArray }, // Filter by skills
-      // friends: { $nin: [new mongoose.Types.ObjectId(userId)] }, // Exclude friends
-    });
+      {
+        $project: {
+          name: 1,
+          location: 1,
+          skills: 1,
+          profilePicture: 1,
+          "liveLocation.coordinates": 1, // Include coordinates for map display
+          distance: { $round: ["$distance", 2] }, // Round distance to 2 decimal places
+        },
+      },
+    ]);
 
     console.log("Found users: ", nearbyUsers);
     res.status(200).json(nearbyUsers);
