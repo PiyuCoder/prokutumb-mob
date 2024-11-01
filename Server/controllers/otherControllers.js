@@ -59,11 +59,11 @@ exports.getNearbyUsers = async (req, res) => {
             coordinates: [parseFloat(longitude), parseFloat(latitude)],
           },
           $minDistance: 0, // Adjust as needed
-          $maxDistance: 50000, // For example, 50 km
+          $maxDistance: 5000000, // For example, 50 km
         },
       },
-      skills: { $in: interestsArray }, // Filter by skills
-      friends: { $nin: [new mongoose.Types.ObjectId(userId)] }, // Exclude friends
+      // skills: { $in: interestsArray }, // Filter by skills
+      // friends: { $nin: [new mongoose.Types.ObjectId(userId)] }, // Exclude friends
     });
 
     console.log("Found users: ", nearbyUsers.length);
