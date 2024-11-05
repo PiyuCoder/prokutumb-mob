@@ -32,7 +32,7 @@ const ProfileScreen = () => {
   const {user} = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const [webData, setWebData] = useState(null);
-  const navigation = useNavigation(); // Hook for navigation
+  const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [isExperienceModalVisible, setExperienceModalVisible] = useState(false);

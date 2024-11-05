@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   TextInput,
   ActivityIndicator,
   StyleSheet,
+  RefreshControl,
+  StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {logout} from '../store/slices/authSlice';
@@ -24,6 +26,7 @@ const likeIcon = require('../assets/icons/like.png');
 const commentIcon = require('../assets/icons/comment.png');
 const viewIcon = require('../assets/icons/view.png');
 const shareIcon = require('../assets/icons/share.png');
+const bellIcon = require('../assets/icons/bell.png');
 
 const HomeScreen = ({navigation}) => {
   const [isFeedView, setIsFeedView] = useState(true); // Toggle between Feed and Profile
@@ -31,6 +34,7 @@ const HomeScreen = ({navigation}) => {
   const posts = useSelector(state => state.posts.posts);
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility
   const [newPostContent, setNewPostContent] = useState(''); // Content of new post
   const [selectedMedia, setSelectedMedia] = useState(null); // Selected media for the post
@@ -59,6 +63,7 @@ const HomeScreen = ({navigation}) => {
       setPage(prevPage => prevPage + 1);
       setIsFetching(false);
       setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -72,7 +77,11 @@ const HomeScreen = ({navigation}) => {
     }
   }, [posts, user]);
 
-  // console.log(posts);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setIsLoading(true);
+    loadMorePosts();
+  }, []);
 
   const renderStory = ({item}) => (
     <TouchableOpacity
@@ -106,6 +115,8 @@ const HomeScreen = ({navigation}) => {
     // Logic to show story details can be added here
   };
 
+  // console.log(posts);
+
   const handleLogout = () => {
     dispatch(logout());
     AsyncStorage.removeItem('authToken');
@@ -113,6 +124,9 @@ const HomeScreen = ({navigation}) => {
     navigation.navigate('Login');
   };
 
+  const handleUserPress = userId => {
+    navigation.navigate('UserProfile', {userId});
+  };
   // Function to pick media (image or video)
   const pickMedia = async mediaType => {
     const options = {
@@ -182,7 +196,13 @@ const HomeScreen = ({navigation}) => {
             marginRight: 10,
           }}
         />
-        <Text style={{fontWeight: 'bold', color: '#141414'}}>
+        <Text
+          onPress={() =>
+            user?._id === item.user._id
+              ? navigation.navigate('Profile')
+              : handleUserPress(item.user._id)
+          }
+          style={{fontWeight: 'bold', color: '#141414'}}>
           {item.user.name}
         </Text>
       </View>
@@ -244,15 +264,20 @@ const HomeScreen = ({navigation}) => {
     <View
       style={{
         flex: 1,
-        padding: 10,
+        paddingHorizontal: 10,
         // paddingBottom: 80,
         backgroundColor: '#FDF7FD',
       }}>
+      <StatusBar backgroundColor="#FDF7FD" barStyle="dark-content" />
       <Loader isLoading={isLoading} />
       <FlatList
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         data={isFeedView ? posts : userPosts}
         keyExtractor={item => item._id}
         renderItem={renderPost}
+        contentContainerStyle={{paddingBottom: 65}}
         // onEndReached={loadMorePosts}
         onEndReachedThreshold={0.2}
         ListFooterComponent={
@@ -261,9 +286,31 @@ const HomeScreen = ({navigation}) => {
         ListHeaderComponent={
           <View>
             {/* Stories Section */}
-            <Text style={[styles.proku, {color: '#4B164C', fontSize: 24}]}>
-              ProKu
-            </Text>
+            <View
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={[styles.proku, {color: '#4B164C', fontSize: 24}]}>
+                ProKu
+              </Text>
+              <TouchableOpacity style={styles.iconButtons}>
+                <Image source={bellIcon} />
+                <View
+                  style={{
+                    position: 'absolute',
+                    backgroundColor: 'red',
+                    width: 7,
+                    height: 7,
+                    borderRadius: 3.5,
+                    top: 8,
+                    right: 10,
+                  }}
+                />
+              </TouchableOpacity>
+            </View>
             <View style={{height: 100, paddingVertical: 10}}>
               <FlatList
                 horizontal
@@ -274,7 +321,7 @@ const HomeScreen = ({navigation}) => {
               />
             </View>
 
-            {/* <View>
+            <View>
               <TouchableOpacity
                 style={{
                   backgroundColor: '#DD88CF',
@@ -285,7 +332,7 @@ const HomeScreen = ({navigation}) => {
                 onPress={handleLogout}>
                 <Text style={{color: '#fff', fontWeight: 'bold'}}>Logout</Text>
               </TouchableOpacity>
-            </View> */}
+            </View>
 
             {/* Toggle between Feed and Profile */}
             <View
@@ -343,7 +390,7 @@ const HomeScreen = ({navigation}) => {
             {/* QR Code for sharing profile */}
             {!isFeedView && (
               <LinearGradient
-                colors={['#DE2BAE', '#FEBE58', '#24EDFF']}
+                colors={['#DD88CF', '#DD88CF', '#DD88CF']}
                 style={styles.qrContainer}>
                 {/* <Text style={styles.qrText}>Scan to connect:</Text> */}
                 <QRCode
@@ -558,6 +605,18 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: '#7B7B7B',
+  },
+  iconButtons: {
+    position: 'relative',
+    padding: 2,
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    borderColor: '#4b164c5a',
+    borderWidth: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

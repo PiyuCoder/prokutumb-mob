@@ -10,6 +10,10 @@ import SplashScreen from './src/screens/SplashScreen';
 import {PersistGate} from 'redux-persist/integration/react'; // Import PersistGate
 import {ActivityIndicator, View} from 'react-native'; // Loading indicator
 import ProfileScreen from './src/screens/ProfileScreen';
+import NetworkScreen from './src/screens/NetworkScreen';
+import UserProfile from './src/screens/UserProfile';
+import ChatScreen from './src/screens/ChatScreen';
+import MessageScreen from './src/screens/MessageScreen';
 
 const Stack = createStackNavigator();
 
@@ -44,8 +48,28 @@ export default function App() {
               options={{headerShown: false}}
             />
             <Stack.Screen
+              name="UserProfile"
+              component={UserProfile}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
               name="Dashboard"
               component={DashboardScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Network"
+              component={NetworkScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Message"
+              component={MessageScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Chat"
+              component={ChatScreen}
               options={{headerShown: false}}
             />
           </Stack.Navigator>

@@ -87,3 +87,47 @@ exports.getNearbyUsers = async (req, res) => {
     res.status(500).json({ message: "Error fetching nearby users" });
   }
 };
+
+exports.prokuInteraction = async (req, res) => {
+  const { userId, query } = req.body;
+
+  console.log(userId, query);
+
+  try {
+    // Generate AI response using OpenAI (or any other AI service)
+    // const aiResponse = await openai.Completion.create({
+    //   model: 'text-davinci-003', // Choose a model; replace with your desired model
+    //   prompt: query,
+    //   max_tokens: 100,
+    // });
+
+    // const responseText = aiResponse.choices[0].text.trim();
+    const responseText = "AI Response";
+
+    // Save user query and AI response to the database
+    const member = await Member.findById(userId);
+    const interaction = {
+      query,
+      response: responseText,
+      createdAt: new Date(),
+    };
+    member.chatbotInteractions.push(interaction);
+    await member.save();
+
+    // Send both user query and AI response to the frontend
+    res.status(200).json({ query, response: responseText });
+  } catch (error) {
+    console.error("Error handling interaction:", error);
+    res.status(500).json({ error: "Failed to handle interaction" });
+  }
+};
+
+exports.fetchProkuInteractions = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const member = await Member.findById(userId);
+    res.status(200).json(member.chatbotInteractions);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to retrieve interactions" });
+  }
+};

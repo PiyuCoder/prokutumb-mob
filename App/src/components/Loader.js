@@ -6,7 +6,7 @@ const Loader = ({isLoading}) => {
 
   return (
     <View style={styles.loaderContainer}>
-      <ActivityIndicator size="large" color="#0000ff" />
+      <ActivityIndicator size="large" color="#DD88CF" />
     </View>
   );
 };
@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.7)', // Semi-transparent background
-    zIndex: 10, // Ensure it appears above other components
+    zIndex: 50, // Ensure it appears above other components
   },
 });
 

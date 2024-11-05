@@ -5,7 +5,7 @@ import MessageScreen from './MessageScreen';
 import DiscoverScreen from './DiscoverScreen';
 import MatchScreen from './MatchScreen';
 import NetworkScreen from './NetworkScreen';
-import {View, Image} from 'react-native';
+import {View, Image, TouchableOpacity, StyleSheet} from 'react-native';
 
 import homeIcon from '../assets/icons/home.png';
 import messageIcon from '../assets/icons/message.png';
@@ -16,7 +16,7 @@ import networkIcon from '../assets/icons/network.png';
 // Create the Tab Navigator
 const Tab = createBottomTabNavigator();
 
-const DashboardScreen = () => {
+const DashboardScreen = ({navigation}) => {
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
@@ -41,13 +41,18 @@ const DashboardScreen = () => {
 
           // Render the custom icon
           return (
-            <View>
-              <Image source={iconSource} style={iconStyle} />
+            <View style={{alignItems: 'center'}}>
+              {focused && (
+                <View style={styles.circle}>
+                  <Image source={iconSource} style={iconStyle} />
+                </View>
+              )}
+              {!focused && <Image source={iconSource} style={iconStyle} />}
             </View>
           );
         },
         tabBarShowLabel: false, // Hide the tab labels (text)
-        tabBarActiveTintColor: '#DD88CF',
+        tabBarActiveTintColor: 'white',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           position: 'absolute', // Make it float
@@ -77,7 +82,17 @@ const DashboardScreen = () => {
       <Tab.Screen
         name="Network"
         component={NetworkScreen}
-        options={{headerShown: false}}
+        options={{
+          tabBarButton: props => (
+            <TouchableOpacity
+              {...props}
+              onPress={() => {
+                // Navigate to a new screen instead of just using the tab
+                navigation.navigate('Network');
+              }}
+            />
+          ),
+        }}
       />
       <Tab.Screen
         name="Match"
@@ -87,10 +102,30 @@ const DashboardScreen = () => {
       <Tab.Screen
         name="Message"
         component={MessageScreen}
-        options={{headerShown: false}}
+        options={{
+          tabBarButton: props => (
+            <TouchableOpacity
+              {...props}
+              onPress={() => {
+                // Navigate to a new screen instead of just using the tab
+                navigation.navigate('Message');
+              }}
+            />
+          ),
+        }}
       />
     </Tab.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  circle: {
+    backgroundColor: '#DD88CF', // Circle color
+    borderRadius: 30, // Adjust to make a perfect circle
+    padding: 8, // Space between the icon and the circle
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 export default DashboardScreen;

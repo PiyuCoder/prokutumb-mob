@@ -76,7 +76,16 @@ const GoogleSignInButton = ({setIsLoading}) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={handleGoogleLogin} style={styles.customButton}>
-        <Image style={styles.googleIcon} source={googleIcon} />
+        <View
+          style={{
+            backgroundColor: 'white',
+            height: 30,
+            width: 30,
+            borderRadius: 15,
+            padding: 3,
+          }}>
+          <Image style={styles.googleIcon} source={googleIcon} />
+        </View>
         <Text style={styles.customButtonText}>Login with Google</Text>
       </TouchableOpacity>
 
@@ -92,22 +101,23 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   googleIcon: {
-    height: 24, // Adjusted the size for better alignment
+    height: 24,
     width: 24,
   },
   customButton: {
-    backgroundColor: '#FFFFFF', // Google's blue color
+    backgroundColor: '#dd88cf45', // Google's blue color
     borderRadius: 50,
     padding: 12,
     minWidth: 250, // Increase the width for larger screens
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.8,
-    shadowRadius: 2,
+    justifyContent: 'space-between',
+    // shadowColor: '#000',
+    // shadowOffset: {width: 0, height: 2},
+    // shadowOpacity: 0.8,
+    // shadowRadius: 2,
     elevation: 5, // Shadow effect for elevation
+    paddingRight: 50,
   },
   customButtonText: {
     color: '#4B164C',

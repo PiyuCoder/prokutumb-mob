@@ -29,6 +29,38 @@ exports.googleLogin = (req, res) => {
   });
 };
 
+exports.fetchUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    console.log(userId);
+
+    const user = await Member.findById(userId);
+
+    if (!user) {
+      res.status(400).json({ message: "user not found." });
+    }
+
+    const whyConnect = ["Mutual Interests", "Location", "Education"];
+
+    res.status(200).json({
+      success: true,
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture,
+        experience: user.experience,
+        about: user.bio,
+        location: user.location,
+        whyConnect,
+      },
+    });
+  } catch (error) {
+    res.sta(500).json({ message: "Server error while fetching user" });
+  }
+};
+
 exports.editAbout = async (req, res) => {
   try {
     const { about } = req.body; // Get the updated "About" text from the request body
