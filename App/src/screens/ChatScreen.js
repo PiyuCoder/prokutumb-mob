@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Alert,
 } from 'react-native';
+import {useSelector} from 'react-redux';
+import socket from '../socket';
+import {axiosInstance} from '../api/axios';
 
 const backIcon = require('../assets/icons/black-back.png');
 const callIcon = require('../assets/icons/telephone.png');
@@ -15,28 +19,83 @@ const videoIcon = require('../assets/icons/cam-recorder.png');
 const infoIcon = require('../assets/icons/info.png');
 
 const ChatScreen = ({route, navigation}) => {
-  const {name} = route.params;
+  const {name, userId, profilePicture} = route.params;
+  const {user} = useSelector(state => state.auth);
 
-  const [messages, setMessages] = useState([
-    {id: '1', text: 'Hi there!', sender: 'Alice'},
-    {id: '2', text: 'How are you?', sender: 'You'},
-  ]);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const res = await axiosInstance.get(
+        `/api/user/fetchMessages/${user?._id}/${userId}`,
+      );
+      if (res.data.success) {
+        setMessages(res.data.messages);
+      }
+    };
+    fetchMessages();
+  }, []);
+
+  useEffect(() => {
+    // Listen for incoming messages
+    socket.on('receiveMessage', message => {
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {id: Date.now().toString(), ...message},
+      ]);
+    });
+
+    return () => {
+      socket.off('receiveMessage');
+    };
+  }, []);
 
   const handleSend = () => {
     if (newMessage.trim()) {
+      const messageData = {
+        sender: user._id,
+        recipient: userId,
+        text: newMessage,
+      };
+
+      // Send message to the backend via socket
+      socket.emit('sendMessage', messageData);
+
+      // Update local messages state to display the sent message
       setMessages(prevMessages => [
         ...prevMessages,
-        {
-          id: (prevMessages.length + 1).toString(),
-          text: newMessage,
-          sender: 'You',
-        },
+        {...messageData, id: Date.now().toString(), sender: user?._id},
       ]);
       setNewMessage('');
     }
   };
 
+  const handleAudioCall = () => {
+    socket.emit('initiateCall', {
+      recipientId: userId,
+      callerId: user._id,
+      callerName: user.name,
+      recipientName: name,
+      isVideo: false,
+    });
+    Alert.alert('Audio Call Initiated');
+  };
+
+  const handleVideoCall = () => {
+    socket.emit('initiateCall', {
+      recipientId: userId,
+      callerId: user._id,
+      callerName: user.name,
+      recipientName: name,
+      isVideo: true,
+    });
+    Alert.alert('Video Call Initiated');
+  };
+
+  const openInfoScreen = () => {
+    navigation.navigate('UserInfoScreen', {userId: recipientId});
+  };
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -49,41 +108,59 @@ const ChatScreen = ({route, navigation}) => {
           backgroundColor: 'white',
           padding: 16,
         }}>
-        <TouchableOpacity onPress={() => navigation.navigate('Message')}>
-          <Image source={backIcon} />
-        </TouchableOpacity>
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: 'bold',
-            color: 'black',
-            textAlign: 'left',
-          }}>
-          {name}
-        </Text>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <TouchableOpacity
+            style={{marginRight: 8}}
+            onPress={() => navigation.navigate('Message')}>
+            <Image source={backIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('UserProfile', {userId})}
+            style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Image
+              source={{uri: profilePicture}}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                marginRight: 10,
+              }}
+            />
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: 'bold',
+                color: 'black',
+                textAlign: 'left',
+              }}>
+              {name}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 15}}>
-          <TouchableOpacity>
-            <Image source={callIcon} />
+          <TouchableOpacity onPress={handleAudioCall}>
+            <Image source={callIcon} style={styles.icon} />
           </TouchableOpacity>
-          <TouchableOpacity>
-            <Image source={videoIcon} />
+          <TouchableOpacity onPress={handleVideoCall}>
+            <Image source={videoIcon} style={styles.icon} />
           </TouchableOpacity>
-          <TouchableOpacity>
-            <Image source={infoIcon} />
+          <TouchableOpacity onPress={openInfoScreen}>
+            <Image source={infoIcon} style={styles.icon} />
           </TouchableOpacity>
         </View>
       </View>
-      {/* <Text style={styles.header}>{name}</Text> */}
 
       {/* Messages List */}
       <FlatList
         data={messages}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item._id}
         renderItem={({item}) => (
           <View
             style={
-              item.sender === 'You' ? styles.yourMessage : styles.otherMessage
+              item.sender === user?._id
+                ? styles.yourMessage
+                : styles.otherMessage
             }>
             <Text style={styles.messageText}>{item.text}</Text>
           </View>

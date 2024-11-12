@@ -20,6 +20,7 @@ xmlns:tools="http://schemas.android.com/tools">
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true"
+      android:usesCleartextTraffic="true"
       android:appComponentFactory="android.support.v4.app.CoreComponentFactory"
       tools:replace="android:appComponentFactory">
       <meta-data

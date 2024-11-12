@@ -8,21 +8,27 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
+import * as Progress from 'react-native-progress';
 import axios from 'axios';
 import LinearGradient from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
 import {axiosInstance} from '../api/axios';
+import {useSelector} from 'react-redux';
+import Loader from '../components/Loader';
 
-const editIcon = require('../assets/icons/edit.png');
-const penIcon = require('../assets/icons/pen.png');
 const backIcon = require('../assets/icons/back.png');
-const closeIcon = require('../assets/icons/close.png');
 
 const UserProfile = ({route}) => {
   const {userId} = route.params;
+  const currentUser = useSelector(state => state.auth?.user);
   const [user, setUser] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [webData, setWebData] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('Connect');
   const navigation = useNavigation(); // Hook for navigation
+
+  // console.log('Current User: ', currentUser);
+  // console.log('userId: ', userId);
 
   // Hide the status bar when the screen is rendered
   useEffect(() => {
@@ -36,15 +42,46 @@ const UserProfile = ({route}) => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const res = await axiosInstance.get(`/api/user/fetchUser/${userId}`);
-      console.log('user details: ', res.data.user);
-      if (res.data.success) {
-        setUser(res.data.user);
+      try {
+        setLoading(true);
+        const res = await axiosInstance.get(
+          `/api/user/fetchUser/${userId}/${currentUser?._id}`,
+        );
+
+        if (res.data.success) {
+          setUser(res.data.user);
+
+          // Check if they are already connected
+          if (res.data.user.isAlreadyConnected) {
+            setConnectionStatus('Message');
+          } else {
+            const requestSent = res.data.user.friendRequests?.some(
+              request => request?.fromUser === currentUser?._id,
+            );
+            const requestReceived = currentUser.friendRequests?.some(
+              request => request?.fromUser === userId,
+            );
+
+            if (requestSent) {
+              setConnectionStatus('Pending');
+            } else if (requestReceived) {
+              setConnectionStatus('Accept/Decline');
+            } else {
+              setConnectionStatus('Connect');
+            }
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUser();
   }, [userId]);
+
+  console.log(connectionStatus);
 
   // Fetch user info from external APIs (LinkedIn, etc.)
   const fetchUserWebInfo = async () => {
@@ -74,6 +111,65 @@ const UserProfile = ({route}) => {
     // fetchUserWebInfo();
   }, []);
 
+  const handleConnect = async () => {
+    // setLoading(true)
+    try {
+      if (connectionStatus === 'Connect') {
+        await axiosInstance.post('/api/user/send-connection-request', {
+          senderId: currentUser?._id,
+          receiverId: userId,
+        });
+        setConnectionStatus('Pending');
+      }
+    } catch (error) {
+      console.error('Error sending connection request:', error);
+    }
+  };
+
+  const handleAccept = async () => {
+    try {
+      const response = await axiosInstance.post(
+        '/api/user/acceptFriendRequest',
+        {
+          fromUserId: userId, // The user who sent the request
+          toUserId: currentUser._id, // The current user (receiver)
+        },
+      );
+
+      if (response.data.success) {
+        setConnectionStatus('Message'); // Update status to "Message"
+        // Optionally update the friend lists or UI as needed here
+      } else {
+        console.log('Failed to accept the request.');
+      }
+    } catch (error) {
+      console.log('Error accepting friend request:', error);
+    }
+  };
+
+  const handleDecline = async () => {
+    try {
+      const response = await axiosInstance.post(
+        '/api/user/declineFriendRequest',
+        {
+          fromUserId: userId, // The user who sent the request
+          toUserId: currentUser._id, // The current user (receiver)
+        },
+      );
+
+      if (response.data.success) {
+        setConnectionStatus('Connect'); // Update status to "Connect"
+        // Optionally remove the friend request from UI or state here
+      } else {
+        console.log('Failed to decline the request.');
+      }
+    } catch (error) {
+      console.log('Error declining friend request:', error);
+    }
+  };
+
+  // const handleMessage = () => {};
+
   const handleBackPress = () => {
     navigation.goBack(); // Navigate back to the previous screen
   };
@@ -85,6 +181,7 @@ const UserProfile = ({route}) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {loading && <Loader isLoading={loading} />}
       {/* Profile Section */}
       <View style={styles.profileCard}>
         <View style={styles.profileIconContainer}>
@@ -93,6 +190,36 @@ const UserProfile = ({route}) => {
             className="border h-8 w-8 border-white  rounded-full p-2 flex items-center justify-center">
             <Image style={{height: 15, width: 15}} source={backIcon} />
           </TouchableOpacity>
+          {connectionStatus === 'Connect' && (
+            <TouchableOpacity
+              onPress={handleConnect}
+              className="bg-[#DD88CF] rounded-full p-2 px-4 flex items-center justify-center">
+              <Text className="text-white font-bold">{connectionStatus}</Text>
+            </TouchableOpacity>
+          )}
+          {currentUser.friendRequests?.some(
+            request => request.fromUser === userId,
+          ) && (
+            <View className="bg-[#4B164C] rounded-full p-2 px-4 flex flex-row items-center justify-center">
+              <Progress.Circle
+                size={30}
+                progress={0.7}
+                showsText
+                thickness={3}
+                textStyle={{color: 'white', fontSize: 8}}
+                color="#DD88CF"
+                unfilledColor="#dd88cf62"
+                borderColor="#4B164C"
+              />
+              <Text className="text-white font-bold ml-2 ">Match</Text>
+            </View>
+          )}
+
+          {connectionStatus === 'Pending' && (
+            <View className="bg-pink-300 rounded-full p-2 px-4 flex items-center justify-center">
+              <Text className="text-white font-bold">Pending</Text>
+            </View>
+          )}
         </View>
         <Image
           source={
@@ -110,11 +237,40 @@ const UserProfile = ({route}) => {
           end={{x: 0, y: 1}}
           style={styles.overlay}
         />
-        <Text style={styles.userName}>{user.name}</Text>
-        <Text style={styles.userLocation}>
-          {user.location?.state || 'State'},{' '}
-          {user.location?.country || 'Country'}
-        </Text>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userLocation}>
+            {user.location?.state || 'State'},{' '}
+            {user.location?.country || 'Country'}
+          </Text>
+          {connectionStatus === 'Accept/Decline' && (
+            <View className="w-80 flex items-center mx-auto flex-row justify-around z-10 mt-5">
+              <TouchableOpacity
+                onPress={handleAccept}
+                className="bg-[#DD88CF] rounded-full p-3 px-5 flex items-center justify-center">
+                <Text className="text-white font-bold">Accept</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDecline}
+                className="bg-[#855BFD] rounded-full p-3 px-5 flex items-center justify-center">
+                <Text className="text-white font-bold">Decline</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {connectionStatus === 'Message' && (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('Chat', {
+                  name: user.name,
+                  userId,
+                  profilePicture: user.profilePicture,
+                })
+              }
+              className="bg-[#DD88CF] z-10 rounded-full p-2 px-4 flex items-center justify-center mt-4">
+              <Text className="text-white font-bold">Message</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.mainCard}>
@@ -243,9 +399,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  userName: {
+  detailsContainer: {
     position: 'absolute',
-    bottom: 120,
+    bottom: 100,
+  },
+  userName: {
+    // position: 'absolute',
+    // bottom: 120,
     fontSize: 30,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -253,8 +413,8 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   userLocation: {
-    position: 'absolute',
-    bottom: 100,
+    // position: 'absolute',
+    // bottom: 100,
     fontSize: 16,
     textAlign: 'center',
     color: 'white',
@@ -262,7 +422,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   card: {
-    backgroundColor: '#6619d2',
+    backgroundColor: '#855BFD',
     padding: 20,
     borderRadius: 10,
     marginBottom: 20,

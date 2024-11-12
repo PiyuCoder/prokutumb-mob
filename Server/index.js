@@ -5,19 +5,23 @@ require("dotenv").config();
 const path = require("path");
 const connectDB = require("./config/db")();
 
-const userRouter = require("./routes/userRoute");
-const postRouter = require("./routes/postRoutes");
-const otherRouter = require("./routes/otherRoutes");
 const socketHandler = require("./config/socket");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Update with your frontend domain in production
+    origin: "*",
   },
 });
+
 app.use(express.json());
+
+const userSocketMap = {};
+
+const userRouter = require("./routes/userRoute")(io, userSocketMap);
+const postRouter = require("./routes/postRoutes");
+const otherRouter = require("./routes/otherRoutes");
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -26,6 +30,7 @@ app.use("/api/user", userRouter);
 app.use("/api/posts", postRouter);
 app.use("/api", otherRouter);
 
-socketHandler(io);
+socketHandler(io, userSocketMap);
+
 const PORT = process.env.PORT || "3001";
-app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
+server.listen(PORT, () => console.log(`Listening on port: ${PORT}`));

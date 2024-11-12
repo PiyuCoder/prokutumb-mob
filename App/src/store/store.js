@@ -9,7 +9,7 @@ import authReducer from './slices/authSlice';
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth', 'posts'], // Reducers you want to persist
+  whitelist: ['auth', 'posts'],
 };
 
 // Combine reducers
@@ -34,6 +34,5 @@ const store = configureStore({
     }),
 });
 
-// Export persistor and store
 export const persistor = persistStore(store);
 export default store;

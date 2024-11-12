@@ -1,5 +1,7 @@
 const Member = require("../models/Member");
 const mongoose = require("mongoose");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { SessionsClient } = require("@google-cloud/dialogflow-cx");
 
 const updateUserLocation = async (userId, latitude, longitude) => {
   try {
@@ -88,21 +90,60 @@ exports.getNearbyUsers = async (req, res) => {
   }
 };
 
+async function detectIntentText(query) {
+  const client = new SessionsClient();
+  const projectId = "grand-icon-439713-i6";
+  const location = "us-central1";
+  const agentId = "56bc7a84-f538-409e-a354-fcce1cf042a8";
+  const languageCode = "en";
+
+  const sessionId = Math.random().toString(36).substring(7);
+  const sessionPath = client.projectLocationAgentSessionPath(
+    projectId,
+    location,
+    agentId,
+    sessionId
+  );
+  const request = {
+    session: sessionPath,
+    queryInput: {
+      text: {
+        text: query,
+      },
+      languageCode,
+    },
+  };
+  const [response] = await client.detectIntent(request);
+  for (const message of response.queryResult.responseMessages) {
+    if (message.text) {
+      console.log(`Agent Response: ${message.text.text}`);
+    }
+  }
+  if (response.queryResult.match.intent) {
+    console.log(
+      `Matched Intent: ${response.queryResult.match.intent.displayName}`
+    );
+  }
+  console.log(`Current Page: ${response.queryResult.currentPage.displayName}`);
+}
+
 exports.prokuInteraction = async (req, res) => {
   const { userId, query } = req.body;
 
   console.log(userId, query);
 
   try {
-    // Generate AI response using OpenAI (or any other AI service)
-    // const aiResponse = await openai.Completion.create({
-    //   model: 'text-davinci-003', // Choose a model; replace with your desired model
-    //   prompt: query,
-    //   max_tokens: 100,
-    // });
+    const genAI = new GoogleGenerativeAI(
+      "AIzaSyA2MXxVjM_sygMcocVFRfvyvZKQicvvc38"
+    );
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // const responseText = aiResponse.choices[0].text.trim();
-    const responseText = "AI Response";
+    const prompt = "Explain how AI works";
+
+    const result = await model.generateContent(query);
+    // detectIntentText(query);
+    console.log(result.response.text());
+    const responseText = result.response.text();
 
     // Save user query and AI response to the database
     const member = await Member.findById(userId);

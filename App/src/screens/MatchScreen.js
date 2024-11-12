@@ -56,26 +56,28 @@ const users = [
 const MatchScreen = () => {
   const navigation = useNavigation();
   const renderUserCard = user => (
-    <View key={user._id} style={styles.userCard}>
-      <ImageBackground
-        source={{uri: user.profilePicture}}
-        style={styles.profilePicture}
-        imageStyle={styles.profilePictureImage}>
-        <LinearGradient
-          colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
-          start={{x: 0, y: 0}}
-          end={{x: 0, y: 1}}
-          style={styles.overlay}
-        />
-        <View style={styles.overlayContent}>
-          <View style={styles.distanceContainer}>
-            <Text style={styles.userDistance}>{user.distance} m</Text>
+    <TouchableOpacity key={user._id}>
+      <View style={styles.userCard}>
+        <ImageBackground
+          source={{uri: user.profilePicture}}
+          style={styles.profilePicture}
+          imageStyle={styles.profilePictureImage}>
+          <LinearGradient
+            colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
+            start={{x: 0, y: 0}}
+            end={{x: 0, y: 1}}
+            style={styles.overlay}
+          />
+          <View style={styles.overlayContent}>
+            <View style={styles.distanceContainer}>
+              <Text style={styles.userDistance}>{user.distance} m</Text>
+            </View>
+            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userLocation}>{user.location}</Text>
           </View>
-          <Text style={styles.userName}>{user.name}</Text>
-          <Text style={styles.userLocation}>{user.location}</Text>
-        </View>
-      </ImageBackground>
-    </View>
+        </ImageBackground>
+      </View>
+    </TouchableOpacity>
   );
 
   const handleBackPress = () => {

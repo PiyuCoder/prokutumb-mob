@@ -15,15 +15,29 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.post("/google-signin", checkRegistration, userController.googleLogin);
-router.get("/fetchUser/:userId", userController.fetchUser);
-router.put("/about/:userId", userController.editAbout);
-router.put(
-  "/profile/:userId",
-  upload.single("profilePicture"),
-  userController.editProfile
-);
-router.put("/:userId/experience", userController.addExperience);
-// router.delete("/:userId/experience/:experienceId", userController.editProfile);
+module.exports = (io, userSocketMap) => {
+  router.post("/google-signin", checkRegistration, userController.googleLogin);
+  router.get("/fetchUser/:userId/:currentUserId", userController.fetchUser);
+  router.put("/about/:userId", userController.editAbout);
+  router.put(
+    "/profile/:userId",
+    upload.single("profilePicture"),
+    userController.editProfile
+  );
+  router.get("/connectionRequests/:userId", userController.fetchFriendRequests);
+  router.post(
+    "/send-connection-request",
+    userController.sendRequest(io, userSocketMap)
+  );
+  router.get(
+    "/fetchMessages/:userId/:recipientId",
+    userController.fetchMessages
+  );
+  router.post("/acceptFriendRequest", userController.acceptRequest);
+  router.post("/declineFriendRequest", userController.declineRequest);
+  router.put("/:userId/experience", userController.addExperience);
+  router.get("/conversations/:userId", userController.fetchConversations);
+  // router.delete("/:userId/experience/:experienceId", userController.editProfile);
 
-module.exports = router;
+  return router;
+};

@@ -6,6 +6,7 @@ const initialState = {
   token: null,
   user: null, // Add user information to the initial state
   isAuthenticated: false,
+  friendRequests: [],
   status: 'idle', // for tracking loading status
   error: null,
 };
@@ -82,6 +83,24 @@ export const deleteUserExperience = createAsyncThunk(
   },
 );
 
+export const fetchFriendRequests = createAsyncThunk(
+  'auth/fetchFriendRequests',
+  async (userId, {rejectWithValue}) => {
+    try {
+      const response = await axiosInstance.get(
+        `/api/user/connectionRequests/${userId}`,
+      );
+
+      // console.log('user while fetching reqs', response.data.user);
+      return response.data; // Return friend requests
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to fetch friend requests',
+      );
+    }
+  },
+);
+
 const updateAsyncStorage = user => {
   // Update AsyncStorage with the new user data
   AsyncStorage.setItem('user', JSON.stringify(user))
@@ -105,6 +124,7 @@ const authSlice = createSlice({
       state.token = null;
       state.user = null; // Clear user information on logout
       state.isAuthenticated = false;
+      state.friendRequests = [];
     },
   },
   extraReducers: builder => {
@@ -161,6 +181,18 @@ const authSlice = createSlice({
         state.user = action.payload.user; // Update "About" in user data
       })
       .addCase(deleteUserExperience.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+      .addCase(fetchFriendRequests.pending, state => {
+        state.status = 'loading';
+      })
+      .addCase(fetchFriendRequests.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.friendRequests = action.payload.requests;
+        updateAsyncStorage(action.payload.user);
+      })
+      .addCase(fetchFriendRequests.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       });

@@ -184,6 +184,8 @@ const ProfileScreen = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  console.log(user.profilePicture);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Profile Section */}

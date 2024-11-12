@@ -14,13 +14,17 @@ import {
   StatusBar,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {logout} from '../store/slices/authSlice';
+import {fetchFriendRequests, logout} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {launchImageLibrary} from 'react-native-image-picker'; // Use react-native-image-picker
 import {addNewPost, fetchPosts} from '../store/slices/postSlice';
 import QRCode from 'react-native-qrcode-svg';
 import LinearGradient from 'react-native-linear-gradient';
 import Loader from '../components/Loader';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {connectSocket, disconnectSocket} from '../socket';
+import socket from '../socket';
+import ConnectionRequests from '../components/ConnectionRequests';
 
 const likeIcon = require('../assets/icons/like.png');
 const commentIcon = require('../assets/icons/comment.png');
@@ -54,6 +58,8 @@ const HomeScreen = ({navigation}) => {
     loadMorePosts(); // Fetch the first page
   }, []);
 
+  // console.log(posts);
+
   const loadMorePosts = async () => {
     console.log('onEndReached triggered, page:', page);
     setIsLoading(true);
@@ -68,6 +74,7 @@ const HomeScreen = ({navigation}) => {
   };
 
   useEffect(() => {
+    connectSocket();
     // Filter posts to get only the user's posts
     if (user && posts) {
       setIsFetching(true);
@@ -80,6 +87,7 @@ const HomeScreen = ({navigation}) => {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setIsLoading(true);
+    dispatch(fetchFriendRequests(user?._id));
     loadMorePosts();
   }, []);
 
@@ -116,11 +124,14 @@ const HomeScreen = ({navigation}) => {
   };
 
   // console.log(posts);
+  // console.log(user.name);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await GoogleSignin.signOut();
     dispatch(logout());
     AsyncStorage.removeItem('authToken');
     AsyncStorage.removeItem('user');
+    disconnectSocket();
     navigation.navigate('Login');
   };
 
@@ -321,7 +332,7 @@ const HomeScreen = ({navigation}) => {
               />
             </View>
 
-            <View>
+            {/* <View>
               <TouchableOpacity
                 style={{
                   backgroundColor: '#DD88CF',
@@ -332,7 +343,7 @@ const HomeScreen = ({navigation}) => {
                 onPress={handleLogout}>
                 <Text style={{color: '#fff', fontWeight: 'bold'}}>Logout</Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
 
             {/* Toggle between Feed and Profile */}
             <View
@@ -418,6 +429,7 @@ const HomeScreen = ({navigation}) => {
                 </TouchableOpacity>
               </View>
             )}
+            <ConnectionRequests isFeedView={isFeedView} userId={user?._id} />
             {!isFeedView && (
               <View>
                 <Text

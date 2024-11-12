@@ -28,6 +28,8 @@ const LoginScreen = ({navigation}) => {
       const token = await AsyncStorage.getItem('authToken');
       const user = await AsyncStorage.getItem('user');
 
+      // console.log(user);
+
       if (token && user) {
         // Dispatch loginSuccess with existing token and user
         dispatch(loginSuccess({token, user: JSON.parse(user)}));
