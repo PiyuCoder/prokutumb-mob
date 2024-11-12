@@ -19,12 +19,13 @@ import {useSelector} from 'react-redux';
 import MapView, {Marker, Circle} from 'react-native-maps';
 import LinearGradient from 'react-native-linear-gradient';
 import Geocoder from 'react-native-geocoding';
+import Config from 'react-native-config';
 import Loader from '../components/Loader';
 
 const lensIcon = require('../assets/icons/lens.png');
 const filterIcon = require('../assets/icons/filter.png');
 
-const DiscoverScreen = () => {
+const DiscoverScreen = ({navigation}) => {
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
   const [locationName, setLocationName] = useState('');
@@ -149,6 +150,10 @@ const DiscoverScreen = () => {
     });
   }, [nearbyUsers]);
 
+  const handleUserPress = userId => {
+    navigation.navigate('UserProfile', {userId});
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -194,34 +199,38 @@ const DiscoverScreen = () => {
           ? nearbyUsers
               .filter(item => item?._id !== user?._id)
               .map(user => (
-                <View key={user._id} style={styles.userCard}>
-                  <ImageBackground
-                    source={{uri: user.profilePicture}} // Display user's profile picture
-                    style={styles.profilePicture}
-                    imageStyle={styles.profilePictureImage} // Style the image
-                  >
-                    <LinearGradient
-                      colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
-                      start={{x: 0, y: 0}}
-                      end={{x: 0, y: 1}}
-                      style={styles.overlay}
-                    />
-                    <View style={styles.overlayContent}>
-                      <View style={styles.distanceContainer}>
-                        <Text style={styles.userDistance}>
-                          {user.distance} m
+                <TouchableOpacity
+                  key={user._id}
+                  onPress={() => handleUserPress(user?._id)}>
+                  <View style={styles.userCard}>
+                    <ImageBackground
+                      source={{uri: user.profilePicture}} // Display user's profile picture
+                      style={styles.profilePicture}
+                      imageStyle={styles.profilePictureImage} // Style the image
+                    >
+                      <LinearGradient
+                        colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
+                        start={{x: 0, y: 0}}
+                        end={{x: 0, y: 1}}
+                        style={styles.overlay}
+                      />
+                      <View style={styles.overlayContent}>
+                        <View style={styles.distanceContainer}>
+                          <Text style={styles.userDistance}>
+                            {user.distance} m
+                          </Text>
+                        </View>
+                        <Text style={styles.userName}>{user.name}</Text>
+                        <Text style={styles.userLocation}>
+                          {userLocations[user._id] || 'Loading...'}
                         </Text>
                       </View>
-                      <Text style={styles.userName}>{user.name}</Text>
-                      <Text style={styles.userLocation}>
-                        {userLocations[user._id] || 'Loading...'}
-                      </Text>
-                    </View>
-                  </ImageBackground>
-                  {/* <Text style={styles.userSkills}>
+                    </ImageBackground>
+                    {/* <Text style={styles.userSkills}>
                     {user.skills?.join(', ')}
                   </Text> */}
-                </View>
+                  </View>
+                </TouchableOpacity>
               ))
           : !loading && <Text style={styles.noUsersText}>No users found</Text>}
       </ScrollView>
