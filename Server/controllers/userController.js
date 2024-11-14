@@ -476,3 +476,70 @@ exports.fetchConversations = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch data." });
   }
 };
+
+exports.fetchTopNetworkers = async (req, res) => {
+  try {
+    // Filter friends added in the last week
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const topNetworkers = await Member.aggregate([
+      { $match: { "friends.dateAdded": { $gte: oneWeekAgo } } },
+      {
+        $project: {
+          name: 1,
+          profilePicture: 1,
+          friends: 1,
+          friendCount: { $size: "$friends" },
+        },
+      },
+      { $sort: { friendCount: -1 } },
+      { $limit: 10 },
+    ]);
+
+    res.json(topNetworkers);
+  } catch (error) {
+    console.error("Error fetching top networkers:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.fetchPeopleYouMayKnow = async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.params.userId);
+    const user = await Member.findById(userId).populate("friends", "_id");
+
+    // Get IDs of user's friends
+    const friendIds = user.friends.map((friend) => friend._id);
+
+    // Find people with mutual friends and shared interests
+    const peopleYouMayKnow = await Member.aggregate([
+      {
+        $match: {
+          _id: { $nin: [...friendIds, userId] },
+          interests: { $in: user.interests },
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          profilePicture: 1,
+          commonInterests: {
+            $size: { $setIntersection: ["$interests", user.interests] },
+          },
+          mutualFriends: {
+            $size: { $setIntersection: ["$friends", friendIds] },
+          },
+        },
+      },
+      { $match: { mutualFriends: { $gt: 0 }, commonInterests: { $gt: 0 } } },
+      { $sort: { mutualFriends: -1, commonInterests: -1 } },
+      { $limit: 10 },
+    ]);
+
+    res.json(peopleYouMayKnow);
+  } catch (error) {
+    console.error("Error fetching people you may know:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

@@ -1,5 +1,5 @@
 import {useNavigation} from '@react-navigation/native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import {
   Image,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import {axiosInstance} from '../api/axios';
+import {useSelector} from 'react-redux';
+import SearchPeople from '../components/SearchPeople';
 
 const lensIcon = require('../assets/icons/lens.png');
 const filterIcon = require('../assets/icons/filter.png');
@@ -55,6 +58,33 @@ const users = [
 
 const MatchScreen = () => {
   const navigation = useNavigation();
+  const [topNetworkers, setTopNetworkers] = useState([]);
+  const [peopleYouMayKnow, setPeopleYouMayKnow] = useState([]);
+  const {user} = useSelector(state => state.auth);
+
+  useEffect(() => {
+    const fetchTopNetworkers = async () => {
+      const response = await axiosInstance.get('/api/user/top-networkers');
+      setTopNetworkers(response?.data);
+    };
+
+    const fetchPeopleYouMayKnow = async () => {
+      const response = await axiosInstance.get(
+        `/api/user/people-you-may-know/${user?._id}`,
+      );
+      setPeopleYouMayKnow(response?.data);
+    };
+
+    // const fetchSearchResults = async () => {
+    //   const response = await fetch(`https://your-backend-url.com/api/search-people?q=${searchQuery}`);
+    //   const data = await response.json();
+    //   setSearchResults(data);
+    // };
+
+    fetchTopNetworkers();
+    fetchPeopleYouMayKnow();
+  }, []);
+
   const renderUserCard = user => (
     <TouchableOpacity key={user._id}>
       <View style={styles.userCard}>
@@ -108,12 +138,13 @@ const MatchScreen = () => {
             gap: 10,
             paddingEnd: 4,
           }}>
-          <TouchableOpacity style={styles.iconButtons}>
+          <SearchPeople />
+          {/* <TouchableOpacity style={styles.iconButtons}>
             <Image source={lensIcon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButtons}>
             <Image source={filterIcon} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
       {/* Section 1: Top Networkers of the Week */}
@@ -122,7 +153,11 @@ const MatchScreen = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.horizontalScroll}>
-        {users.map(user => renderUserCard(user))}
+        {topNetworkers?.length ? (
+          topNetworkers?.map(user => renderUserCard(user))
+        ) : (
+          <Text>No users found</Text>
+        )}
       </ScrollView>
 
       {/* Section 2: People You May Know */}
@@ -131,7 +166,11 @@ const MatchScreen = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.horizontalScroll}>
-        {users.map(user => renderUserCard(user))}
+        {peopleYouMayKnow?.length ? (
+          peopleYouMayKnow?.map(user => renderUserCard(user))
+        ) : (
+          <Text>No users found</Text>
+        )}
       </ScrollView>
 
       {/* Section 3: People You Are Searching For */}
@@ -140,7 +179,11 @@ const MatchScreen = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.horizontalScroll}>
-        {users.map(user => renderUserCard(user))}
+        {users?.length ? (
+          users.map(user => renderUserCard(user))
+        ) : (
+          <Text>No users found</Text>
+        )}
       </ScrollView>
     </ScrollView>
   );
@@ -177,6 +220,7 @@ const styles = StyleSheet.create({
   },
   horizontalScroll: {
     paddingHorizontal: 10,
+    minHeight: 150,
   },
   userCard: {
     position: 'relative',

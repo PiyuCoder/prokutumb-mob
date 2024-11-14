@@ -37,6 +37,12 @@ module.exports = (io, userSocketMap) => {
   router.post("/declineFriendRequest", userController.declineRequest);
   router.put("/:userId/experience", userController.addExperience);
   router.get("/conversations/:userId", userController.fetchConversations);
+  router.get("/top-networkers", userController.fetchTopNetworkers);
+  router.get(
+    "/people-you-may-know/:userId",
+    userController.fetchPeopleYouMayKnow
+  );
+  // router.get('/top-networkers', userController.fetchTopNetworkers)
   // router.delete("/:userId/experience/:experienceId", userController.editProfile);
 
   return router;

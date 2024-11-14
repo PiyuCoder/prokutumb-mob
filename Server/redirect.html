@@ -1,0 +1,18 @@
+<!-- redirect.html -->
+<html>
+  <head>
+    <title>Redirecting...</title>
+  </head>
+  <body>
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get("userId");
+      if (userId) {
+        // Redirect to deep link
+        window.location.href = `prokutumb://profile/${userId}`;
+      } else {
+        alert("User ID not found.");
+      }
+    </script>
+  </body>
+</html>

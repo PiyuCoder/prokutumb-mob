@@ -172,3 +172,22 @@ exports.fetchProkuInteractions = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve interactions" });
   }
 };
+
+exports.searchPeople = async (req, res) => {
+  try {
+    const { q } = req.query; // Use req.query to get query parameters
+
+    const users = await Member.find({
+      $or: [
+        { name: { $regex: q, $options: "i" } }, // Corrected `$option` to `$options`
+        { email: { $regex: q, $options: "i" } },
+      ],
+    }).limit(7);
+
+    // console.log(users);
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error in searchPeople:", error); // Added for easier debugging
+    res.status(500).json({ message: "Server error" });
+  }
+};

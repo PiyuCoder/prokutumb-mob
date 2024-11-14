@@ -21,6 +21,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Geocoder from 'react-native-geocoding';
 import Config from 'react-native-config';
 import Loader from '../components/Loader';
+import SearchPeople from '../components/SearchPeople';
 
 const lensIcon = require('../assets/icons/lens.png');
 const filterIcon = require('../assets/icons/filter.png');
@@ -181,12 +182,13 @@ const DiscoverScreen = ({navigation}) => {
             gap: 10,
             paddingEnd: 4,
           }}>
-          <TouchableOpacity style={styles.iconButtons}>
+          <SearchPeople />
+          {/* <TouchableOpacity style={styles.iconButtons}>
             <Image source={lensIcon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButtons}>
             <Image source={filterIcon} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
       {loading && <Loader isLoading={loading} />}

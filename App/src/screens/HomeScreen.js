@@ -405,10 +405,11 @@ const HomeScreen = ({navigation}) => {
                 style={styles.qrContainer}>
                 {/* <Text style={styles.qrText}>Scan to connect:</Text> */}
                 <QRCode
-                  value={user?._id} // Change this to the data you want to share
+                  // value={`prokutumb://profile/${user?._id}`}
+                  value={`https://prokutumb-mob.onrender.com/redirect.html?userId=${user?._id}`}
                   size={120}
                   color="black"
-                  backgroundColor="transparent" // Make QR code background transparent
+                  backgroundColor="transparent"
                 />
               </LinearGradient>
             )}

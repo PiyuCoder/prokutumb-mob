@@ -15,6 +15,7 @@ import {
   Text,
   View,
   StyleSheet,
+  Linking,
 } from 'react-native';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
@@ -30,6 +31,14 @@ import socket, {connectSocket, disconnectSocket} from './src/socket';
 
 const Stack = createStackNavigator();
 const navigationRef = React.createRef();
+const linking = {
+  prefixes: ['prokutumb://'],
+  config: {
+    screens: {
+      UserProfile: 'profile/:userId', // Define the path and params
+    },
+  },
+};
 
 function IncomingCallModal({incomingCall, onAccept, onDecline}) {
   if (!incomingCall) return null;
@@ -104,6 +113,28 @@ export default function App() {
     };
   }, [user, isReady]);
 
+  // useEffect(() => {
+  //   const handleDeepLink = event => {
+  //     const url = event.url;
+  //     const userId = url.split('/').pop(); // Get the user ID from the URL
+  //     if (userId) {
+  //       navigationRef.current.navigate('UserProfile', {userId}); // Navigate to the ProfileScreen with the userId
+  //     }
+  //   };
+
+  //   // Listen for deep links when the app is running
+  //   Linking.addEventListener('url', handleDeepLink);
+
+  //   // Check if the app was opened from a deep link while it was closed
+  //   Linking.getInitialURL().then(url => {
+  //     if (url) handleDeepLink({url});
+  //   });
+
+  //   return () => {
+  //     Linking.removeEventListener('url', handleDeepLink);
+  //   };
+  // }, []);
+
   // Accept and decline call handlers
   const acceptCall = () => {
     if (navigationRef.current) {
@@ -134,6 +165,7 @@ export default function App() {
         loading={<ActivityIndicator size="large" />}
         persistor={persistor}>
         <NavigationContainer
+          linking={linking}
           ref={navigationRef}
           onReady={() => setIsReady(true)} // Set isReady to true once NavigationContainer is ready
         >
