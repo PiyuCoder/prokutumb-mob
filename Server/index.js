@@ -25,6 +25,7 @@ const otherRouter = require("./routes/otherRoutes");
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(express.static("public"));
 
 app.use("/api/user", userRouter);
 app.use("/api/posts", postRouter);
