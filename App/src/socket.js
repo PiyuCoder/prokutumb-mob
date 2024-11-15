@@ -1,10 +1,12 @@
 import io from 'socket.io-client';
 
-const SERVER_URL = 'http://10.0.2.2:3001'; // Or use 'https://prokutumb-mob.onrender.com' for deployed
+// const SERVER_URL = 'http://10.0.2.2:3001'; // Or use 'https://prokutumb-mob.onrender.com' for deployed
+const SERVER_URL = 'https://prokutumb-mob.onrender.com'; // Or use 'https://prokutumb-mob.onrender.com' for deployed
 
 const socket = io(SERVER_URL, {
-  autoConnect: true,
+  autoConnect: false,
   transports: ['websocket'],
+  upgrade: false,
 });
 
 export const connectSocket = () => {

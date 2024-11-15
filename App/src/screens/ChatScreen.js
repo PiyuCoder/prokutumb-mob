@@ -65,7 +65,7 @@ const ChatScreen = ({route, navigation}) => {
       // Update local messages state to display the sent message
       setMessages(prevMessages => [
         ...prevMessages,
-        {...messageData, id: Date.now().toString(), sender: user?._id},
+        {...messageData, _id: Date.now().toString(), sender: user?._id},
       ]);
       setNewMessage('');
     }
