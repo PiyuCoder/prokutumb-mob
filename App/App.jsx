@@ -79,39 +79,44 @@ export default function App() {
   useEffect(() => {
     if (!socket || !user?._id) return;
 
-    connectSocket();
-    socket.emit('registerUser', user._id);
+    if (user?._id) {
+      connectSocket();
+      socket.on('connect', () => {
+        console.log('Connected to socket:', socket.id);
+      });
+      socket.emit('registerUser', user._id);
 
-    socket.on('incomingCall', data => {
-      if (data.recipientId === user?._id) {
-        console.log('incoming data:', data);
-        setIncomingCall(data); // Trigger the modal
-      }
-    });
-
-    socket.on('callAccepted', data => {
-      console.log('Call accepted by the receiver', data);
-      // Ensure navigationRef is ready before trying to navigate
-      if (isReady && navigationRef.current) {
-        if (data.callerId === user._id || data.recipientId === user._id) {
-          navigationRef.current.navigate('CallScreen', {
-            callData: data, // Directly use the data from the accepted call event
-            isVideo: data.isVideo,
-          });
+      socket.on('incomingCall', data => {
+        if (data.recipientId === user?._id) {
+          console.log('incoming data:', data);
+          setIncomingCall(data); // Trigger the modal
         }
-      } else {
-        console.log('Navigation reference is not ready yet.');
-      }
-    });
+      });
 
-    return () => {
-      if (!user?._id) {
-        disconnectSocket();
-        socket.off('incomingCall');
-        socket.off('callAccepted');
-      }
-    };
-  }, [user, isReady]);
+      socket.on('callAccepted', data => {
+        console.log('Call accepted by the receiver', data);
+        // Ensure navigationRef is ready before trying to navigate
+        if (isReady && navigationRef.current) {
+          if (data.callerId === user._id || data.recipientId === user._id) {
+            navigationRef.current.navigate('CallScreen', {
+              callData: data, // Directly use the data from the accepted call event
+              isVideo: data.isVideo,
+            });
+          }
+        } else {
+          console.log('Navigation reference is not ready yet.');
+        }
+      });
+
+      return () => {
+        if (!user?._id) {
+          disconnectSocket();
+          socket.off('incomingCall');
+          socket.off('callAccepted');
+        }
+      };
+    }
+  }, [user?._id, isReady]);
 
   // useEffect(() => {
   //   const handleDeepLink = event => {

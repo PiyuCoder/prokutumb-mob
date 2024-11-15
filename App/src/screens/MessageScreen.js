@@ -31,7 +31,7 @@ const MessageScreen = () => {
 
     // Listen for userStatus events
     socket.on('userStatus', ({userId, online}) => {
-      console.log('online: ', online);
+      // console.log('online: ', online);
       setOnlineStatus(prevStatus => ({
         ...prevStatus,
         [userId]: online,
@@ -64,6 +64,15 @@ const MessageScreen = () => {
 
   const isUserOnline = userId => onlineStatus[userId];
 
+  const filteredConversations = conversations?.filter(conv => {
+    const lowerCaseText = searchText.toLowerCase();
+
+    // Ensure `name` is defined before calling `toLowerCase` to avoid errors
+    return searchText
+      ? conv?.senderDetails?.name?.toLowerCase().includes(lowerCaseText)
+      : true;
+  });
+
   return (
     <View style={styles.container}>
       <View
@@ -74,7 +83,7 @@ const MessageScreen = () => {
           marginBottom: 10,
           padding: 16,
         }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.navigate('Dashboard')}>
           <Image source={backIcon} />
         </TouchableOpacity>
         <Text style={{fontSize: 24, fontWeight: 'bold', color: 'black'}}>
@@ -99,7 +108,13 @@ const MessageScreen = () => {
       />
 
       {/* Frequently contacted */}
-      <Text style={{fontWeight: 'bold', color: 'black', margin: 8}}>
+      <Text
+        style={{
+          fontWeight: 'bold',
+          color: 'black',
+          margin: 10,
+          marginLeft: 15,
+        }}>
         Frequently contacted
       </Text>
 
@@ -107,7 +122,7 @@ const MessageScreen = () => {
       <FlatList
         data={frequentContacts}
         horizontal
-        contentContainerStyle={{paddingHorizontal: 9}}
+        contentContainerStyle={{paddingHorizontal: 12}}
         showsHorizontalScrollIndicator={false}
         keyExtractor={item => item._id}
         renderItem={({item}) => (
@@ -115,6 +130,7 @@ const MessageScreen = () => {
             <Image
               source={{uri: item.profilePicture}}
               style={styles.profilePictureContact}
+              defaultSource={require('../assets/default-pp.png')}
             />
             {isUserOnline(item._id) && (
               <View
@@ -133,7 +149,7 @@ const MessageScreen = () => {
 
       {/* List of Conversations */}
       <FlatList
-        data={conversations}
+        data={filteredConversations}
         keyExtractor={item => item.message._id}
         renderItem={({item}) => {
           const contact =
@@ -199,13 +215,13 @@ const styles = StyleSheet.create({
   headerText: {fontSize: 24, fontWeight: 'bold', color: 'black'},
   headerIcons: {flexDirection: 'row', alignItems: 'center', gap: 15},
   searchInput: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 20,
+    backgroundColor: 'white',
+    height: 45,
+    borderRadius: 22.5,
     paddingHorizontal: 16,
     margin: 16,
     color: 'black',
+    elevation: 5,
   },
   conversationsList: {
     flexGrow: 1,
@@ -228,11 +244,21 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginRight: 10,
+    borderColor: 'gray',
+    borderWidth: 2,
+    padding: 4,
+    elevation: 2,
+    backgroundColor: 'white',
   },
   profilePictureContact: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    borderColor: 'gray',
+    borderWidth: 2,
+    padding: 4,
+    elevation: 2,
+    backgroundColor: 'white',
     // marginRight: 10,
   },
   messageInfo: {flex: 1},

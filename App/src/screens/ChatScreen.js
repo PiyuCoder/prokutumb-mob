@@ -124,6 +124,11 @@ const ChatScreen = ({route, navigation}) => {
                 height: 40,
                 borderRadius: 20,
                 marginRight: 10,
+                borderColor: 'gray',
+                borderWidth: 2,
+                padding: 4,
+                elevation: 2,
+                backgroundColor: 'white',
               }}
             />
             <Text
