@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,23 @@ import {
   StyleSheet,
   RefreshControl,
   StatusBar,
+  Share,
+  TouchableWithoutFeedback,
+  Alert,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {fetchFriendRequests, logout} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {launchImageLibrary} from 'react-native-image-picker'; // Use react-native-image-picker
-import {addNewPost, fetchPosts} from '../store/slices/postSlice';
+import {
+  addNewPost,
+  commentOnPost,
+  deletePost,
+  editPost,
+  fetchPosts,
+  incrementShare,
+  likePost,
+} from '../store/slices/postSlice';
 import QRCode from 'react-native-qrcode-svg';
 import LinearGradient from 'react-native-linear-gradient';
 import Loader from '../components/Loader';
@@ -25,8 +36,11 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {connectSocket, disconnectSocket} from '../socket';
 import socket from '../socket';
 import ConnectionRequests from '../components/ConnectionRequests';
+import ProfilePicture from '../components/ProfilePicture';
+import {axiosInstance} from '../api/axios';
 
 const likeIcon = require('../assets/icons/like.png');
+const likedIcon = require('../assets/icons/liked.png');
 const commentIcon = require('../assets/icons/comment.png');
 const viewIcon = require('../assets/icons/view.png');
 const shareIcon = require('../assets/icons/share.png');
@@ -40,18 +54,41 @@ const HomeScreen = ({navigation}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility
+  const [actionModalVisible, setActionModalVisible] = useState(false);
   const [newPostContent, setNewPostContent] = useState(''); // Content of new post
   const [selectedMedia, setSelectedMedia] = useState(null); // Selected media for the post
   const [page, setPage] = useState(1); // Current page for pagination
   const [isFetching, setIsFetching] = useState(false); // Loading indicator
+  const [isEditMode, setIsEditMode] = useState(false); // Loading indicator
   const [userPosts, setUserPosts] = useState([]);
+  const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false);
+  const [openCommentPostId, setOpenCommentPostId] = useState(null);
+  const [openActionPostId, setOpenActionPostId] = useState(null);
+  const [currentComment, setCurrentComment] = useState('');
   const totalPages = useSelector(state => state.posts.totalPages);
+  const [stories, setStories] = useState([]);
+
+  const flatListRef = useRef(null);
+
+  const fetchStories = async () => {
+    try {
+      const response = await axiosInstance.get(`/api/recentPosts`, {
+        params: {userId: user?._id},
+      });
+      setStories(response.data);
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    }
+  };
+  useEffect(() => {
+    fetchStories();
+  }, [user]);
 
   // console.log(user);
-  const stories = [
-    {id: '1', name: 'My Post', image: user?.profilePicture, isUser: true},
-    // Add other stories here as needed
-  ];
+  // const stories = [
+  //   {id: '1', name: 'My Post', image: user?.profilePicture, isUser: true},
+  //   // Add other stories here as needed
+  // ];
 
   // Fetch initial posts on component mount
   useEffect(() => {
@@ -65,7 +102,7 @@ const HomeScreen = ({navigation}) => {
     setIsLoading(true);
     if (!isFetching && (page <= totalPages || totalPages === 0)) {
       setIsFetching(true);
-      await dispatch(fetchPosts({page}));
+      await dispatch(fetchPosts({page, userId: user?._id}));
       setPage(prevPage => prevPage + 1);
       setIsFetching(false);
       setIsLoading(false);
@@ -88,43 +125,94 @@ const HomeScreen = ({navigation}) => {
     setRefreshing(true);
     setIsLoading(true);
     dispatch(fetchFriendRequests(user?._id));
+    fetchStories();
     loadMorePosts();
   }, []);
 
+  const toggleCommentSection = postId => {
+    setOpenCommentPostId(prevPostId => (prevPostId === postId ? null : postId));
+  };
+  const toggleActionSection = postId => {
+    setOpenActionPostId(prevPostId => (prevPostId === postId ? null : postId));
+  };
+
+  const handleAddComment = post => {
+    if (currentComment.trim() !== '') {
+      // console.log(post);
+      dispatch(
+        commentOnPost({
+          postId: post._id,
+          userId: user?._id,
+          content: currentComment,
+        }),
+      );
+      setCurrentComment(''); // Clear input
+    }
+  };
+
+  // console.log(stories);
   const renderStory = ({item}) => (
     <TouchableOpacity
       onPress={() => {
-        // Open the modal when the user story is pressed
-        if (item.isUser) {
-          console.log('Opening modal for user story'); // Debugging log
-          setModalVisible(true); // Open modal
-        } else {
-          viewStory(item);
-        }
+        viewStory(item);
       }}>
-      <View style={{alignItems: 'center', marginHorizontal: 10}}>
-        <Image
+      <View
+        style={{
+          alignItems: 'center',
+          marginHorizontal: 10,
+          position: 'relative',
+        }}>
+        <ProfilePicture
+          profilePictureUri={item.image}
+          width={50}
+          height={50}
+          borderRadius={25}
+          marginRight={10}
+          borderColor={'#DD88CF'}
+          isUser={false}
+          story
+        />
+        {/* <Image
           source={{uri: item.image}}
           style={{
             width: 60,
             height: 60,
             borderRadius: 30,
             borderWidth: item.isUser ? 2 : 0,
-            borderColor: item.isUser ? 'green' : 'transparent',
+            borderColor: item.isUser ? '' : '#DD88CF',
           }}
-        />
+        /> */}
         <Text style={{fontSize: 12, marginTop: 5}}>{item.name}</Text>
+        {/* <View
+          style={{
+            position: 'absolute',
+            bottom: 18,
+            right: 7,
+            backgroundColor: 'white',
+            height: 20,
+            width: 20,
+            borderRadius: 10,
+            padding: 1,
+          }}>
+          <Image
+            style={{height: '100%', width: '100%'}}
+            source={require('../assets/icons/add.png')}
+          />
+        </View> */}
       </View>
     </TouchableOpacity>
   );
 
   const viewStory = story => {
     console.log('Viewing story of', story.name);
-    // Logic to show story details can be added here
+    // setSelectedStory(story);
+    console.log(story);
+    // Scroll to the post that matches the story's postId
+    const index = posts.findIndex(post => post._id === story.id);
+    if (index !== -1) {
+      flatListRef.current.scrollToIndex({index, animated: true});
+    }
   };
-
-  // console.log(posts);
-  // console.log(user.name);
 
   const handleLogout = async () => {
     await GoogleSignin.signOut();
@@ -157,6 +245,30 @@ const HomeScreen = ({navigation}) => {
     });
   };
 
+  const sharePost = async post => {
+    try {
+      const result = await Share.share({
+        message: `Check out this post: ${post.content}`,
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('Post shared with activity:', result.activityType);
+        } else {
+          console.log('Post shared!');
+          // Increment the share count
+          await dispatch(incrementShare(post._id));
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
+  };
+
+  console.log('EditMode: ', isEditMode);
+  console.log('EditMode: ', isEditMode);
   const handleAddPost = async () => {
     if (newPostContent.trim()) {
       const formData = new FormData();
@@ -166,26 +278,61 @@ const HomeScreen = ({navigation}) => {
       formData.append('content', newPostContent); // Post content
 
       // Add media if selected
-      if (selectedMedia) {
+      if (selectedMedia && selectedMedia?.type) {
         formData.append('media', {
-          uri: selectedMedia.uri, // URI of the media file
-          type: selectedMedia.type, // MIME type of the media (image/video)
-          name: `media.${selectedMedia.type.split('/')[1]}`, // Name of the file with appropriate extension
+          uri: selectedMedia?.uri || selectedMedia?.mediaUrl, // URI of the media file
+          type: selectedMedia?.type || selectedMedia?.mediaType, // MIME type of the media (image/video)
+          name: `media.${selectedMedia?.type?.split('/')[1]}` || 'unknown', // Name of the file with appropriate extension
         });
       }
 
-      // Dispatch the action to add new post with FormData
-      await dispatch(addNewPost(formData)); // Assuming addNewPost handles FormData
+      if (isEditMode) {
+        await dispatch(editPost({formData, postId: openActionPostId}));
+        setIsEditMode(false);
+      } else {
+        // Dispatch the action to add new post with FormData
+        await dispatch(addNewPost(formData)); // Assuming addNewPost handles FormData
+      }
 
       // Reset modal and post input
       setModalVisible(false);
       setNewPostContent('');
       setSelectedMedia(null);
+      setOpenActionPostId(null);
     } else {
       alert('Please enter post content.');
     }
   };
 
+  const handleEditPost = post => {
+    setIsEditMode(true);
+    setModalVisible(true);
+    setNewPostContent(post?.content);
+    if (post?.mediaUrl && post?.mediaType)
+      setSelectedMedia({mediaUrl: post?.mediaUrl, mediaType: post?.mediaType});
+  };
+
+  const handleDeletePost = postId => {
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            // Dispatch Redux action or call an API to delete the post
+            dispatch(deletePost(postId));
+            setOpenActionPostId(null);
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  console.log(selectedMedia);
   const renderPost = ({item}) => (
     <View
       className="border border-gray-200"
@@ -196,26 +343,70 @@ const HomeScreen = ({navigation}) => {
         borderRadius: 8,
       }}>
       {/* User info (Profile Picture and Name) */}
-      <View style={{flexDirection: 'row', alignItems: 'center'}}>
-        <Image
-          // className="border border-red-500"
-          source={{uri: item.user.profilePicture}}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            marginRight: 10,
-          }}
-        />
-        <Text
-          onPress={() =>
-            user?._id === item.user._id
-              ? navigation.navigate('Profile')
-              : handleUserPress(item.user._id)
-          }
-          style={{fontWeight: 'bold', color: '#141414'}}>
-          {item.user.name}
-        </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <ProfilePicture
+            profilePictureUri={item.user.profilePicture}
+            width={40}
+            height={40}
+            borderRadius={20}
+            marginRight={10}
+          />
+          <Text
+            onPress={() =>
+              user?._id === item.user._id
+                ? navigation.navigate('Profile')
+                : handleUserPress(item.user._id)
+            }
+            style={{fontWeight: 'bold', color: '#141414'}}>
+            {item.user.name}
+          </Text>
+        </View>
+        {user?._id === item.user._id && (
+          <View style={{position: 'relative', zIndex: 100}}>
+            <TouchableOpacity
+              onPress={() => {
+                toggleActionSection(item._id);
+                setActionModalVisible(!actionModalVisible);
+              }}>
+              <Image
+                style={{height: 20, width: 20}}
+                source={require('../assets/icons/action.png')}
+              />
+            </TouchableOpacity>
+            {actionModalVisible && openActionPostId === item._id && (
+              <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setActionModalVisible(false);
+                    handleEditPost(item);
+                  }}>
+                  <Text style={styles.dropdownItemText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setActionModalVisible(false);
+                    handleDeletePost(item._id);
+                    // setOpenActionPostId(null);
+                  }}>
+                  <Text style={styles.dropdownItemText}>Delete</Text>
+                </TouchableOpacity>
+                {/* <TouchableOpacity
+            style={styles.dropdownItem}
+            onPress={() => setActionModalVisible(false)}>
+            <Text style={styles.dropdownItemText}>Cancel</Text>
+          </TouchableOpacity> */}
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Post Content */}
@@ -251,37 +442,97 @@ const HomeScreen = ({navigation}) => {
 
       {/* Post Actions: Likes, Comments, Views, and Share */}
       <View style={styles.postActions}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity
+          onPress={() =>
+            dispatch(likePost({userId: user?._id, postId: item._id}))
+          }
+          style={styles.actionButton}>
+          <Image
+            source={item?.likes?.includes(user?._id) ? likedIcon : likeIcon}
+            style={styles.actionIcon}
+          />
+          <Text style={styles.actionText}>{item.likes.length} </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => toggleCommentSection(item._id)}
+          style={styles.actionButton}>
           <Image source={commentIcon} style={styles.actionIcon} />
           <Text style={styles.actionText}>{item.comments.length}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Image source={likeIcon} style={styles.actionIcon} />
-          <Text style={styles.actionText}>{item.likes.length} </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        {/* <TouchableOpacity style={styles.actionButton}>
           <Image source={viewIcon} style={styles.actionIcon} />
           <Text style={styles.actionText}>{item.views} </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
+        </TouchableOpacity> */}
+        <TouchableOpacity
+          onPress={() => sharePost(item)}
+          style={styles.actionButton}>
           <Image source={shareIcon} style={styles.actionIcon} />
           <Text style={styles.actionText}>{item.shares}</Text>
         </TouchableOpacity>
       </View>
+      {/* Comment Section */}
+      {openCommentPostId === item._id && (
+        <View style={styles.commentSection}>
+          <Text style={{fontWeight: 'bold', color: 'black', margin: 6}}>
+            Comments
+          </Text>
+          {item.comments?.length > 0 ? (
+            item.comments.map(comment => (
+              <View key={comment._id} style={styles.commentContainer}>
+                <Image
+                  source={{uri: comment.user?.profilePicture}}
+                  style={styles.profilePicture}
+                />
+                <View>
+                  <Text style={styles.commentUserName}>
+                    {comment.user?.name}
+                  </Text>
+                  <Text style={styles.commentContent}>{comment.content}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noCommentsText}>No comments yet</Text>
+          )}
+
+          {/* Add Comment Input */}
+          <View style={styles.commentInputContainer}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Add a comment..."
+              value={currentComment}
+              onChangeText={setCurrentComment}
+            />
+            <TouchableOpacity
+              style={styles.addCommentButton}
+              onPress={() => handleAddComment(item)}>
+              <Text style={styles.addCommentText}>Post</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
+
+  const handleOutsidePress = () => {
+    if (actionModalVisible) {
+      setActionModalVisible(false);
+      setOpenActionPostId(null);
+    }
+  };
 
   return (
     <View
       style={{
         flex: 1,
-        paddingHorizontal: 10,
+        paddingHorizontal: 7,
         // paddingBottom: 80,
         backgroundColor: '#FDF7FD',
       }}>
       <StatusBar backgroundColor="#FDF7FD" barStyle="dark-content" />
       <Loader isLoading={isLoading} />
       <FlatList
+        ref={flatListRef}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -289,6 +540,7 @@ const HomeScreen = ({navigation}) => {
         keyExtractor={item => item._id}
         renderItem={renderPost}
         contentContainerStyle={{paddingBottom: 65}}
+        ListEmptyComponent={<Text>No Posts yet</Text>}
         // onEndReached={loadMorePosts}
         onEndReachedThreshold={0.2}
         ListFooterComponent={
@@ -303,26 +555,83 @@ const HomeScreen = ({navigation}) => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                padding: 5,
               }}>
-              <Text style={[styles.proku, {color: '#4B164C', fontSize: 24}]}>
+              <Image
+                style={{height: 35, width: 75}}
+                source={require('../assets/proku-home-logo.png')}
+              />
+              {/* <Text style={[styles.proku, {color: '#4B164C', fontSize: 24}]}>
                 ProKu
-              </Text>
-              <TouchableOpacity style={styles.iconButtons}>
-                <Image source={bellIcon} />
+              </Text> */}
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Notifications')}
+                style={styles.iconButtons}>
+                <Image source={bellIcon} style={{width: 28, height: 28}} />
                 <View
                   style={{
                     position: 'absolute',
-                    backgroundColor: 'red',
-                    width: 7,
-                    height: 7,
-                    borderRadius: 3.5,
                     top: 8,
                     right: 10,
-                  }}
-                />
+                    width: 9,
+                    height: 9,
+                    borderRadius: 4,
+                    padding: 1,
+                    backgroundColor: 'white',
+                  }}>
+                  <View
+                    style={{
+                      backgroundColor: '#DD88CF',
+                      width: 7,
+                      height: 7,
+                      borderRadius: 3.5,
+                    }}
+                  />
+                </View>
               </TouchableOpacity>
             </View>
-            <View style={{height: 100, paddingVertical: 10}}>
+            <View
+              style={{height: 100, paddingVertical: 10, flexDirection: 'row'}}>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log('Opening modal for user story'); // Debugging log
+                  setModalVisible(true); // Open modal
+                }}>
+                <View
+                  style={{
+                    alignItems: 'center',
+                    marginHorizontal: 10,
+                    position: 'relative',
+                  }}>
+                  <ProfilePicture
+                    profilePictureUri={user?.profilePicture}
+                    width={50}
+                    height={50}
+                    borderRadius={25}
+                    marginRight={10}
+                    isUser={true}
+                    story
+                  />
+
+                  <Text style={{fontSize: 12, marginTop: 5}}>My Post</Text>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      bottom: 18,
+                      right: 7,
+                      backgroundColor: 'white',
+                      height: 20,
+                      width: 20,
+                      borderRadius: 10,
+                      padding: 1,
+                    }}>
+                    <Image
+                      style={{height: '100%', width: '100%'}}
+                      source={require('../assets/icons/add.png')}
+                    />
+                  </View>
+                </View>
+              </TouchableOpacity>
               <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -481,7 +790,7 @@ const HomeScreen = ({navigation}) => {
                 marginBottom: 15,
                 color: 'black',
               }}>
-              Create New Post
+              {isEditMode ? 'Edit Post' : 'Create New Post'}
             </Text>
             <TextInput
               placeholder="What's on your mind?"
@@ -529,9 +838,13 @@ const HomeScreen = ({navigation}) => {
             </View>
             {selectedMedia && (
               <View style={{marginTop: 15}}>
-                {selectedMedia.type.startsWith('image') ? (
+                {(selectedMedia?.uri || selectedMedia?.mediaUrl) &&
+                (selectedMedia?.type?.startsWith('image') ||
+                  selectedMedia?.mediaType === 'image') ? (
                   <Image
-                    source={{uri: selectedMedia.uri}}
+                    source={{
+                      uri: selectedMedia?.uri || selectedMedia?.mediaUrl, // Ensure uri is a string
+                    }}
                     style={{
                       width: 100,
                       height: 100,
@@ -541,11 +854,13 @@ const HomeScreen = ({navigation}) => {
                   />
                 ) : (
                   <Text style={{marginTop: 10}}>
-                    Video selected: {selectedMedia.uri}
+                    Video selected:{' '}
+                    {selectedMedia?.uri || selectedMedia?.mediaUrl}
                   </Text>
                 )}
               </View>
             )}
+
             <View
               style={{
                 marginTop: 20,
@@ -564,7 +879,13 @@ const HomeScreen = ({navigation}) => {
                 <Text style={{color: '#fff'}}>Post</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => setModalVisible(false)}
+                onPress={() => {
+                  if (isEditMode) setIsEditMode(false);
+                  setModalVisible(false);
+                  setNewPostContent('');
+                  setSelectedMedia(null);
+                  setOpenActionPostId(null);
+                }}
                 style={{
                   backgroundColor: '#ccc',
                   paddingVertical: 10,
@@ -610,11 +931,13 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    width: 40,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 5,
+    width: 22,
+    height: 22,
+    objectFit: 'cover',
   },
   actionText: {
     color: '#7B7B7B',
@@ -622,14 +945,101 @@ const styles = StyleSheet.create({
   iconButtons: {
     position: 'relative',
     padding: 2,
-    height: 40,
-    width: 40,
-    borderRadius: 20,
+    height: 45,
+    width: 45,
+    borderRadius: 22.5,
     borderColor: '#4b164c5a',
-    borderWidth: 1,
+    borderWidth: 2,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  commentContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0', // Light grey divider
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  commentInput: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+  },
+  addCommentButton: {
+    marginLeft: 10,
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 8,
+  },
+  addCommentText: {
+    color: '#fff',
+  },
+  commentUserName: {
+    fontWeight: 'bold',
+    color: '#333', // Darker text color for better readability
+    fontSize: 14,
+    marginBottom: 2, // Spacing between username and content
+  },
+  commentContent: {
+    color: '#555', // Slightly lighter text for the content
+    fontSize: 13,
+    lineHeight: 18, // Better readability with line spacing
+  },
+  noCommentsText: {
+    textAlign: 'center',
+    color: '#999', // Grey text for "no comments" message
+    fontSize: 14,
+    paddingVertical: 10,
+  },
+  profilePicture: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 10, // Space between image and text
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 25, // Adjust position relative to the action icon
+    right: 0,
+    width: 100,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    elevation: 5, // Adds shadow for Android
+    shadowColor: '#000', // Adds shadow for iOS
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowRadius: 5,
+    zIndex: 2, // Ensures the dropdown is on top of other elements
+  },
+  dropdownItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  modalActionOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Semi-transparent overlay for full-screen modals
+  },
+  modalActionContent: {
+    width: '80%',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    padding: 20,
   },
 });
 

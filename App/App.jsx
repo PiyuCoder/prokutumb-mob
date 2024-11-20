@@ -28,6 +28,10 @@ import ChatScreen from './src/screens/ChatScreen';
 import MessageScreen from './src/screens/MessageScreen';
 import CallScreen from './src/screens/CallScreen';
 import socket, {connectSocket, disconnectSocket} from './src/socket';
+import SettingScreen from './src/screens/SettingScreen';
+import EditProfile from './src/screens/EditProfile';
+import ConnectionsScreen from './src/screens/ConnectionsScreen';
+import Notifications from './src/screens/Notifications';
 
 const Stack = createStackNavigator();
 const navigationRef = React.createRef();
@@ -219,6 +223,26 @@ export default function App() {
             <Stack.Screen
               name="CallScreen"
               component={CallScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Settings"
+              component={SettingScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="EditProfile"
+              component={EditProfile}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Connections"
+              component={ConnectionsScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Notifications"
+              component={Notifications}
               options={{headerShown: false}}
             />
           </Stack.Navigator>

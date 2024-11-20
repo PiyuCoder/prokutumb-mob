@@ -10,15 +10,18 @@ const memberSchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
-  // password: {
-  //   type: String,
-  //   required: true,
-  // },
+  dob: {
+    type: Date,
+  },
   profilePicture: {
     type: String,
   },
+  coverPicture: {
+    type: String,
+  },
   interests: {
-    type: Array,
+    type: [String],
+    default: [],
   },
   liveLocation: {
     type: {

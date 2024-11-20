@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 const SERVER_URL = 'https://prokutumb-mob.onrender.com'; // Or use 'https://prokutumb-mob.onrender.com' for deployed
 
 const socket = io(SERVER_URL, {
-  autoConnect: false,
+  autoConnect: true,
   transports: ['websocket'],
   upgrade: false,
 });

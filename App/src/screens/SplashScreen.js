@@ -1,7 +1,7 @@
 // SplashScreen.js
 import React, {useEffect} from 'react';
 import {View, Text, Image, StyleSheet} from 'react-native';
-import proku from '../assets/proku-logo.png';
+import proku from '../assets/splash-logo.png';
 
 const SplashScreen = ({navigation}) => {
   useEffect(() => {
@@ -19,7 +19,7 @@ const SplashScreen = ({navigation}) => {
         source={proku} // Replace with your logo URL
         style={styles.logo}
       />
-      <Text style={styles.title}>Connecting the World</Text>
+      {/* <Text style={styles.title}>Connecting the World</Text> */}
     </View>
   );
 };

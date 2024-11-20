@@ -127,7 +127,7 @@ const MatchScreen = () => {
           margin: 10,
         }}>
         <TouchableOpacity onPress={handleBackPress} style={styles.iconButtons}>
-          <Image source={backIcon} />
+          <Image source={backIcon} style={styles.icon} />
         </TouchableOpacity>
         <Text style={styles.title}>Connect</Text>
         <View
@@ -194,6 +194,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9F9F9',
   },
+  icon: {
+    width: 30,
+    height: 30,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -206,7 +210,7 @@ const styles = StyleSheet.create({
     width: 40,
     borderRadius: 20,
     borderColor: '#4b164c5a',
-    borderWidth: 1,
+    borderWidth: 2,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

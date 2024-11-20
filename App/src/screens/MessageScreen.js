@@ -12,6 +12,8 @@ import {
 import {axiosInstance} from '../api/axios';
 import {useSelector} from 'react-redux';
 import socket from '../socket';
+import FriendsModal from '../components/FriendsModal';
+import ProfilePicture from '../components/ProfilePicture';
 
 const backIcon = require('../assets/icons/black-back.png');
 const chatIcon = require('../assets/icons/conversation.png');
@@ -22,6 +24,7 @@ const MessageScreen = () => {
   const [onlineStatus, setOnlineStatus] = useState({});
   const [conversations, setConversations] = useState([]);
   const [frequentContacts, setFrequentContacts] = useState([]);
+  // const [modalVisible, setModalVisible] = useState(false)
   const navigation = useNavigation();
   const {user} = useSelector(state => state.auth);
 
@@ -84,18 +87,19 @@ const MessageScreen = () => {
           padding: 16,
         }}>
         <TouchableOpacity onPress={() => navigation.navigate('Dashboard')}>
-          <Image source={backIcon} />
+          <Image source={backIcon} style={styles.icon} />
         </TouchableOpacity>
         <Text style={{fontSize: 24, fontWeight: 'bold', color: 'black'}}>
           Direct Message
         </Text>
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 15}}>
-          <TouchableOpacity>
+          {/* <TouchableOpacity>
             <Image source={settingIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity>
+          </TouchableOpacity> */}
+          {/* <TouchableOpacity>
             <Image source={chatIcon} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          <FriendsModal userId={user?._id} />
         </View>
       </View>
 
@@ -122,16 +126,23 @@ const MessageScreen = () => {
       <FlatList
         data={frequentContacts}
         horizontal
-        contentContainerStyle={{paddingHorizontal: 12}}
+        contentContainerStyle={{paddingHorizontal: 20}}
         showsHorizontalScrollIndicator={false}
         keyExtractor={item => item._id}
         renderItem={({item}) => (
-          <View key={item._id} style={{flexDirection: 'row', marginRight: 10}}>
-            <Image
+          <View key={item._id} style={{flexDirection: 'row', marginRight: 15}}>
+            <ProfilePicture
+              profilePictureUri={item.profilePicture}
+              width={40}
+              height={40}
+              borderRadius={20}
+              // marginRight={10}
+            />
+            {/* <Image
               source={{uri: item.profilePicture}}
               style={styles.profilePictureContact}
               defaultSource={require('../assets/default-pp.png')}
-            />
+            /> */}
             {isUserOnline(item._id) && (
               <View
                 style={{
@@ -166,10 +177,17 @@ const MessageScreen = () => {
                 })
               }>
               <View style={styles.conversationContainer}>
-                <Image
+                <ProfilePicture
+                  profilePictureUri={contact.profilePicture}
+                  width={40}
+                  height={40}
+                  borderRadius={20}
+                  marginRight={10}
+                />
+                {/* <Image
                   source={{uri: contact.profilePicture}}
                   style={styles.profilePicture}
-                />
+                /> */}
                 <View style={styles.messageInfo}>
                   <View style={{flexDirection: 'row', gap: 3}}>
                     <Text style={styles.conversationName}>
@@ -205,6 +223,10 @@ const MessageScreen = () => {
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#F5F5F5', overflow: 'scroll'},
+  icon: {
+    width: 30,
+    height: 30,
+  },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',

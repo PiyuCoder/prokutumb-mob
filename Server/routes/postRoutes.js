@@ -7,6 +7,12 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 router.post("/", upload.single("media"), postController.createPost);
-router.get("/", postController.fetchPosts);
+router.put("/:postId", upload.single("media"), postController.editPost);
+router.delete("/:postId", postController.deletePost);
+router.get("/:userId", postController.fetchPosts);
+router.put("/like/:postId", postController.likePost);
+router.put("/view/:postId", postController.incrementPostView);
+router.put("/share/:postId", postController.incerementPostShare);
+router.post("/comment/:postId", postController.addComment);
 
 module.exports = router;

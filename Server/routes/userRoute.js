@@ -2,28 +2,30 @@ const router = require("express").Router();
 const userController = require("../controllers/userController");
 const checkRegistration = require("../middlewares/checkRegistration");
 const multer = require("multer");
+const path = require("path");
 
-// Configure Multer to store files in the 'uploads' folder
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/dp/");
+    cb(null, "uploads/dp/"); // make sure this directory exists
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname); // Append a timestamp to the original file name
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname); // Extract file extension
+    cb(null, file.fieldname + "-" + uniqueSuffix + ext); // filename with extension
   },
 });
 
-const upload = multer({ storage: storage });
+const uploadPictures = multer({ storage: storage }).fields([
+  { name: "profilePicture", maxCount: 1 },
+  { name: "coverPicture", maxCount: 1 },
+]);
 
 module.exports = (io, userSocketMap) => {
   router.post("/google-signin", checkRegistration, userController.googleLogin);
   router.get("/fetchUser/:userId/:currentUserId", userController.fetchUser);
   router.put("/about/:userId", userController.editAbout);
-  router.put(
-    "/profile/:userId",
-    upload.single("profilePicture"),
-    userController.editProfile
-  );
+  router.put("/profile/:userId", uploadPictures, userController.editProfile);
+
   router.get("/connectionRequests/:userId", userController.fetchFriendRequests);
   router.post(
     "/send-connection-request",
@@ -37,6 +39,8 @@ module.exports = (io, userSocketMap) => {
   router.post("/declineFriendRequest", userController.declineRequest);
   router.put("/:userId/experience", userController.addExperience);
   router.get("/conversations/:userId", userController.fetchConversations);
+  router.put("/interests/:userId", userController.updateInterests);
+  router.get("/friends/:userId", userController.fetchFriends);
   router.get("/top-networkers", userController.fetchTopNetworkers);
   router.get(
     "/people-you-may-know/:userId",

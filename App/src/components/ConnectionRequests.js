@@ -3,6 +3,7 @@ import {View, Text, Image, TouchableOpacity, FlatList} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {fetchFriendRequests} from '../store/slices/authSlice';
 import {useNavigation} from '@react-navigation/native';
+import ProfilePicture from './ProfilePicture';
 
 const ConnectionRequests = ({isFeedView, userId}) => {
   const {friendRequests} = useSelector(state => state.auth);
@@ -68,6 +69,13 @@ const ConnectionRequests = ({isFeedView, userId}) => {
                     borderRadius: 20,
                     marginRight: 10,
                   }}
+                />
+                <ProfilePicture
+                  profilePictureUri={item.profilePicture}
+                  width={40}
+                  height={40}
+                  borderRadius={20}
+                  marginRight={10}
                 />
                 <View>
                   <Text style={{fontWeight: 'bold', color: '#141414'}}>

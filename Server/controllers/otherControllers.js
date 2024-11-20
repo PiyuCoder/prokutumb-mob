@@ -2,6 +2,8 @@ const Member = require("../models/Member");
 const mongoose = require("mongoose");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { SessionsClient } = require("@google-cloud/dialogflow-cx");
+const Feed = require("../models/Feed");
+const Notification = require("../models/Notification");
 
 const updateUserLocation = async (userId, latitude, longitude) => {
   try {
@@ -189,5 +191,104 @@ exports.searchPeople = async (req, res) => {
   } catch (error) {
     console.error("Error in searchPeople:", error); // Added for easier debugging
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getRecentPosts = async (req, res) => {
+  try {
+    const { userId } = req.query; // Get the logged-in user's ID from query params
+
+    // Fetch the user's connections (friends)
+    const user = await Member.findById(userId).populate(
+      "friends",
+      "name profilePicture"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Get the IDs of user's friends (connections)
+    const connectionIds = user.friends.map((friend) => friend._id);
+
+    // Aggregation to get the most recent post from each connection
+    const recentPosts = await Feed.aggregate([
+      {
+        $match: { user: { $in: connectionIds } }, // Match posts from connections
+      },
+      {
+        $sort: { createdAt: -1 }, // Sort posts by creation date in descending order (most recent first)
+      },
+      {
+        $group: {
+          _id: "$user", // Group by user (each user will have only one post)
+          postId: { $first: "$_id" }, // Take the first post (most recent due to sorting)
+        },
+      },
+      {
+        $lookup: {
+          from: "members", // Look up in the `Member` collection
+          localField: "_id", // Match the user ID from the grouped posts
+          foreignField: "_id", // Match the `user` field from the `Feed`
+          as: "userDetails", // Output the result to the `userDetails` array
+        },
+      },
+      {
+        $unwind: "$userDetails", // Unwind the `userDetails` array
+      },
+      {
+        $project: {
+          _id: 0,
+          id: "$postId", // Rename postId to id for the response
+          name: "$userDetails.name", // Get name from `userDetails`
+          image: "$userDetails.profilePicture", // Get profilePicture from `userDetails`
+          userId: "$_id", // Get the user ID
+        },
+      },
+    ]);
+
+    res.status(200).json(recentPosts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+exports.getNotifications = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const notifications = await Notification.find({ recipientId: userId })
+      .sort({ timestamp: -1 }) // Sort by latest notifications
+      .exec();
+
+    res.status(200).json(notifications);
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    res.status(500).json({ message: "Error fetching notifications." });
+  }
+};
+
+exports.markAsRead = async (req, res) => {
+  try {
+    const { notificationId } = req.body;
+
+    // Find the notification and update the status to "read"
+    const notification = await Notification.findByIdAndUpdate(
+      notificationId,
+      { status: "read" },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found." });
+    }
+
+    res.status(200).json({ message: "Notification marked as read." });
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    res
+      .status(500)
+      .json({ message: "Server error while marking notification as read." });
   }
 };

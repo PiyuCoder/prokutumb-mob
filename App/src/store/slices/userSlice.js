@@ -37,6 +37,13 @@ const userSlice = createSlice({
       state.isHr = false;
       state.needsRegistration = false;
     },
+    removeFriendRequest: (state, action) => {
+      const {fromUserId, toUserId} = action.payload;
+      state.friendRequests = state.friendRequests.filter(
+        request =>
+          request.fromUser !== fromUserId || request.toUser !== toUserId,
+      );
+    },
   },
   extraReducers: builder => {
     builder
@@ -61,6 +68,6 @@ const userSlice = createSlice({
   },
 });
 
-export const {logout} = userSlice.actions;
+export const {logout, removeFriendRequest} = userSlice.actions;
 
 export default userSlice.reducer;

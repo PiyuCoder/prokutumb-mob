@@ -4,6 +4,8 @@ const path = require("path");
 const fs = require("fs");
 const Message = require("../models/Message");
 const mongoose = require("mongoose");
+const Feed = require("../models/Feed");
+const Notification = require("../models/Notification");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -23,9 +25,12 @@ exports.googleLogin = (req, res) => {
       _id: user._id,
       email: user.email,
       name: user.name,
-      profilePicture: user.profilePicture, // Profile picture from Google
+      profilePicture: user.profilePicture,
+      coverPicture: user.coverPicture,
       experience: user.experience,
-      about: user.bio,
+      bio: user.bio,
+      dob: user.dob,
+      interests: user.interests,
       location: user.location,
       friends: user.friends,
       friendRequests: user.friendRequests,
@@ -39,18 +44,31 @@ exports.fetchUser = async (req, res) => {
 
     console.log(userId);
 
+    // Fetch user details
     const user = await Member.findById(userId);
 
     if (!user) {
-      res.status(400).json({ message: "user not found." });
+      return res.status(400).json({ message: "User not found." });
     }
 
+    // Check if the current user is already connected
     const isAlreadyConnected = user.friends.some(
       (friend) => friend._id.toString() === currentUserId.toString()
     );
 
+    // Fetch user's posts
+    const posts = await Feed.find({ user: userId })
+      .populate("user", "name profilePicture") // Populate post creator
+      .populate({
+        path: "comments.user", // Populate comment user
+        select: "name profilePicture", // Include name and profilePicture
+      })
+      .sort({ createdAt: -1 })
+      .lean(); // Convert MongoDB documents to plain JavaScript objects
+
     const whyConnect = ["Mutual Interests", "Location", "Education"];
 
+    // Return user details and posts
     res.status(200).json({
       success: true,
       user: {
@@ -58,15 +76,20 @@ exports.fetchUser = async (req, res) => {
         email: user.email,
         name: user.name,
         profilePicture: user.profilePicture,
+        coverPicture: user.coverPicture,
         experience: user.experience,
-        about: user.bio,
+        bio: user.bio,
+        dob: user.dob,
+        interests: user.interests,
         location: user.location,
         friendRequests: user.friendRequests,
         whyConnect,
         isAlreadyConnected,
       },
+      posts, // Include user's posts
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error while fetching user" });
   }
 };
@@ -94,8 +117,11 @@ exports.editAbout = async (req, res) => {
         email: user.email,
         name: user.name,
         profilePicture: user.profilePicture,
+        coverPicture: user.coverPicture,
         experience: user.experience,
-        about: user.bio,
+        bio: user.bio,
+        dob: user.dob,
+        interests: user.interests,
         location: user.location,
         friends: user.friends,
         friendRequests: user.friendRequests,
@@ -111,9 +137,9 @@ exports.editAbout = async (req, res) => {
 
 exports.editProfile = async (req, res) => {
   try {
-    console.log(req.body);
-    const { userId, location, name } = req.body;
+    const { userId, location, name, dob } = req.body;
 
+    // console.log(name, dob);
     // Find the user in the database
     const user = await Member.findById(userId);
 
@@ -121,45 +147,71 @@ exports.editProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Handle profile picture update if a new file is uploaded
-    if (req.file) {
-      // Construct the new profile picture URL
+    // console.log(req.files?.profilePicture, req.files?.coverPicture);
+    // Handle Profile Picture Update
+    if (req.files?.profilePicture) {
       const newProfilePicture = `http://${req.get("host")}/uploads/dp/${
-        req.file.filename
+        req.files.profilePicture[0].filename
       }`;
 
-      // Delete the old profile picture from the server if it exists
-      if (user.profilePicture && user.profilePicture.includes("/uploads/dp/")) {
+      // Delete the old profile picture
+      if (user.profilePicture?.includes("/uploads/dp/")) {
         const oldFilePath = path.join(
           __dirname,
           "../uploads/dp/",
           path.basename(user.profilePicture)
         );
         if (fs.existsSync(oldFilePath)) {
-          fs.unlinkSync(oldFilePath); // Delete the old file
+          fs.unlinkSync(oldFilePath);
         }
       }
 
-      // Update the user's profile picture
       user.profilePicture = newProfilePicture;
     }
 
-    // Update the location
+    // Handle Cover Picture Update
+    if (req.files?.coverPicture) {
+      const newCoverPicture = `http://${req.get("host")}/uploads/dp/${
+        req.files.coverPicture[0].filename
+      }`;
+
+      // Delete the old cover picture
+      if (user.coverPicture?.includes("/uploads/dp/")) {
+        const oldCoverPath = path.join(
+          __dirname,
+          "../uploads/dp/",
+          path.basename(user.coverPicture)
+        );
+        if (fs.existsSync(oldCoverPath)) {
+          fs.unlinkSync(oldCoverPath);
+        }
+      }
+
+      user.coverPicture = newCoverPicture;
+    }
+
+    // Update other fields
     user.location = location;
     user.name = name;
+    user.dob = dob;
 
     // Save the updated user data
     await user.save();
 
+    // console.log(user);
+
     res.status(200).json({
-      message: "Profile section updated successfully",
+      message: "Profile updated successfully",
       user: {
         _id: user._id,
         email: user.email,
         name: user.name,
-        profilePicture: user.profilePicture, // Updated profile picture
+        profilePicture: user.profilePicture,
+        coverPicture: user.coverPicture,
         experience: user.experience,
-        about: user.bio,
+        bio: user.bio,
+        dob: user.dob,
+        interests: user.interests,
         location: user.location,
         friends: user.friends,
         friendRequests: user.friendRequests,
@@ -167,10 +219,9 @@ exports.editProfile = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-
-    res.status(500).json({
-      message: "An error occurred while updating the Profile section",
-    });
+    res
+      .status(500)
+      .json({ message: "An error occurred while updating the profile" });
   }
 };
 
@@ -197,8 +248,11 @@ exports.addExperience = async (req, res) => {
         email: updatedUser.email,
         name: updatedUser.name,
         profilePicture: updatedUser.profilePicture, // Profile picture from Google
+        coverPicture: updatedUser.coverPicture,
         experience: updatedUser.experience,
-        about: updatedUser.bio,
+        bio: updatedUser.bio,
+        dob: updatedUser.dob,
+        interests: user.interests,
         location: updatedUser.location,
         friends: updatedUser.friends,
         friendRequests: updatedUser.friendRequests,
@@ -224,6 +278,15 @@ exports.sendRequest = (io, userSocketMap) => async (req, res) => {
     receiver.friendRequests.push({ fromUser: senderId });
     await receiver.save();
 
+    // Create a notification for the receiver
+    const notification = new Notification({
+      recipientId: receiverId,
+      senderId: senderId,
+      message: "You have a new connection request.",
+      type: "connection request",
+    });
+    await notification.save();
+
     // Emit a socket event to the receiver if they are online
     const receiverSocketId = userSocketMap[receiverId];
     if (receiverSocketId) {
@@ -231,6 +294,9 @@ exports.sendRequest = (io, userSocketMap) => async (req, res) => {
         message: "You have a new connection request.",
         fromUserId: senderId,
       });
+      console.log(
+        `Sent notification to ${receiverId} about the new connection request.`
+      );
     }
 
     res.status(200).json({ message: "Connection request sent successfully." });
@@ -541,5 +607,79 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
   } catch (error) {
     console.error("Error fetching people you may know:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.fetchFriends = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Fetch the user document with the given userId
+    const user = await Member.findById(userId).populate({
+      path: "friends",
+      select: "name profilePicture location", // Populate friends with name, profilePicture, etc.
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    console.log(user.friends);
+    // Return the list of friends
+    res.json(user.friends);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+exports.updateInterests = async (req, res) => {
+  const { userId } = req.params;
+  const { interests } = req.body;
+
+  console.log(interests);
+
+  // Validate input
+  if (!Array.isArray(interests)) {
+    return res.status(400).json({ message: "Interests must be an array." });
+  }
+
+  if (interests.length > 3) {
+    return res
+      .status(400)
+      .json({ message: "You can only select up to 3 interests." });
+  }
+
+  try {
+    // Find the user by ID and update interests
+    const user = await Member.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Update interests
+    user.interests = interests;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Interests updated successfully.",
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture,
+        coverPicture: user.coverPicture,
+        experience: user.experience,
+        bio: user.bio,
+        dob: user.dob,
+        interests: user.interests,
+        location: user.location,
+        friends: user.friends,
+        friendRequests: user.friendRequests,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating interests:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

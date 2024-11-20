@@ -12,6 +12,7 @@ import {
 import {useSelector} from 'react-redux';
 import socket from '../socket';
 import {axiosInstance} from '../api/axios';
+import ProfilePicture from '../components/ProfilePicture';
 
 const backIcon = require('../assets/icons/black-back.png');
 const callIcon = require('../assets/icons/telephone.png');
@@ -112,12 +113,19 @@ const ChatScreen = ({route, navigation}) => {
           <TouchableOpacity
             style={{marginRight: 8}}
             onPress={() => navigation.navigate('Message')}>
-            <Image source={backIcon} />
+            <Image source={backIcon} style={styles.icon} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate('UserProfile', {userId})}
             style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Image
+            <ProfilePicture
+              profilePictureUri={profilePicture}
+              width={40}
+              height={40}
+              borderRadius={20}
+              marginRight={10}
+            />
+            {/* <Image
               source={{uri: profilePicture}}
               style={{
                 width: 40,
@@ -130,7 +138,7 @@ const ChatScreen = ({route, navigation}) => {
                 elevation: 2,
                 backgroundColor: 'white',
               }}
-            />
+            /> */}
             <Text
               style={{
                 fontSize: 16,
@@ -143,7 +151,7 @@ const ChatScreen = ({route, navigation}) => {
           </TouchableOpacity>
         </View>
 
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 15}}>
+        {/* <View style={{flexDirection: 'row', alignItems: 'center', gap: 15}}>
           <TouchableOpacity onPress={handleAudioCall}>
             <Image source={callIcon} style={styles.icon} />
           </TouchableOpacity>
@@ -153,7 +161,7 @@ const ChatScreen = ({route, navigation}) => {
           <TouchableOpacity onPress={openInfoScreen}>
             <Image source={infoIcon} style={styles.icon} />
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
 
       {/* Messages List */}
@@ -194,6 +202,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
+  icon: {
+    width: 30,
+    height: 30,
+  },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -226,16 +238,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
     padding: 16,
+    backgroundColor: 'white',
   },
   input: {
     flex: 1,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    height: 40,
+    // borderColor: '#ccc',
+    // borderWidth: 1,
+    borderRadius: 22.5,
+    paddingHorizontal: 20,
+    height: 45,
     marginRight: 8,
     color: 'black',
+    elevation: 5,
+    backgroundColor: 'white',
   },
   sendButton: {
     color: '#0084ff',

@@ -1,4 +1,5 @@
 const Feed = require("../models/Feed");
+const Member = require("../models/Member");
 const cloudinary = require("../utils/cloudinary");
 const streamifier = require("streamifier");
 
@@ -66,22 +67,109 @@ exports.createPost = async (req, res) => {
   }
 };
 
+exports.editPost = async (req, res) => {
+  try {
+    let mediaUrl = null;
+    let mediaType = null;
+
+    const { postId } = req.params;
+
+    // console.log("editpost:", postId);
+
+    // Find the existing post by ID
+    const existingPost = await Feed.findById(postId);
+
+    if (!existingPost) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    // console.log(req.file);
+
+    // Check if a file is attached and process it
+    if (req.file) {
+      const fileType = req.file.mimetype.split("/")[0]; // 'image' or 'video'
+
+      let result;
+      if (fileType === "image") {
+        result = await uploadToCloudinary(req.file, "image");
+        mediaUrl = result.secure_url; // Image URL from Cloudinary
+        mediaType = "image";
+      } else if (fileType === "video") {
+        result = await uploadToCloudinary(req.file, "video");
+        mediaUrl = result.secure_url; // Video URL from Cloudinary
+        mediaType = "video";
+      }
+    }
+
+    // Update the existing post
+    existingPost.content = req.body.content || existingPost.content;
+    existingPost.mediaUrl = mediaUrl || existingPost.mediaUrl;
+    existingPost.mediaType = mediaType || existingPost.mediaType;
+
+    // Save the updated post
+    const updatedPost = await existingPost.save();
+
+    // Populate user info after updating
+    const populatedPost = await Feed.findById(updatedPost._id).populate(
+      "user",
+      "name profilePicture"
+    );
+
+    res.status(200).json(populatedPost);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+exports.deletePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    const existingPost = await Feed.findByIdAndDelete(postId);
+
+    if (!existingPost) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    res.status(200).json({ message: "Deleted post." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
 exports.fetchPosts = async (req, res) => {
   try {
+    const { userId } = req.params; // Pass the userId in the request body
     const { page = 1, limit = 10 } = req.query;
-    // console.log("working");
 
-    // Fetch posts with pagination
-    const posts = await Feed.find()
-      .populate("user", "name profilePicture")
-      .sort({ createdAt: -1 }) // Sort by latest
-      .skip((page - 1) * limit) // Skip based on the page number
-      .limit(parseInt(limit)); // Limit the number of posts
+    console.log(userId);
 
-    // Get total count of posts for client to know when to stop fetching
-    const total = await Feed.countDocuments();
+    // Fetch the user's friends
+    const user = await Member.findById(userId).select("friends");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    // console.log(posts);
+    const friendsIds = user.friends.map((friend) => friend._id); // Extract friends' IDs
+
+    // Fetch posts created by the user or their friends
+    const posts = await Feed.find({
+      user: { $in: [userId, ...friendsIds] }, // Match userId or any friend's ID
+    })
+      .populate("user", "name profilePicture") // Populate post creator
+      .populate({
+        path: "comments.user", // Populate comment user
+        select: "name profilePicture", // Include name and profilePicture
+      })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .lean(); // Convert MongoDB documents to plain JavaScript objects
+
+    const total = await Feed.countDocuments({
+      user: { $in: [userId, ...friendsIds] }, // Count only matching posts
+    });
 
     res.json({
       posts,
@@ -92,5 +180,97 @@ exports.fetchPosts = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+exports.likePost = async (req, res) => {
+  try {
+    const { userId } = req.body; // User ID from the client
+    const post = await Feed.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Toggle like
+    if (post.likes.includes(userId)) {
+      post.likes = post.likes.filter((id) => id.toString() !== userId);
+    } else {
+      post.likes.push(userId);
+    }
+
+    await post.save();
+    res.json(post);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.incrementPostView = async (req, res) => {
+  try {
+    const post = await Feed.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    post.views += 1;
+    await post.save();
+    res.json({ message: "Views incremented" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.incerementPostShare = async (req, res) => {
+  try {
+    const post = await Feed.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    post.shares += 1;
+    await post.save();
+    res.json({ message: "Shares incremented" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.addComment = async (req, res) => {
+  try {
+    const { userId, content } = req.body;
+
+    // Find the post by ID
+    const post = await Feed.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Create a new comment
+    const newComment = {
+      user: userId,
+      content,
+    };
+
+    // Push the comment to the post's comments array
+    post.comments.push(newComment);
+    await post.save();
+
+    // Populate the user details for the newly added comment
+    const populatedPost = await Feed.findById(post._id).populate({
+      path: "comments.user",
+      select: "name profilePicture", // Select only name and profilePicture fields
+    });
+
+    // Get the last comment added (the one just added)
+    const lastComment =
+      populatedPost.comments[populatedPost.comments.length - 1];
+
+    res.json(lastComment); // Return the newly added comment with user details
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

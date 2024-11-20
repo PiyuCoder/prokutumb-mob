@@ -7,6 +7,7 @@ const initialState = {
   user: null, // Add user information to the initial state
   isAuthenticated: false,
   friendRequests: [],
+  notifications: [],
   status: 'idle', // for tracking loading status
   error: null,
 };
@@ -101,6 +102,39 @@ export const fetchFriendRequests = createAsyncThunk(
   },
 );
 
+export const fetchNotifications = createAsyncThunk(
+  'auth/fetchNotifications',
+  async (userId, {rejectWithValue}) => {
+    try {
+      const response = await axiosInstance.get(`/api/notifications/${userId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to fetch friend requests',
+      );
+    }
+  },
+);
+
+export const saveUserInterests = createAsyncThunk(
+  'auth/saveUserInterests',
+  async ({userId, interests}, {rejectWithValue}) => {
+    try {
+      console.log(interests);
+      // Make the API call to save the user's interests
+      const response = await axiosInstance.put(
+        `/api/user/interests/${userId}`,
+        {interests},
+      );
+      return response.data; // Return the updated user data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to save interests',
+      );
+    }
+  },
+);
+
 const updateAsyncStorage = user => {
   // Update AsyncStorage with the new user data
   AsyncStorage.setItem('user', JSON.stringify(user))
@@ -153,6 +187,9 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         updateAsyncStorage(action.payload.user);
       })
+      .addCase(fetchNotifications.fulfilled, (state, action) => {
+        state.notifications = action.payload;
+      })
       .addCase(editProfile.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
@@ -193,6 +230,19 @@ const authSlice = createSlice({
         updateAsyncStorage(action.payload.user);
       })
       .addCase(fetchFriendRequests.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+      .addCase(saveUserInterests.pending, state => {
+        state.status = 'loading';
+      })
+      .addCase(saveUserInterests.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        console.log('Updated user:', action.payload);
+        state.user = action.payload.user; // Update user data with new interests
+        updateAsyncStorage(action.payload.user); // Save updated user data in AsyncStorage
+      })
+      .addCase(saveUserInterests.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       });

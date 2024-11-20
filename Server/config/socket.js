@@ -35,11 +35,42 @@ const socketHandler = (io, userSocketMap) => {
             timestamp: message.timestamp,
           });
           console.log(`Message sent to recipient ${recipient}`);
+
+          // Emit a notification to recipient about the new message
+          io.to(recipientSocketId).emit("newMessage", {
+            sender,
+            text,
+            timestamp: message.timestamp,
+          });
         } else {
           console.log(`Recipient ${recipient} is not connected`);
         }
       } catch (error) {
         console.error("Error sending message:", error);
+      }
+    });
+
+    // Handle sending friend requests
+    socket.on("sendFriendRequest", async ({ sender, recipient }) => {
+      try {
+        console.log(`Friend request from ${sender} to ${recipient}`);
+
+        // Here, you would handle saving the friend request to the database
+        // Example: Add the friend request to the recipient's list in the database (not shown here)
+
+        // Emit notification to recipient about the new friend request
+        const recipientSocketId = userSocketMap[recipient];
+        if (recipientSocketId) {
+          io.to(recipientSocketId).emit("newFriendRequest", {
+            sender,
+            message: "You have a new friend request!",
+          });
+          console.log(`Friend request sent to recipient ${recipient}`);
+        } else {
+          console.log(`Recipient ${recipient} is not connected`);
+        }
+      } catch (error) {
+        console.error("Error sending friend request:", error);
       }
     });
 

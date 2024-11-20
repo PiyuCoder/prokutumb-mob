@@ -14,18 +14,20 @@ import {
   Platform,
   Keyboard,
   FlatList,
+  ImageBackground,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
 import LinearGradient from 'react-native-linear-gradient';
-import {launchImageLibrary} from 'react-native-image-picker';
 import {useNavigation} from '@react-navigation/native';
 import {editAbout, editProfile} from '../store/slices/authSlice';
 import ExperienceModal from '../components/ExperienceModal';
+import ProfilePicture from '../components/ProfilePicture';
+import InterestsSelector from '../components/InterestsSelector';
 
 const editIcon = require('../assets/icons/edit.png');
 const penIcon = require('../assets/icons/pen.png');
-const backIcon = require('../assets/icons/back.png');
+const settingIcon = require('../assets/icons/setting.png');
 const closeIcon = require('../assets/icons/close.png');
 
 const ProfileScreen = () => {
@@ -33,34 +35,14 @@ const ProfileScreen = () => {
   const dispatch = useDispatch();
   const [webData, setWebData] = useState(null);
   const navigation = useNavigation();
-  const [modalVisible, setModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
+  const [interestEditing, setInterestEditing] = useState(false);
   const [isExperienceModalVisible, setExperienceModalVisible] = useState(false);
-  const [editedName, setEditedName] = useState(user.name);
-  const [profilePicture, setProfilePicture] = useState(null); // Stores the image data
-  const [uploading, setUploading] = useState(false);
-  const [editedState, setEditedState] = useState(user.location?.state);
-  const [editedCountry, setEditedCountry] = useState(user.location?.country);
-  const [newProfilePicture, setNewProfilePicture] = useState(
-    user.profilePicture,
-  );
-  const [editedAbout, setEditedAbout] = useState(user.about);
+
+  const [editedAbout, setEditedAbout] = useState(user.bio);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  // Function to pick image from the device
-  const selectImage = () => {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        quality: 1,
-      },
-      response => {
-        if (response.assets) {
-          setProfilePicture(response.assets[0]); // Select the first image
-        }
-      },
-    );
-  };
+  // console.log(user);
 
   // Hide the status bar when the screen is rendered
   useEffect(() => {
@@ -120,48 +102,11 @@ const ProfileScreen = () => {
     };
   }, []);
 
-  const handleBackPress = () => {
-    navigation.goBack(); // Navigate back to the previous screen
-  };
-
-  const handleEditPress = () => {
-    setModalVisible(true); // Open the edit modal
-  };
-
-  const handleSave = () => {
-    // Prepare the form data
-    const formData = new FormData();
-
-    // Append the image if it exists
-    if (profilePicture) {
-      formData.append('profilePicture', {
-        uri: profilePicture.uri,
-        name: profilePicture.fileName,
-        type: profilePicture.type,
-      });
-    }
-
-    // Append other profile details (location, userId, etc.)
-    formData.append('userId', user?._id);
-    formData.append('name', editedName);
-    formData.append('location[state]', editedState);
-    formData.append('location[country]', editedCountry);
-
-    // Dispatch action or make API call to backend
-    dispatch(editProfile(formData))
-      .unwrap()
-      .then(() => {
-        // Handle success, close modal
-        setModalVisible(false);
-      })
-      .catch(error => {
-        // Handle error
-        console.error('Error updating profile:', error);
-      });
-  };
-
   const handleAboutEditPress = () => {
-    setAboutModalVisible(true); // Open the About edit modal
+    setAboutModalVisible(true);
+  };
+  const handleInterestEditPress = () => {
+    setInterestEditing(true);
   };
 
   const handleAboutSave = () => {
@@ -180,17 +125,17 @@ const ProfileScreen = () => {
   };
 
   const formatDate = dateString => {
-    const options = {year: 'numeric', month: 'long', day: 'numeric'};
+    const options = {year: 'numeric', month: 'short', day: 'numeric'};
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  console.log(user.profilePicture);
+  console.log(user.interests);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Profile Section */}
       <View style={styles.profileCard}>
-        <View style={styles.profileIconContainer}>
+        {/* <View style={styles.profileIconContainer}>
           <TouchableOpacity
             onPress={handleBackPress}
             className="border h-8 w-8 border-white  rounded-full p-2 flex items-center justify-center">
@@ -201,23 +146,196 @@ const ProfileScreen = () => {
             className="border h-8 w-8 border-white rounded-full p-2 flex items-center justify-center">
             <Image style={{height: 15, width: 15}} source={editIcon} />
           </TouchableOpacity>
+        </View> */}
+
+        <View style={{width: '100%', position: 'relative'}}>
+          <ImageBackground
+            style={styles.coverPicture}
+            source={{
+              uri:
+                user?.coverPicture ||
+                'https://img.freepik.com/free-vector/gradient-network-connection-background_23-2148880712.jpg',
+            }}
+          />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Settings')}
+            className=" absolute right-5 top-7 bg-white h-7 w-7 flex items-center justify-center rounded-full bg-opacity-20 shadow-lg">
+            <Image style={{height: 20, width: 20}} source={settingIcon} />
+          </TouchableOpacity>
+
+          <View
+            style={{
+              position: 'absolute',
+              alignSelf: 'center',
+              bottom: -90,
+              width: 150,
+              height: 150,
+              borderRadius: 75,
+              backgroundColor: '#FDF7FD',
+              padding: 5,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <View
+              style={{
+                width: 100,
+                height: 100,
+                position: 'absolute',
+                bottom: 60,
+                left: -85,
+                zIndex: -2,
+                transform: [{rotateZ: '43deg'}],
+                alignSelf: 'center',
+                borderColor: '#FDF7FD',
+                borderEndEndRadius: 80,
+                borderRightWidth: 20,
+                borderBottomWidth: 0,
+              }}
+            />
+
+            <View
+              style={{
+                width: 50,
+                height: 50,
+                position: 'absolute',
+                bottom: 72,
+                left: -45,
+                zIndex: -2,
+                transform: [{rotateZ: '-18deg'}],
+                alignSelf: 'center',
+                borderColor: '#FDF7FD',
+                borderEndEndRadius: 40,
+                borderRightWidth: 0,
+                borderBottomWidth: 20,
+              }}
+            />
+
+            <View
+              style={{
+                width: 100,
+                height: 100,
+                position: 'absolute',
+                bottom: 60,
+                right: -85,
+                zIndex: -2,
+                transform: [{rotateZ: '-43deg'}],
+                alignSelf: 'center',
+                borderColor: '#FDF7FD',
+                borderBottomStartRadius: 80,
+                borderLeftWidth: 20,
+                borderBottomWidth: 0,
+              }}
+            />
+            <View
+              style={{
+                width: 50,
+                height: 50,
+                position: 'absolute',
+                bottom: 70,
+                right: -50,
+                zIndex: -2,
+                transform: [{rotateZ: '22deg'}],
+                alignSelf: 'center',
+                borderColor: '#FDF7FD',
+                borderBottomStartRadius: 20,
+                borderLeftWidth: 0,
+                borderBottomWidth: 20,
+              }}
+            />
+            <View style={{zIndex: 4}}>
+              <ProfilePicture
+                profilePictureUri={user.profilePicture}
+                width={120}
+                height={120}
+                borderRadius={60}
+                borderColor="#242760"
+              />
+            </View>
+          </View>
+          {/* <Image
+            source={{uri: user.profilePicture}}
+            style={styles.profilePicture}
+          /> */}
         </View>
-        <Image
-          source={{uri: user.profilePicture}}
-          style={styles.profilePicture}
-        />
-        {/* Overlay with Linear Gradient */}
-        <LinearGradient
-          colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
-          start={{x: 0, y: 0}}
-          end={{x: 0, y: 1}}
-          style={styles.overlay}
-        />
+      </View>
+      <View style={{marginTop: 90}}>
         <Text style={styles.userName}>{user.name}</Text>
         <Text style={styles.userLocation}>
           {user.location?.state || 'State'},{' '}
           {user.location?.country || 'Country'}
         </Text>
+        <View
+          style={{
+            width: '70%',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            alignSelf: 'center',
+            marginTop: 10,
+          }}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('Connections', {userId: user?._id})
+            }>
+            <Text
+              style={{
+                color: '#242760',
+                fontSize: 20,
+                fontWeight: 'bold',
+                textAlign: 'center',
+              }}>
+              {user?.friends?.length}
+            </Text>
+            <Text>Connections</Text>
+          </TouchableOpacity>
+          <View>
+            <Text
+              style={{
+                color: '#242760',
+                fontSize: 20,
+                fontWeight: 'bold',
+                textAlign: 'center',
+              }}>
+              0
+            </Text>
+            <Text>Communities</Text>
+          </View>
+        </View>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: 10,
+            gap: 10,
+          }}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditProfile')}
+            style={{
+              backgroundColor: '#242760',
+              padding: 6,
+              width: 100,
+              borderRadius: 8,
+            }}>
+            <Text style={{color: 'white', textAlign: 'center'}}>
+              Edit profile
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Match')}
+            style={{
+              backgroundColor: '#242760',
+              padding: 6,
+              width: 100,
+              borderRadius: 8,
+            }}>
+            <Text style={{color: 'white', textAlign: 'center'}}>
+              Add friends
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.mainCard}>
@@ -229,7 +347,7 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.card}>
-          <Text style={styles.sectionText}>{user.about}</Text>
+          <Text style={styles.sectionText}>{user.bio}</Text>
         </View>
 
         {/* Experience Section */}
@@ -241,7 +359,7 @@ const ProfileScreen = () => {
         </View>
 
         <View style={styles.card}>
-          {user.experience.map((exp, index) => (
+          {user.experience?.map((exp, index) => (
             <View key={index} style={styles.experienceItem}>
               <View
                 style={{
@@ -257,6 +375,34 @@ const ProfileScreen = () => {
                 </Text>
               </View>
               <Text style={styles.experienceTitle}>{exp.role}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Interest Section */}
+        <View style={styles.titleSection}>
+          <Text style={styles.sectionTitle}>Interests</Text>
+          <TouchableOpacity onPress={handleInterestEditPress}>
+            <Image style={{height: 15, width: 15}} source={penIcon} />
+          </TouchableOpacity>
+        </View>
+        <View
+          style={[
+            styles.card,
+            {flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20},
+          ]}>
+          {user?.interests?.map((interest, index) => (
+            <View
+              key={index}
+              style={{
+                margin: 5,
+                paddingVertical: 7,
+                paddingHorizontal: 18,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: '#4B164C33',
+              }}>
+              <Text style={styles.sectionText}>{interest}</Text>
             </View>
           ))}
         </View>
@@ -316,84 +462,25 @@ const ProfileScreen = () => {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Edit Profile Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}>
-          <View style={styles.closeIconContainer}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Image source={closeIcon} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView contentContainerStyle={styles.scrollViewContent}>
-            <View style={styles.modalContent}>
-              {/* Edit Profile Picture URL */}
-              <TextInput
-                value={newProfilePicture}
-                onChangeText={setNewProfilePicture}
-                placeholderTextColor={'gray'}
-                placeholder="New Profile Picture URL"
-                style={styles.input}
-              />
-
-              {/* Image Selection Button */}
-              <TouchableOpacity onPress={selectImage} style={styles.button}>
-                <Text>Select Image</Text>
-              </TouchableOpacity>
-
-              {/* Display Selected Image */}
-              {profilePicture && (
-                <Image
-                  source={{uri: profilePicture.uri}}
-                  style={styles.imagePreview}
-                />
-              )}
-
-              {/* Edit Name */}
-              <TextInput
-                value={editedName}
-                onChangeText={setEditedName}
-                placeholder="Edit Name"
-                placeholderTextColor={'gray'}
-                style={styles.input}
-              />
-
-              {/* Edit State */}
-              <TextInput
-                value={editedState}
-                onChangeText={setEditedState}
-                placeholder="Edit State"
-                placeholderTextColor={'gray'}
-                style={styles.input}
-              />
-
-              {/* Edit Country */}
-              <TextInput
-                value={editedCountry}
-                onChangeText={setEditedCountry}
-                placeholder="Edit Country"
-                placeholderTextColor={'gray'}
-                style={styles.input}
-              />
-
-              {/* Save Button */}
-              <Button color="#DD88CF" title="Save" onPress={handleSave} />
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-
       {/* Experience Modal */}
       <ExperienceModal
         isVisible={isExperienceModalVisible}
         onClose={() => setExperienceModalVisible(false)}
       />
+
+      {interestEditing && (
+        <Modal
+          style={{flex: 1}}
+          animationType="slide"
+          transparent={true}
+          visible={interestEditing}
+          onRequestClose={() => setInterestEditing(false)}>
+          <InterestsSelector
+            onClose={() => setInterestEditing(false)}
+            userId={user?._id}
+          />
+        </Modal>
+      )}
     </ScrollView>
   );
 };
@@ -401,24 +488,24 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#FDF7FD',
   },
   mainCard: {
-    backgroundColor: '#DD88CF',
+    backgroundColor: '#FDF7FD',
     padding: 20,
-    borderTopStartRadius: 30,
-    borderTopEndRadius: 30,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
-    marginTop: -50,
+
+    // marginTop: -50,
     zIndex: 2,
   },
   profileCard: {
     position: 'relative',
     alignItems: 'center',
+  },
+  coverPicture: {
+    width: '100%',
+    height: 250,
+    alignSelf: 'center',
+    resizeMode: 'cover',
   },
   profilePicture: {
     width: '100%',
@@ -447,25 +534,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   userName: {
-    position: 'absolute',
-    bottom: 120,
-    fontSize: 30,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#FFFFFF',
+    color: '#242760',
     zIndex: 2,
   },
   userLocation: {
-    position: 'absolute',
-    bottom: 100,
-    fontSize: 16,
+    fontSize: 12,
     textAlign: 'center',
-    color: 'white',
+    color: '#544C4C',
     marginTop: 5,
     zIndex: 2,
   },
   card: {
-    backgroundColor: '#6619d2',
+    backgroundColor: '#FFFFFF',
     padding: 20,
     borderRadius: 10,
     marginBottom: 20,
@@ -481,16 +564,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingEnd: 5,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: 13,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: 'white',
+    color: '#242760',
   },
   sectionText: {
-    fontSize: 16,
-    color: 'white',
+    fontSize: 14,
+    color: 'black',
   },
   experienceItem: {
     marginBottom: 10,
@@ -515,14 +601,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   experienceTitle: {
-    color: 'white',
+    color: 'black',
   },
   experienceCompany: {
-    color: 'white',
+    color: 'black',
     fontWeight: 'bold',
   },
   experienceDuration: {
-    color: 'white',
+    color: 'black',
   },
   input: {
     // borderWidth: 1,

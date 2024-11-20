@@ -47,7 +47,7 @@ const SearchPeople = () => {
       <TouchableOpacity
         style={styles.iconButtons}
         onPress={() => setSearchVisible(true)}>
-        <Image source={lensIcon} />
+        <Image source={lensIcon} style={styles.icon} />
       </TouchableOpacity>
 
       {/* Filter Icon */}
@@ -117,6 +117,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  icon: {
+    width: 25,
+    height: 25,
   },
   modalOverlay: {
     flex: 1,
