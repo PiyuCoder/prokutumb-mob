@@ -28,6 +28,33 @@ const otherRouter = require("./routes/otherRoutes");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.static("public"));
 
+app.get("/auth/callback", async (req, res) => {
+  const { code } = req.query;
+  console.log(code);
+  if (!code) {
+    return res.status(400).send("Authorization code missing.");
+  }
+  const tokenResponse = await fetch(
+    "https://www.linkedin.com/oauth/v2/accessToken",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: "http://10.0.2.2:8081/auth/callback",
+        client_id: "86dvpoievc6jdx",
+        client_secret: "WPL_AP1.ItYT2qO32AOtxQV8.KPUExQ==",
+      }),
+    }
+  );
+
+  const tokenData = await tokenResponse.json();
+  console.log("Access Token:", tokenData.access_token);
+
+  res.redirect("/"); // Redirect user back to the app
+});
+
 app.use("/api/user", userRouter);
 app.use("/api/posts", postRouter);
 app.use("/api", otherRouter);

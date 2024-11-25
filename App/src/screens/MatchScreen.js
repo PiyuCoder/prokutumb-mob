@@ -13,6 +13,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {axiosInstance} from '../api/axios';
 import {useSelector} from 'react-redux';
 import SearchPeople from '../components/SearchPeople';
+import LinkedInAuth from '../components/LinkedInAuth';
 
 const lensIcon = require('../assets/icons/lens.png');
 const filterIcon = require('../assets/icons/filter.png');
@@ -147,6 +148,7 @@ const MatchScreen = () => {
           </TouchableOpacity> */}
         </View>
       </View>
+      <LinkedInAuth />
       {/* Section 1: Top Networkers of the Week */}
       <Text style={styles.sectionTitle}>Top Networkers of the Week</Text>
       <ScrollView
