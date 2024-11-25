@@ -42,17 +42,25 @@ app.get("/auth/callback", async (req, res) => {
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: "http://10.0.2.2:8081/auth/callback",
-        client_id: "86dvpoievc6jdx",
+        redirect_uri: "https://prokutumb-mob.onrender.com/auth/callback",
+        client_id: process.env.LINKEDIN_CLIENT_ID,
         client_secret: "WPL_AP1.ItYT2qO32AOtxQV8.KPUExQ==",
       }),
     }
   );
 
   const tokenData = await tokenResponse.json();
+
+  if (!tokenResponse.ok) {
+    console.error("Token Fetch Error:", tokenData);
+    return res.status(tokenResponse.status).json({
+      error: tokenData.error || "Unable to fetch access token.",
+    });
+  }
+
   console.log("Access Token:", tokenData.access_token);
 
-  res.redirect("/"); // Redirect user back to the app
+  res.redirect(`prokutumb://auth/callback?token=${tokenData.access_token}`);
 });
 
 app.use("/api/user", userRouter);

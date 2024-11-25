@@ -40,6 +40,7 @@ const linking = {
   config: {
     screens: {
       UserProfile: 'profile/:userId', // Define the path and params
+      MatchScreen: 'auth/callback',
     },
   },
 };
