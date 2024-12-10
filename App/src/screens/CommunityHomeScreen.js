@@ -15,29 +15,29 @@ import {
   Share,
   TouchableWithoutFeedback,
   Alert,
+  ImageBackground,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
+import * as Progress from 'react-native-progress';
 import {fetchFriendRequests, logout} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {launchImageLibrary} from 'react-native-image-picker'; // Use react-native-image-picker
+import Loader from '../components/Loader';
+import ProfilePicture from '../components/ProfilePicture';
+import {axiosInstance, axiosInstanceForm} from '../api/axios';
 import {
-  addNewPost,
-  commentOnPost,
+  setPosts,
+  likePost,
   deletePost,
   editPost,
-  fetchPosts,
+  addNewPost,
   incrementShare,
-  likePost,
-} from '../store/slices/postSlice';
-import QRCode from 'react-native-qrcode-svg';
+  commentOnPost,
+  requestToJoinCommunity,
+} from '../store/slices/commPostSlice';
+import {useNavigation} from '@react-navigation/native';
+import ChatBotButton from '../components/ChatBotButton';
 import LinearGradient from 'react-native-linear-gradient';
-import Loader from '../components/Loader';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
-import {connectSocket, disconnectSocket} from '../socket';
-import socket from '../socket';
-import ConnectionRequests from '../components/ConnectionRequests';
-import ProfilePicture from '../components/ProfilePicture';
-import {axiosInstance} from '../api/axios';
 
 const likeIcon = require('../assets/icons/like.png');
 const likedIcon = require('../assets/icons/liked.png');
@@ -46,12 +46,63 @@ const viewIcon = require('../assets/icons/view.png');
 const shareIcon = require('../assets/icons/share.png');
 const bellIcon = require('../assets/icons/bell.png');
 
-const HomeScreen = ({navigation}) => {
-  const [isFeedView, setIsFeedView] = useState(true); // Toggle between Feed and Profile
+const members = [
+  {
+    _id: '1',
+    name: 'John Doe',
+    profilePicture: 'https://via.placeholder.com/150',
+  },
+  {
+    _id: '2',
+    name: 'Tony Stark',
+    profilePicture: 'https://via.placeholder.com/150',
+  },
+  {
+    _id: '3',
+    name: 'Spiderman',
+    profilePicture: 'https://via.placeholder.com/150',
+  },
+  {
+    _id: '4',
+    name: 'Captain America',
+    profilePicture: 'https://via.placeholder.com/150',
+  },
+  {
+    _id: '5',
+    name: 'Thor',
+    profilePicture: 'https://via.placeholder.com/150',
+  },
+];
+
+const events = [
+  {
+    _id: '1',
+    name: 'Event One',
+    profilePicture: 'https://via.placeholder.com/150',
+    distance: 120,
+    location: 'New York',
+  },
+  {
+    _id: '2',
+    name: 'Event Two',
+    profilePicture: 'https://via.placeholder.com/150',
+    distance: 120,
+    location: 'California',
+  },
+];
+
+const CommunityHomeScreen = ({route}) => {
+  const {communityId} = route.params;
+  const [isFeedView, setIsFeedView] = useState(true);
+  const [community, setCommunity] = useState({
+    name: 'Loading...',
+    profilePicture: 'https://via.placeholder.com/150',
+    description: 'Community for the cool developers',
+  });
   const {user} = useSelector(state => state.auth);
-  const posts = useSelector(state => state.posts.posts);
+  const {posts} = useSelector(state => state.commposts);
   const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility
   const [actionModalVisible, setActionModalVisible] = useState(false);
@@ -60,50 +111,40 @@ const HomeScreen = ({navigation}) => {
   const [page, setPage] = useState(1); // Current page for pagination
   const [isFetching, setIsFetching] = useState(false); // Loading indicator
   const [isEditMode, setIsEditMode] = useState(false); // Loading indicator
+  // const [hasRequested, setHasRequested] = useState(
+  //   community?.joinRequests?.includes(user?._id) || false,
+  // );
   const [userPosts, setUserPosts] = useState([]);
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false);
+  const [isChatBotVisible, setIsChatBotVisible] = useState(false);
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
   const [openActionPostId, setOpenActionPostId] = useState(null);
   const [currentComment, setCurrentComment] = useState('');
   const totalPages = useSelector(state => state.posts.totalPages);
-  const [stories, setStories] = useState([]);
+  const navigation = useNavigation();
 
   const flatListRef = useRef(null);
-
-  const fetchStories = async () => {
-    try {
-      const response = await axiosInstance.get(`/api/recentPosts`, {
-        params: {userId: user?._id},
-      });
-      setStories(response.data);
-    } catch (error) {
-      console.error('Error fetching stories:', error);
-    }
-  };
-  useEffect(() => {
-    fetchStories();
-  }, [user]);
-
-  // console.log(user);
-  // const stories = [
-  //   {id: '1', name: 'My Post', image: user?.profilePicture, isUser: true},
-  //   // Add other stories here as needed
-  // ];
 
   // Fetch initial posts on component mount
   useEffect(() => {
     loadMorePosts(); // Fetch the first page
-  }, []);
+  }, [communityId]);
 
   // console.log(posts);
 
   const loadMorePosts = async () => {
-    console.log('onEndReached triggered, page:', page);
-    setIsLoading(true);
-    if (!isFetching && (page <= totalPages || totalPages === 0)) {
-      setIsFetching(true);
-      await dispatch(fetchPosts({page, userId: user?._id}));
-      setPage(prevPage => prevPage + 1);
+    try {
+      if (communityId) {
+        const res = await axiosInstance.get(`/api/communities/${communityId}`);
+        if (res.status === 200) {
+          console.log(res.data.data);
+          setCommunity(res?.data?.data || []); // Adjust based on backend response
+          dispatch(setPosts(res?.data?.posts || []));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching communities:', error.message);
+    } finally {
       setIsFetching(false);
       setIsLoading(false);
       setRefreshing(false);
@@ -111,9 +152,8 @@ const HomeScreen = ({navigation}) => {
   };
 
   useEffect(() => {
-    connectSocket();
     // Filter posts to get only the user's posts
-    if (user && posts) {
+    if (community && posts) {
       setIsFetching(true);
       const filteredPosts = posts.filter(post => post.user?._id === user?._id);
       setUserPosts(filteredPosts);
@@ -124,8 +164,6 @@ const HomeScreen = ({navigation}) => {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     setIsLoading(true);
-    dispatch(fetchFriendRequests(user?._id));
-    fetchStories();
     loadMorePosts();
   }, []);
 
@@ -148,79 +186,6 @@ const HomeScreen = ({navigation}) => {
       );
       setCurrentComment(''); // Clear input
     }
-  };
-
-  // console.log(stories);
-  const renderStory = ({item}) => (
-    <TouchableOpacity
-      onPress={() => {
-        viewStory(item);
-      }}>
-      <View
-        style={{
-          alignItems: 'center',
-          marginHorizontal: 10,
-          position: 'relative',
-        }}>
-        <ProfilePicture
-          profilePictureUri={item.image}
-          width={50}
-          height={50}
-          borderRadius={25}
-          marginRight={10}
-          borderColor={'#DD88CF'}
-          isUser={false}
-          story
-        />
-        {/* <Image
-          source={{uri: item.image}}
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: 30,
-            borderWidth: item.isUser ? 2 : 0,
-            borderColor: item.isUser ? '' : '#DD88CF',
-          }}
-        /> */}
-        <Text style={{fontSize: 12, marginTop: 5}}>{item.name}</Text>
-        {/* <View
-          style={{
-            position: 'absolute',
-            bottom: 18,
-            right: 7,
-            backgroundColor: 'white',
-            height: 20,
-            width: 20,
-            borderRadius: 10,
-            padding: 1,
-          }}>
-          <Image
-            style={{height: '100%', width: '100%'}}
-            source={require('../assets/icons/add.png')}
-          />
-        </View> */}
-      </View>
-    </TouchableOpacity>
-  );
-
-  const viewStory = story => {
-    console.log('Viewing story of', story.name);
-    // setSelectedStory(story);
-    console.log(story);
-    // Scroll to the post that matches the story's postId
-    const index = posts.findIndex(post => post._id === story.id);
-    if (index !== -1) {
-      flatListRef.current.scrollToIndex({index, animated: true});
-    }
-  };
-
-  const handleLogout = async () => {
-    await GoogleSignin.signOut();
-    dispatch(logout());
-    AsyncStorage.removeItem('authToken');
-    AsyncStorage.removeItem('user');
-    disconnectSocket();
-    navigation.navigate('Login');
   };
 
   const handleUserPress = userId => {
@@ -267,22 +232,27 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
-  console.log('EditMode: ', isEditMode);
-  console.log('EditMode: ', isEditMode);
   const handleAddPost = async () => {
-    if (newPostContent.trim()) {
+    try {
+      // Validate post content
+      if (!newPostContent.trim() && !selectedMedia) {
+        alert('Please enter post content or upload media.');
+        return;
+      }
+
       const formData = new FormData();
 
-      // Add post content (text) to form data
-      formData.append('user', user?._id); // User ID
-      formData.append('content', newPostContent); // Post content
+      // Add post content (text) and related IDs to form data
+      formData.append('userId', user?._id); // User ID
+      formData.append('communityId', communityId); // Community ID
+      formData.append('content', newPostContent.trim()); // Post content
 
       // Add media if selected
-      if (selectedMedia && selectedMedia?.type) {
+      if (selectedMedia && selectedMedia.uri) {
         formData.append('media', {
-          uri: selectedMedia?.uri || selectedMedia?.mediaUrl, // URI of the media file
-          type: selectedMedia?.type || selectedMedia?.mediaType, // MIME type of the media (image/video)
-          name: `media.${selectedMedia?.type?.split('/')[1]}` || 'unknown', // Name of the file with appropriate extension
+          uri: selectedMedia.uri, // URI of the media file
+          type: selectedMedia.type, // MIME type (e.g., image/jpeg, video/mp4)
+          name: `media.${selectedMedia.type.split('/')[1]}`, // File name with extension
         });
       }
 
@@ -294,13 +264,14 @@ const HomeScreen = ({navigation}) => {
         await dispatch(addNewPost(formData)); // Assuming addNewPost handles FormData
       }
 
-      // Reset modal and post input
+      // Reset modal and inputs
       setModalVisible(false);
       setNewPostContent('');
       setSelectedMedia(null);
-      setOpenActionPostId(null);
-    } else {
-      alert('Please enter post content.');
+      setIsEditMode(false); // Reset edit mode
+    } catch (error) {
+      console.error('Error creating post:', error.message);
+      alert('An error occurred while creating the post. Please try again.');
     }
   };
 
@@ -332,7 +303,34 @@ const HomeScreen = ({navigation}) => {
     );
   };
 
-  console.log(selectedMedia);
+  const renderEventCard = ({item: event}) => (
+    <TouchableOpacity
+      // onPress={() =>
+      //   navigation.navigate('CommunityHome', {communityId: community._id})
+      // }
+      key={event._id}
+      style={styles.cardWrapper}>
+      <View style={styles.userCard}>
+        <ImageBackground
+          source={{uri: event.profilePicture}}
+          style={styles.profilePicture}
+          imageStyle={styles.profilePictureImage}>
+          <LinearGradient
+            colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
+            start={{x: 0, y: 0}}
+            end={{x: 0, y: 1}}
+            style={styles.overlay}
+          />
+          <View style={styles.overlayContent}>
+            <Text style={styles.userName}>{event.name}</Text>
+            <Text style={styles.userLocation}>{event.location}</Text>
+          </View>
+        </ImageBackground>
+      </View>
+    </TouchableOpacity>
+  );
+
+  // console.log(selectedMedia);
   const renderPost = ({item}) => (
     <View
       className="border border-gray-200"
@@ -398,11 +396,6 @@ const HomeScreen = ({navigation}) => {
                   }}>
                   <Text style={styles.dropdownItemText}>Delete</Text>
                 </TouchableOpacity>
-                {/* <TouchableOpacity
-            style={styles.dropdownItem}
-            onPress={() => setActionModalVisible(false)}>
-            <Text style={styles.dropdownItemText}>Cancel</Text>
-          </TouchableOpacity> */}
               </View>
             )}
           </View>
@@ -540,10 +533,13 @@ const HomeScreen = ({navigation}) => {
         flex: 1,
         paddingHorizontal: 7,
         // paddingBottom: 80,
-        backgroundColor: '#FDF7FD',
+        backgroundColor: 'white',
       }}>
-      <StatusBar backgroundColor="#FDF7FD" barStyle="dark-content" />
+      <StatusBar backgroundColor="white" barStyle="dark-content" />
       <Loader isLoading={isLoading} />
+      {isChatBotVisible && (
+        <ChatBotButton setIsChatBotVisible={setIsChatBotVisible} />
+      )}
       <FlatList
         ref={flatListRef}
         refreshControl={
@@ -551,9 +547,16 @@ const HomeScreen = ({navigation}) => {
         }
         data={isFeedView ? posts : userPosts}
         keyExtractor={item => item._id}
-        renderItem={renderPost}
+        renderItem={
+          isFeedView &&
+          (community?.members?.includes(user?._id) ||
+            community?.createdBy?._id === user?._id) &&
+          renderPost
+        }
         contentContainerStyle={{paddingBottom: 65}}
-        ListEmptyComponent={<Text>No Posts yet</Text>}
+        ListEmptyComponent={
+          <Text style={{margin: 20, textAlign: 'center'}}>No Posts yet</Text>
+        }
         // onEndReached={loadMorePosts}
         onEndReachedThreshold={0.2}
         ListFooterComponent={
@@ -561,22 +564,14 @@ const HomeScreen = ({navigation}) => {
         }
         ListHeaderComponent={
           <View>
-            {/* Stories Section */}
             <View
               style={{
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'flex-end',
                 padding: 5,
               }}>
-              <Image
-                style={{height: 35, width: 75}}
-                source={require('../assets/proku-home-logo.png')}
-              />
-              {/* <Text style={[styles.proku, {color: '#4B164C', fontSize: 24}]}>
-                ProKu
-              </Text> */}
               <TouchableOpacity
                 onPress={() => navigation.navigate('Notifications')}
                 style={styles.iconButtons}>
@@ -603,157 +598,213 @@ const HomeScreen = ({navigation}) => {
                 </View>
               </TouchableOpacity>
             </View>
-            <View
-              style={{height: 100, paddingVertical: 10, flexDirection: 'row'}}>
-              <TouchableOpacity
-                onPress={() => {
-                  console.log('Opening modal for user story'); // Debugging log
-                  setModalVisible(true); // Open modal
-                }}>
-                <View
-                  style={{
-                    alignItems: 'center',
-                    marginHorizontal: 10,
-                    position: 'relative',
-                  }}>
-                  <ProfilePicture
-                    profilePictureUri={user?.profilePicture}
-                    width={50}
-                    height={50}
-                    borderRadius={25}
-                    marginRight={10}
-                    isUser={true}
-                    story
-                  />
 
-                  <Text style={{fontSize: 12, marginTop: 5}}>My Post</Text>
-                  <View
-                    style={{
-                      position: 'absolute',
-                      bottom: 18,
-                      right: 7,
-                      backgroundColor: 'white',
-                      height: 20,
-                      width: 20,
-                      borderRadius: 10,
-                      padding: 1,
-                    }}>
-                    <Image
-                      style={{height: '100%', width: '100%'}}
-                      source={require('../assets/icons/add.png')}
-                    />
-                  </View>
-                </View>
-              </TouchableOpacity>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={stories}
-                keyExtractor={item => item.id}
-                renderItem={renderStory}
+            <View style={styles.communityHeader}>
+              <ProfilePicture
+                profilePictureUri={community?.profilePicture || ''}
+                width={140}
+                height={140}
+                borderRadius={70}
               />
-            </View>
-
-            {/* <View>
-              <TouchableOpacity
+              <Text style={styles.communityName}>{community?.name || ''}</Text>
+              {/* <Text style={styles.communityDescription}>
+                {community?.description || ''}
+              </Text> */}
+              <View
                 style={{
-                  backgroundColor: '#DD88CF',
-                  padding: 10,
-                  borderRadius: 10,
+                  flexDirection: 'row',
+                  gap: 10,
                   alignItems: 'center',
-                }}
-                onPress={handleLogout}>
-                <Text style={{color: '#fff', fontWeight: 'bold'}}>Logout</Text>
-              </TouchableOpacity>
-            </View> */}
+                  justifyContent: 'center',
+                }}>
+                {!community.members?.includes(user?._id) &&
+                  community.createdBy?._id !== user?._id && (
+                    <TouchableOpacity
+                      disabled={community?.joinRequests?.some(
+                        req => req._id == user?._id,
+                      )}
+                      onPress={() => {
+                        dispatch(
+                          requestToJoinCommunity({
+                            userId: user?._id,
+                            communityId,
+                          }),
+                        ).then(action => {
+                          console.log(action.payload);
+                          if (requestToJoinCommunity.fulfilled.match(action)) {
+                            setCommunity(action.payload?.data);
+                          }
+                        });
+                      }}
+                      style={{
+                        backgroundColor: '#DD88CF',
+                        padding: 10,
+                        width: 90,
+                        borderRadius: 30,
+                        marginTop: 10,
+                      }}>
+                      <Text
+                        style={{
+                          color: 'whit  e',
+                          fontWeight: '500',
+                          textAlign: 'center',
+                        }}>
+                        {community?.joinRequests?.some(
+                          req => req._id == user?._id,
+                        )
+                          ? 'Requested'
+                          : 'Join'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                {(community.members?.includes(user?._id) ||
+                  community.createdBy?._id == user?._id) && (
+                  <TouchableOpacity
+                    onPress={() => setIsChatBotVisible(true)}
+                    style={{
+                      backgroundColor: '#DD88CF',
+                      padding: 10,
+                      width: 90,
+                      borderRadius: 30,
+                      marginTop: 10,
+                    }}>
+                    <Text
+                      style={{
+                        color: 'whit  e',
+                        fontWeight: '500',
+                        textAlign: 'center',
+                      }}>
+                      Ask AI
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {(community.members?.includes(user?._id) ||
+                  community.createdBy?._id == user?._id) && (
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: 'white',
+                      borderWidth: 1,
+                      borderColor: '#DD88CF',
+                      padding: 8,
+                      width: 90,
+                      borderRadius: 30,
+                      marginTop: 10,
+                    }}
+                    onPress={() => {
+                      setModalVisible(true); // Open modal
+                    }}>
+                    <Text
+                      style={{
+                        color: '#DD88CF',
+                        fontWeight: '500',
+                        textAlign: 'center',
+                      }}>
+                      Add Post
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
 
             {/* Toggle between Feed and Profile */}
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginVertical: 10,
-                backgroundColor: '#F8E7F6',
-                borderRadius: 30,
-                padding: 5,
-              }}>
-              <TouchableOpacity
-                onPress={() => setIsFeedView(true)}
+            {(community.members?.includes(user?._id) ||
+              community.createdBy?._id === user?._id) && (
+              <View
                 style={{
-                  backgroundColor: isFeedView ? '#FFFFFF' : '#F8E7F6',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 25,
-                  flex: 1,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginVertical: 10,
+                  backgroundColor: '#F8E7F6',
+                  borderRadius: 30,
+                  padding: 5,
                 }}>
-                <Text
-                  style={[
-                    styles.proku,
-                    {
-                      fontSize: 12,
-                      color: isFeedView ? '#4B164C' : '#000',
-                      textAlign: 'center',
-                    },
-                  ]}>
-                  Connection Feed
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setIsFeedView(false)}
-                style={{
-                  backgroundColor: !isFeedView ? '#FFFFFF' : '#F8E7F6',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 25,
-                  flex: 1,
-                }}>
-                <Text
-                  style={[
-                    styles.proku,
-                    {
-                      fontSize: 12,
-                      color: !isFeedView ? '#4B164C' : '#000',
-                      textAlign: 'center',
-                    },
-                  ]}>
-                  My Profile
-                </Text>
-              </TouchableOpacity>
-            </View>
-            {/* QR Code for sharing profile */}
-            {!isFeedView && (
-              <LinearGradient
-                colors={['#DD88CF', '#DD88CF', '#DD88CF']}
-                style={styles.qrContainer}>
-                {/* <Text style={styles.qrText}>Scan to connect:</Text> */}
-                <QRCode
-                  // value={`prokutumb://profile/${user?._id}`}
-                  value={`https://prokutumb-mob.onrender.com/redirect.html?userId=${user?._id}`}
-                  size={120}
-                  color="black"
-                  backgroundColor="transparent"
-                />
-              </LinearGradient>
-            )}
-            {!isFeedView && (
-              <View>
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('Profile')}
+                  onPress={() => setIsFeedView(true)}
                   style={{
-                    backgroundColor: '#DD88CF',
-                    padding: 12,
-                    borderRadius: 10,
-                    alignItems: 'center',
-                    marginTop: 10,
+                    backgroundColor: isFeedView ? '#FFFFFF' : '#F8E7F6',
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    borderRadius: 25,
+                    flex: 1,
                   }}>
-                  <Text style={{color: '#141414', fontWeight: 'bold'}}>
-                    View Profile
+                  <Text
+                    style={[
+                      styles.proku,
+                      {
+                        fontSize: 12,
+                        color: isFeedView ? '#4B164C' : '#000',
+                        textAlign: 'center',
+                      },
+                    ]}>
+                    Community Feed
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setIsFeedView(false)}
+                  style={{
+                    backgroundColor: !isFeedView ? '#FFFFFF' : '#F8E7F6',
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    borderRadius: 25,
+                    flex: 1,
+                  }}>
+                  <Text
+                    style={[
+                      styles.proku,
+                      {
+                        fontSize: 12,
+                        color: !isFeedView ? '#4B164C' : '#000',
+                        textAlign: 'center',
+                      },
+                    ]}>
+                    Members
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
-            <ConnectionRequests isFeedView={isFeedView} userId={user?._id} />
-            {!isFeedView && (
+            {!community.members?.includes(user?._id) &&
+              community.createdBy?._id !== user?._id && (
+                <View style={{flex: 1, justifyContent: 'flex-start'}}>
+                  <View
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'flex-start',
+                      margin: 10,
+                    }}>
+                    <Text style={styles.title}>About</Text>
+                    <Text style={{color: '#141414'}}>
+                      {community?.description}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'flex-start',
+                      margin: 10,
+                    }}>
+                    <Text style={styles.title}>Upcoming Events</Text>
+                  </View>
+                  <FlatList
+                    data={events}
+                    keyExtractor={item => item._id}
+                    renderItem={renderEventCard}
+                    contentContainerStyle={styles.listContent}
+                    numColumns={2} // Three columns
+                    // ListHeaderComponent={renderHeader}
+                    // ListFooterComponent={renderFooter}
+                    ListEmptyComponent={() => (
+                      <View style={styles.noTrendingContainer}>
+                        <Image source={require('../assets/not-found.png')} />
+                        <Text style={styles.noUsersText}>No Events found</Text>
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
+
+            {/* {!isFeedView && (
               <View>
                 <Text
                   style={{
@@ -762,14 +813,99 @@ const HomeScreen = ({navigation}) => {
                     fontWeight: 'bold',
                     marginVertical: 15,
                   }}>
-                  My Posts
+                  Members
                 </Text>
               </View>
+            )} */}
+
+            {!isFeedView && (
+              <TouchableOpacity onPress={() => {}}>
+                <View style={styles.friendItem}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginBottom: 7,
+                      padding: 5,
+                    }}>
+                    <ProfilePicture
+                      profilePictureUri={community?.createdBy?.profilePicture}
+                      width={40}
+                      height={40}
+                      borderRadius={20}
+                      marginRight={10}
+                    />
+
+                    <Text style={styles.friendName}>
+                      {community?.createdBy?.name}
+                    </Text>
+                  </View>
+                  <View className="bg-[#4B164C] rounded-full p-2 px-4 flex flex-row items-center justify-center">
+                    <Progress.Circle
+                      size={30}
+                      progress={0.7}
+                      showsText
+                      thickness={3}
+                      textStyle={{color: 'white', fontSize: 8}}
+                      color="#242760"
+                      unfilledColor="#dd88cf62"
+                      borderColor="#4B164C"
+                    />
+                    <Text className="text-white font-bold ml-2 ">Match</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+            {!isFeedView && (
+              <FlatList
+                data={members}
+                keyExtractor={item => item._id} // Assuming each friend has a unique `id`
+                renderItem={({item}) => (
+                  <TouchableOpacity onPress={() => {}}>
+                    <View style={styles.friendItem}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginBottom: 7,
+                          padding: 5,
+                        }}>
+                        <ProfilePicture
+                          profilePictureUri={item.profilePicture}
+                          width={40}
+                          height={40}
+                          borderRadius={20}
+                          marginRight={10}
+                        />
+
+                        <Text style={styles.friendName}>{item.name}</Text>
+                      </View>
+                      <View className="bg-[#4B164C] rounded-full p-2 px-4 flex flex-row items-center justify-center">
+                        <Progress.Circle
+                          size={30}
+                          progress={0.7}
+                          showsText
+                          thickness={3}
+                          textStyle={{color: 'white', fontSize: 8}}
+                          color="#242760"
+                          unfilledColor="#dd88cf62"
+                          borderColor="#4B164C"
+                        />
+                        <Text className="text-white font-bold ml-2 ">
+                          Match
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={() => (
+                  <Text style={styles.emptyMessage}>No Members found</Text>
+                )}
+              />
             )}
           </View>
         }
       />
-
       {/* Modal for adding post */}
       <Modal
         animationType="slide"
@@ -781,7 +917,7 @@ const HomeScreen = ({navigation}) => {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 0)',
           }}>
           <View
             style={{
@@ -936,6 +1072,12 @@ const styles = StyleSheet.create({
     shadowRadius: 6, // Softer shadow radius
     // elevation: 5, // For Android elevation
   },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#22172A',
+    textAlign: 'left',
+  },
   postActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -954,6 +1096,66 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: '#7B7B7B',
+  },
+  listContent: {
+    minHeight: '100%',
+    paddingHorizontal: 10,
+    paddingBottom: 20,
+    backgroundColor: 'white',
+  },
+  userCard: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    aspectRatio: 0.75,
+  },
+  cardWrapper: {
+    flex: 1,
+    margin: 8,
+    maxWidth: '45%', // Ensure three columns fit evenly
+    // backgroundColor: 'red',
+  },
+  profilePicture: {
+    width: '100%',
+    height: '100%',
+  },
+
+  profilePictureImage: {
+    borderRadius: 10,
+  },
+  overlay: {
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+  },
+  overlayContent: {
+    position: 'absolute',
+    alignItems: 'center',
+    paddingBottom: 10,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  userLocation: {
+    marginBottom: 10,
+    color: '#FFFFFF',
+  },
+  communityHeader: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 10,
+  },
+  communityName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#141414',
   },
   iconButtons: {
     position: 'relative',
@@ -1013,12 +1215,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingVertical: 10,
   },
-  profilePicture: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 10, // Space between image and text
-  },
+  // profilePicture: {
+  //   width: 30,
+  //   height: 30,
+  //   borderRadius: 15,
+  //   marginRight: 10, // Space between image and text
+  // },
   dropdownMenu: {
     position: 'absolute',
     top: 25, // Adjust position relative to the action icon
@@ -1054,6 +1256,28 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
   },
+  friendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 7,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    padding: 5,
+    marginHorizontal: 5,
+    backgroundColor: 'white',
+  },
+  friendImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  friendName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'black',
+  },
 });
 
-export default HomeScreen;
+export default CommunityHomeScreen;

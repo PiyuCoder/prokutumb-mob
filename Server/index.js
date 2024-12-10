@@ -23,10 +23,16 @@ const userSocketMap = {};
 const userRouter = require("./routes/userRoute")(io, userSocketMap);
 const postRouter = require("./routes/postRoutes");
 const otherRouter = require("./routes/otherRoutes");
+const communityRouter = require("./routes/communityRoutes")(io, userSocketMap);
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.static("public"));
+
+app.get("/auth/callback", (req, res) => {
+  console.log("Callback URL hit:", req.originalUrl);
+  res.status(200).send("Callback received!");
+});
 
 app.get("/auth/callback", async (req, res) => {
   const { code } = req.query;
@@ -60,12 +66,14 @@ app.get("/auth/callback", async (req, res) => {
 
   console.log("Access Token:", tokenData.access_token);
 
-  res.redirect(`prokutumb://auth/callback?token=${tokenData.access_token}`);
+  // res.redirect(`prokutumb://auth/callback?token=${tokenData.access_token}`);
+  res.redirect(`prokutumb://auth/callback?code=${code}`);
 });
 
 app.use("/api/user", userRouter);
 app.use("/api/posts", postRouter);
 app.use("/api", otherRouter);
+app.use("/api/communities", communityRouter);
 
 socketHandler(io, userSocketMap);
 

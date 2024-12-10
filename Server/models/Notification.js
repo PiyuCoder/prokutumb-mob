@@ -20,6 +20,14 @@ const notificationSchema = new mongoose.Schema(
       type: String, // Type of notification (e.g., "connection request", "message", "call")
       required: true,
     },
+    isCommunity: {
+      type: Boolean,
+      default: false,
+    },
+    communityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Communitymob",
+    },
     status: {
       type: String, // The status of the notification (e.g., "unread", "read")
       default: "unread", // By default, notifications are unread
@@ -32,6 +40,6 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Notification = mongoose.model("Notification", notificationSchema);
+const NotificationMob = mongoose.model("NotificationMob", notificationSchema);
 
-module.exports = Notification;
+module.exports = NotificationMob;

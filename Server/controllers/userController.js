@@ -5,7 +5,7 @@ const fs = require("fs");
 const Message = require("../models/Message");
 const mongoose = require("mongoose");
 const Feed = require("../models/Feed");
-const Notification = require("../models/Notification");
+const NotificationMob = require("../models/Notification");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -150,7 +150,7 @@ exports.editProfile = async (req, res) => {
     // console.log(req.files?.profilePicture, req.files?.coverPicture);
     // Handle Profile Picture Update
     if (req.files?.profilePicture) {
-      const newProfilePicture = `http://${req.get("host")}/uploads/dp/${
+      const newProfilePicture = `https://${req.get("host")}/uploads/dp/${
         req.files.profilePicture[0].filename
       }`;
 
@@ -171,7 +171,7 @@ exports.editProfile = async (req, res) => {
 
     // Handle Cover Picture Update
     if (req.files?.coverPicture) {
-      const newCoverPicture = `http://${req.get("host")}/uploads/dp/${
+      const newCoverPicture = `https://${req.get("host")}/uploads/dp/${
         req.files.coverPicture[0].filename
       }`;
 
@@ -279,7 +279,7 @@ exports.sendRequest = (io, userSocketMap) => async (req, res) => {
     await receiver.save();
 
     // Create a notification for the receiver
-    const notification = new Notification({
+    const notification = new NotificationMob({
       recipientId: receiverId,
       senderId: senderId,
       message: "You have a new connection request.",

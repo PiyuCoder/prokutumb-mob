@@ -26,6 +26,44 @@ import SearchPeople from '../components/SearchPeople';
 const lensIcon = require('../assets/icons/lens.png');
 const filterIcon = require('../assets/icons/filter.png');
 
+// const communities = [
+//   {
+//     _id: '1',
+//     name: 'John Doe',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     location: 'New York',
+//   },
+//   {
+//     _id: '2',
+//     name: 'Tony Stark',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     location: 'California',
+//   },
+//   {
+//     _id: '3',
+//     name: 'Spiderman',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     location: 'New York',
+//   },
+//   {
+//     _id: '4',
+//     name: 'Captain America',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     location: 'Geogia',
+//   },
+//   {
+//     _id: '5',
+//     name: 'Thor',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     location: 'New Jersey',
+//   },
+// ];
+
 const DiscoverScreen = ({navigation}) => {
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
@@ -37,10 +75,32 @@ const DiscoverScreen = ({navigation}) => {
   const [error, setError] = useState('');
   const [selectedInterest, setSelectedInterest] = useState('');
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [communities, setCommunities] = useState([]);
   const {user} = useSelector(state => state.auth);
+  const [sliceIndex, setSliceIndex] = useState(6);
 
-  const interests = ['None', 'Finance', 'Science', 'Management', 'Startup'];
-
+  const interests = [
+    'Finance',
+    'Science',
+    'Management',
+    'Content',
+    'Startup',
+    'Funding',
+    'AI',
+    'Crypto',
+    'Blockchain',
+    'Technology',
+    'Banking',
+    'Pharma',
+    'Marketing',
+    'EdTech',
+    'Research',
+    'Design',
+    'Sustainablity',
+    'Growth',
+    'Leads',
+    'Strategy',
+  ];
   Geocoder.init('AIzaSyDeS8-47CWqq5QKl0NHnba5cU_Ft2_k8ww');
 
   const fetchLocationName = async (lat, long) => {
@@ -151,9 +211,56 @@ const DiscoverScreen = ({navigation}) => {
     });
   }, [nearbyUsers]);
 
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        if (user?._id) {
+          const res = await axiosInstance.get('/api/communities');
+          if (res.status === 200) {
+            setCommunities(res?.data?.data || []); // Adjust based on backend response
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching communities:', error.message);
+      }
+    };
+
+    fetchCommunities();
+  }, [user?._id]);
+
   const handleUserPress = userId => {
     navigation.navigate('UserProfile', {userId});
   };
+
+  const renderCommunityCard = community => (
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate('CommunityHome', {communityId: community._id})
+      }
+      style={{marginHorizontal: 5}}
+      key={community._id}>
+      <View style={styles.userCard}>
+        <ImageBackground
+          source={{uri: community.profilePicture}}
+          style={styles.profilePicture}
+          imageStyle={styles.profilePictureImage}>
+          <LinearGradient
+            colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
+            start={{x: 0, y: 0}}
+            end={{x: 0, y: 1}}
+            style={styles.overlay}
+          />
+          <View style={styles.overlayContent}>
+            {/* <View style={styles.distanceContainer}>
+              <Text style={styles.userDistance}>{community.distance} m</Text>
+            </View> */}
+            <Text style={styles.userName}>{community.name}</Text>
+            <Text style={styles.userLocation}>{community.location}</Text>
+          </View>
+        </ImageBackground>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <ScrollView
@@ -163,6 +270,10 @@ const DiscoverScreen = ({navigation}) => {
       }>
       {/* <StatusBar backgroundColor="white" barStyle="dark-content" /> */}
       <View style={styles.locationNameContainer}>
+        <Image
+          style={{height: 15, width: 15}}
+          source={require('../assets/icons/pin.png')}
+        />
         <Text style={styles.locationNameText}>{locationName}</Text>
       </View>
       <View
@@ -234,19 +345,42 @@ const DiscoverScreen = ({navigation}) => {
                   </View>
                 </TouchableOpacity>
               ))
-          : !loading && <Text style={styles.noUsersText}>No users found</Text>}
+          : !loading && (
+              <View
+                style={{
+                  paddingHorizontal: 10,
+                  alignSelf: 'center',
+                }}>
+                <Image source={require('../assets/not-found.png')} />
+                <Text style={styles.noUsersText}>No users found</Text>
+              </View>
+            )}
       </ScrollView>
       <View
         style={{
+          flexDirection: 'row',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           margin: 10,
         }}>
         <Text style={styles.title}>Interest</Text>
+        <TouchableOpacity onPress={() => setSliceIndex(interests.length)}>
+          <Text style={{color: '#DD88CF'}}>View all</Text>
+        </TouchableOpacity>
       </View>
       <ScrollView
-        style={{height: 70}}
+        style={{height: 70, width: 400}}
         horizontal
         showsHorizontalScrollIndicator={false}>
-        {interests.map(interest => (
+        {selectedInterest && (
+          <TouchableOpacity
+            onPress={() => setSelectedInterest('')}
+            style={[styles.interestButton, {borderColor: 'red'}]}>
+            <Text style={[styles.interestText]}>X</Text>
+          </TouchableOpacity>
+        )}
+        {interests.slice(0, sliceIndex).map(interest => (
           <TouchableOpacity
             key={interest}
             onPress={() =>
@@ -266,6 +400,36 @@ const DiscoverScreen = ({navigation}) => {
             </Text>
           </TouchableOpacity>
         ))}
+      </ScrollView>
+      <View
+        style={{
+          flexDirection: 'row',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          margin: 10,
+        }}>
+        <Text style={styles.title}>Community</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Communities')}>
+          <Text style={{color: '#DD88CF'}}>View all</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.horizontalScroll}>
+        {communities?.length ? (
+          communities.map(community => renderCommunityCard(community))
+        ) : (
+          <View
+            style={{
+              paddingHorizontal: 10,
+              alignSelf: 'center',
+            }}>
+            <Image source={require('../assets/not-found.png')} />
+            <Text style={styles.noUsersText}>No communities found</Text>
+          </View>
+        )}
       </ScrollView>
       <View
         style={{
@@ -323,10 +487,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
   },
   locationNameText: {
     color: '#22172A',
-    fontSize: 12,
+    fontSize: 13,
   },
   title: {
     fontSize: 24,
@@ -387,6 +554,7 @@ const styles = StyleSheet.create({
     width: 140, // Width of the card
     height: 200, // Height of the card
     marginStart: 3,
+    marginHorizontal: 3,
   },
   profilePicture: {
     width: '100%',
@@ -432,7 +600,7 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   noUsersText: {
-    color: 'black',
+    color: 'gray',
     textAlign: 'center',
   },
   customMarker: {

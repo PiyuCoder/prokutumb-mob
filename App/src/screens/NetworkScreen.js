@@ -29,7 +29,7 @@ const NetworkScreen = () => {
     const fetchMessages = async () => {
       const res = await axiosInstance.get(`/api/interactions/${user?._id}`);
       setMessages(res?.data);
-      console.log('Response chats', res?.data);
+      // console.log('Response chats', res?.data);
     };
     fetchMessages();
   }, [user?._id]);
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     height: 25,
   },
   messageContainer: {
-    marginVertical: 5,
+    marginVertical: 15,
     padding: 10,
     borderRadius: 10,
     flexDirection: 'column', // Stack the messages vertically
@@ -410,6 +410,7 @@ const styles = StyleSheet.create({
 
   messageText: {
     color: 'black',
+    marginVertical: 20,
   },
 
   timeText: {

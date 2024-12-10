@@ -32,6 +32,8 @@ import SettingScreen from './src/screens/SettingScreen';
 import EditProfile from './src/screens/EditProfile';
 import ConnectionsScreen from './src/screens/ConnectionsScreen';
 import Notifications from './src/screens/Notifications';
+import Communities from './src/screens/Communities';
+import CommunityHomeScreen from './src/screens/CommunityHomeScreen';
 
 const Stack = createStackNavigator();
 const navigationRef = React.createRef();
@@ -244,6 +246,16 @@ export default function App() {
             <Stack.Screen
               name="Notifications"
               component={Notifications}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Communities"
+              component={Communities}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CommunityHome"
+              component={CommunityHomeScreen}
               options={{headerShown: false}}
             />
           </Stack.Navigator>

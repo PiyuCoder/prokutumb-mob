@@ -57,11 +57,12 @@ const users = [
   },
 ];
 
-const MatchScreen = () => {
+const MatchScreen = ({route}) => {
   const navigation = useNavigation();
   const [topNetworkers, setTopNetworkers] = useState([]);
   const [peopleYouMayKnow, setPeopleYouMayKnow] = useState([]);
   const {user} = useSelector(state => state.auth);
+  const [accessToken, setAccessToken] = useState('');
 
   useEffect(() => {
     const fetchTopNetworkers = async () => {
@@ -148,7 +149,7 @@ const MatchScreen = () => {
           </TouchableOpacity> */}
         </View>
       </View>
-      <LinkedInAuth />
+      {/* <LinkedInAuth /> */}
       {/* Section 1: Top Networkers of the Week */}
       <Text style={styles.sectionTitle}>Top Networkers of the Week</Text>
       <ScrollView
@@ -158,7 +159,14 @@ const MatchScreen = () => {
         {topNetworkers?.length ? (
           topNetworkers?.map(user => renderUserCard(user))
         ) : (
-          <Text>No users found</Text>
+          <View
+            style={{
+              paddingHorizontal: 10,
+              alignSelf: 'center',
+            }}>
+            <Image source={require('../assets/not-found.png')} />
+            <Text style={styles.noUsersText}>No users found</Text>
+          </View>
         )}
       </ScrollView>
 
@@ -171,7 +179,14 @@ const MatchScreen = () => {
         {peopleYouMayKnow?.length ? (
           peopleYouMayKnow?.map(user => renderUserCard(user))
         ) : (
-          <Text>No users found</Text>
+          <View
+            style={{
+              paddingHorizontal: 10,
+              alignSelf: 'center',
+            }}>
+            <Image source={require('../assets/not-found.png')} />
+            <Text style={styles.noUsersText}>No users found</Text>
+          </View>
         )}
       </ScrollView>
 
@@ -184,7 +199,14 @@ const MatchScreen = () => {
         {users?.length ? (
           users.map(user => renderUserCard(user))
         ) : (
-          <Text>No users found</Text>
+          <View
+            style={{
+              paddingHorizontal: 10,
+              alignSelf: 'center',
+            }}>
+            <Image source={require('../assets/not-found.png')} />
+            <Text style={styles.noUsersText}>No users found</Text>
+          </View>
         )}
       </ScrollView>
     </ScrollView>
@@ -227,6 +249,10 @@ const styles = StyleSheet.create({
   horizontalScroll: {
     paddingHorizontal: 10,
     minHeight: 150,
+  },
+  noUsersText: {
+    color: 'gray',
+    textAlign: 'center',
   },
   userCard: {
     position: 'relative',

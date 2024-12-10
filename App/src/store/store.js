@@ -4,18 +4,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {combineReducers} from 'redux';
 import postsReducer from './slices/postSlice';
 import authReducer from './slices/authSlice';
+import commReducer from './slices/commPostSlice';
 
 // Persist Config
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth', 'posts'],
+  whitelist: ['auth', 'posts', 'commposts'],
 };
 
 // Combine reducers
 const rootReducer = combineReducers({
   auth: authReducer,
   posts: postsReducer,
+  commposts: commReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
