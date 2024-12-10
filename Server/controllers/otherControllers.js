@@ -259,7 +259,8 @@ exports.getNotifications = async (req, res) => {
     const { userId } = req.params;
 
     const notifications = await Notification.find({ recipientId: userId })
-      .sort({ timestamp: -1 }) // Sort by latest notifications
+      .populate("senderId", "name profilePicture") // Sort by latest notifications
+      .sort({ timestamp: -1 })
       .exec();
 
     res.status(200).json(notifications);

@@ -46,34 +46,6 @@ const viewIcon = require('../assets/icons/view.png');
 const shareIcon = require('../assets/icons/share.png');
 const bellIcon = require('../assets/icons/bell.png');
 
-const members = [
-  {
-    _id: '1',
-    name: 'John Doe',
-    profilePicture: 'https://via.placeholder.com/150',
-  },
-  {
-    _id: '2',
-    name: 'Tony Stark',
-    profilePicture: 'https://via.placeholder.com/150',
-  },
-  {
-    _id: '3',
-    name: 'Spiderman',
-    profilePicture: 'https://via.placeholder.com/150',
-  },
-  {
-    _id: '4',
-    name: 'Captain America',
-    profilePicture: 'https://via.placeholder.com/150',
-  },
-  {
-    _id: '5',
-    name: 'Thor',
-    profilePicture: 'https://via.placeholder.com/150',
-  },
-];
-
 const events = [
   {
     _id: '1',
@@ -102,7 +74,7 @@ const CommunityHomeScreen = ({route}) => {
   const {user} = useSelector(state => state.auth);
   const {posts} = useSelector(state => state.commposts);
   const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility
   const [actionModalVisible, setActionModalVisible] = useState(false);
@@ -111,9 +83,7 @@ const CommunityHomeScreen = ({route}) => {
   const [page, setPage] = useState(1); // Current page for pagination
   const [isFetching, setIsFetching] = useState(false); // Loading indicator
   const [isEditMode, setIsEditMode] = useState(false); // Loading indicator
-  // const [hasRequested, setHasRequested] = useState(
-  //   community?.joinRequests?.includes(user?._id) || false,
-  // );
+  const [members, setMembers] = useState([]);
   const [userPosts, setUserPosts] = useState([]);
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false);
   const [isChatBotVisible, setIsChatBotVisible] = useState(false);
@@ -140,6 +110,7 @@ const CommunityHomeScreen = ({route}) => {
           console.log(res.data.data);
           setCommunity(res?.data?.data || []); // Adjust based on backend response
           dispatch(setPosts(res?.data?.posts || []));
+          setMembers(res?.data?.data?.members);
         }
       }
     } catch (error) {
@@ -899,7 +870,7 @@ const CommunityHomeScreen = ({route}) => {
                   </TouchableOpacity>
                 )}
                 ListEmptyComponent={() => (
-                  <Text style={styles.emptyMessage}>No Members found</Text>
+                  <Text style={styles.emptyMessage}></Text>
                 )}
               />
             )}

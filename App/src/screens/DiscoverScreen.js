@@ -189,6 +189,7 @@ const DiscoverScreen = ({navigation}) => {
     setRefreshing(true);
     setLoading(true);
     fetchLocationPermission();
+    fetchCommunities();
   }, []);
 
   useEffect(() => {
@@ -211,20 +212,19 @@ const DiscoverScreen = ({navigation}) => {
     });
   }, [nearbyUsers]);
 
-  useEffect(() => {
-    const fetchCommunities = async () => {
-      try {
-        if (user?._id) {
-          const res = await axiosInstance.get('/api/communities');
-          if (res.status === 200) {
-            setCommunities(res?.data?.data || []); // Adjust based on backend response
-          }
+  const fetchCommunities = async () => {
+    try {
+      if (user?._id) {
+        const res = await axiosInstance.get('/api/communities');
+        if (res.status === 200) {
+          setCommunities(res?.data?.data || []); // Adjust based on backend response
         }
-      } catch (error) {
-        console.error('Error fetching communities:', error.message);
       }
-    };
-
+    } catch (error) {
+      console.error('Error fetching communities:', error.message);
+    }
+  };
+  useEffect(() => {
     fetchCommunities();
   }, [user?._id]);
 

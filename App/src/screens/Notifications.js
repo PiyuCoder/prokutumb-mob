@@ -1,9 +1,10 @@
 import React, {useState, useEffect} from 'react';
 import {useSelector} from 'react-redux';
 import {axiosInstance} from '../api/axios';
-import {Text, TouchableOpacity, View, Button} from 'react-native';
+import {Text, TouchableOpacity, View, Button, StyleSheet} from 'react-native';
+import ProfilePicture from '../components/ProfilePicture';
 
-const Notifications = () => {
+const Notifications = ({navigation}) => {
   const userId = useSelector(state => state.auth?.user?._id);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +15,7 @@ const Notifications = () => {
         const response = await axiosInstance.get(
           `/api/notifications/${userId}`,
         );
+        console.log(response.data);
         setNotifications(response.data);
       } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -98,68 +100,58 @@ const Notifications = () => {
     );
 
   return (
-    <View style={{padding: 15, backgroundColor: '#f8f9fa', flex: 1}}>
-      <Text style={{fontWeight: 'bold', fontSize: 24, marginBottom: 15}}>
-        Notifications
-      </Text>
+    <View style={styles.container}>
+      <Text style={styles.header}>Notifications</Text>
       {notifications?.length === 0 ? (
-        <Text style={{textAlign: 'center', color: '#6c757d'}}>
-          No notifications
-        </Text>
+        <Text style={styles.noNotificationsText}>No notifications</Text>
       ) : (
         <View>
           {notifications.map(notification => (
-            <View
+            <TouchableOpacity
               key={notification._id}
-              style={{
-                backgroundColor:
-                  notification.status === 'unread' ? '#e9ecef' : '#fff',
-                padding: 15,
-                marginBottom: 10,
-                borderRadius: 10,
-                shadowColor: '#000',
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.1,
-                shadowRadius: 5,
-                elevation: 3,
-              }}>
-              <Text style={{fontSize: 16, marginBottom: 10}}>
-                {notification?.message}
-              </Text>
-              {notification.type === 'join request' &&
-                notification.status !== 'read' && (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}>
-                    <TouchableOpacity
-                      onPress={() => handleAccept(notification)}
-                      style={{
-                        backgroundColor: '#28a745',
-                        paddingVertical: 8,
-                        paddingHorizontal: 20,
-                        borderRadius: 5,
-                      }}>
-                      <Text style={{color: '#fff', fontWeight: 'bold'}}>
-                        Accept
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDecline(notification._id)}
-                      style={{
-                        backgroundColor: '#dc3545',
-                        paddingVertical: 8,
-                        paddingHorizontal: 20,
-                        borderRadius: 5,
-                      }}>
-                      <Text style={{color: '#fff', fontWeight: 'bold'}}>
-                        Decline
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-            </View>
+              onPress={() =>
+                notification.type === 'join request' &&
+                navigation.navigate('UserProfile', {
+                  userId: notification.senderId._id,
+                })
+              }>
+              <View
+                style={[
+                  styles.notificationCard,
+                  notification.status === 'unread' && styles.unreadNotification,
+                ]}>
+                <ProfilePicture
+                  profilePictureUri={notification.senderId?.profilePicture}
+                  width={40}
+                  height={40}
+                  borderRadius={20}
+                  marginRight={10}
+                />
+                <View style={styles.notificationContent}>
+                  <Text style={styles.notificationText}>
+                    {notification.message}
+                  </Text>
+                  {/* <Text style={styles.timestamp}>
+                    {new Date(notification.timestamp).toLocaleString()}
+                  </Text> */}
+                  {notification.type === 'join request' &&
+                    notification.status === 'unread' && (
+                      <View style={styles.actionButtons}>
+                        <TouchableOpacity
+                          onPress={() => handleAccept(notification)}
+                          style={styles.acceptButton}>
+                          <Text style={styles.acceptButtonText}>Accept</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => handleDecline(notification._id)}
+                          style={styles.declineButton}>
+                          <Text style={styles.declineButtonText}>Decline</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                </View>
+              </View>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -167,4 +159,76 @@ const Notifications = () => {
   );
 };
 
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#f8f9fa',
+    flex: 1,
+  },
+  header: {
+    fontWeight: 'bold',
+    fontSize: 24,
+    margin: 15,
+    color: 'black',
+  },
+  noNotificationsText: {
+    textAlign: 'center',
+    color: '#6c757d',
+  },
+  notificationCard: {
+    padding: 15,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#EDF3FF',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  unreadNotification: {
+    backgroundColor: '#EDF3FF',
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationText: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: 'black',
+  },
+  timestamp: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginBottom: 10,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 10,
+  },
+  acceptButton: {
+    backgroundColor: '#2E70E8',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  acceptButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  declineButton: {
+    backgroundColor: 'white',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#475569',
+  },
+  declineButtonText: {
+    color: '#475569',
+    fontWeight: 'bold',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 export default Notifications;

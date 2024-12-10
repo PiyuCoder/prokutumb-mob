@@ -24,10 +24,9 @@ exports.fetchCommunity = async (req, res) => {
   try {
     const { communityId } = req.params;
 
-    const community = await Communitymob.findById(communityId).populate(
-      "createdBy",
-      "name profilePicture"
-    ); // Populates creator details if needed
+    const community = await Communitymob.findById(communityId)
+      .populate("createdBy", "name profilePicture")
+      .populate("members", "name profilePicture");
 
     const filter = communityId ? { community: communityId } : {};
     const posts = await CommPost.find(filter)
@@ -35,11 +34,6 @@ exports.fetchCommunity = async (req, res) => {
       .populate("community", "name")
       .sort({ createdAt: -1 }); // Sort by newest first
 
-    // res.status(200).json({
-    //   success: true,
-    //   message: "Posts fetched successfully",
-    //   posts,
-    // });
     res.status(200).json({ success: true, data: community, posts });
   } catch (error) {
     res.status(500).json({
@@ -222,7 +216,7 @@ exports.acceptRequest = async (req, res) => {
     const notification = await NotificationMob.findOneAndUpdate(
       { senderId, type: "join request", recipientId: community.createdBy },
       { status: "read" }
-    );
+    ).populate("senderId", "name profilePicture");
 
     return res.status(200).json({
       success: true,
