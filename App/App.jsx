@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Provider} from 'react-redux';
 import store, {persistor} from './src/store/store';
 import {createStackNavigator} from '@react-navigation/stack';
+// import {createDrawerNavigator} from '@react-navigation/drawer';
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -34,8 +35,14 @@ import ConnectionsScreen from './src/screens/ConnectionsScreen';
 import Notifications from './src/screens/Notifications';
 import Communities from './src/screens/Communities';
 import CommunityHomeScreen from './src/screens/CommunityHomeScreen';
+import EventScreen from './src/screens/EventScreen';
+import ShareScreen from './src/screens/ShareScreen';
+import CreateCommunity from './src/screens/CreateCommunity';
+import CreateEvent from './src/screens/CreateEvent';
+import SuccessCreation from './src/components/SuccessCreation';
 
 const Stack = createStackNavigator();
+// const Drawer = createDrawerNavigator();
 const navigationRef = React.createRef();
 const linking = {
   prefixes: ['prokutumb://'],
@@ -256,6 +263,31 @@ export default function App() {
             <Stack.Screen
               name="CommunityHome"
               component={CommunityHomeScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="EventHome"
+              component={EventScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="ShareScreen"
+              component={ShareScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateCommunity"
+              component={CreateCommunity}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateEvent"
+              component={CreateEvent}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="SuccessCreation"
+              component={SuccessCreation}
               options={{headerShown: false}}
             />
           </Stack.Navigator>

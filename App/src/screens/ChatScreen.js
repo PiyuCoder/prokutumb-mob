@@ -13,11 +13,7 @@ import {useSelector} from 'react-redux';
 import socket from '../socket';
 import {axiosInstance} from '../api/axios';
 import ProfilePicture from '../components/ProfilePicture';
-
-const backIcon = require('../assets/icons/black-back.png');
-const callIcon = require('../assets/icons/telephone.png');
-const videoIcon = require('../assets/icons/cam-recorder.png');
-const infoIcon = require('../assets/icons/info.png');
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ChatScreen = ({route, navigation}) => {
   const {name, userId, profilePicture} = route.params;
@@ -113,7 +109,7 @@ const ChatScreen = ({route, navigation}) => {
           <TouchableOpacity
             style={{marginRight: 8}}
             onPress={() => navigation.navigate('Message')}>
-            <Image source={backIcon} style={styles.icon} />
+            <Ionicons name="chevron-back-outline" size={30} color="black" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate('UserProfile', {userId})}

@@ -7,53 +7,49 @@ import {
   ImageBackground,
   StyleSheet,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {axiosInstance} from '../api/axios';
 import {useSelector} from 'react-redux';
 import SearchPeople from '../components/SearchPeople';
-import LinkedInAuth from '../components/LinkedInAuth';
+import RenderUserCard from '../components/RenderUserCard';
+import AntDesignIcons from 'react-native-vector-icons/AntDesign';
 
-const lensIcon = require('../assets/icons/lens.png');
-const filterIcon = require('../assets/icons/filter.png');
-const backIcon = require('../assets/icons/black-back.png');
-
-const users = [
+const people = [
   {
     _id: '1',
     name: 'John Doe',
     profilePicture: 'https://via.placeholder.com/150',
     distance: 120,
-    location: 'New York',
+    designation: 'UI Developer',
   },
   {
     _id: '2',
     name: 'Tony Stark',
     profilePicture: 'https://via.placeholder.com/150',
     distance: 120,
-    location: 'California',
+    designation: 'MERN Developer',
   },
   {
     _id: '3',
     name: 'Spiderman',
     profilePicture: 'https://via.placeholder.com/150',
     distance: 120,
-    location: 'New York',
+    designation: 'React Developer',
   },
   {
     _id: '4',
     name: 'Captain America',
     profilePicture: 'https://via.placeholder.com/150',
     distance: 120,
-    location: 'Geogia',
+    designation: 'Product Manager',
   },
   {
     _id: '5',
     name: 'Thor',
     profilePicture: 'https://via.placeholder.com/150',
     distance: 120,
-    location: 'New Jersey',
+    designation: 'Business Analyst',
   },
 ];
 
@@ -129,7 +125,7 @@ const MatchScreen = ({route}) => {
           margin: 10,
         }}>
         <TouchableOpacity onPress={handleBackPress} style={styles.iconButtons}>
-          <Image source={backIcon} style={styles.icon} />
+          <AntDesignIcons name="arrowleft" size={30} color="#585C60" />
         </TouchableOpacity>
         <Text style={styles.title}>Connect</Text>
         <View
@@ -149,66 +145,11 @@ const MatchScreen = ({route}) => {
           </TouchableOpacity> */}
         </View>
       </View>
-      {/* <LinkedInAuth /> */}
-      {/* Section 1: Top Networkers of the Week */}
-      <Text style={styles.sectionTitle}>Top Networkers of the Week</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.horizontalScroll}>
-        {topNetworkers?.length ? (
-          topNetworkers?.map(user => renderUserCard(user))
-        ) : (
-          <View
-            style={{
-              paddingHorizontal: 10,
-              alignSelf: 'center',
-            }}>
-            <Image source={require('../assets/not-found.png')} />
-            <Text style={styles.noUsersText}>No users found</Text>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Section 2: People You May Know */}
-      <Text style={styles.sectionTitle}>People You May Know</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.horizontalScroll}>
-        {peopleYouMayKnow?.length ? (
-          peopleYouMayKnow?.map(user => renderUserCard(user))
-        ) : (
-          <View
-            style={{
-              paddingHorizontal: 10,
-              alignSelf: 'center',
-            }}>
-            <Image source={require('../assets/not-found.png')} />
-            <Text style={styles.noUsersText}>No users found</Text>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Section 3: People You Are Searching For */}
-      <Text style={styles.sectionTitle}>People You Are Searching For</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.horizontalScroll}>
-        {users?.length ? (
-          users.map(user => renderUserCard(user))
-        ) : (
-          <View
-            style={{
-              paddingHorizontal: 10,
-              alignSelf: 'center',
-            }}>
-            <Image source={require('../assets/not-found.png')} />
-            <Text style={styles.noUsersText}>No users found</Text>
-          </View>
-        )}
-      </ScrollView>
+      <View style={styles.cardsContainer}>
+        {people?.map(item => (
+          <RenderUserCard key={item._id} item={item} />
+        ))}
+      </View>
     </ScrollView>
   );
 };
@@ -221,6 +162,13 @@ const styles = StyleSheet.create({
   icon: {
     width: 30,
     height: 30,
+  },
+  cardsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    marginTop: 10,
   },
   title: {
     fontSize: 24,

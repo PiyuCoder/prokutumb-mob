@@ -27,13 +27,13 @@ import {
   likePostUserScreen,
 } from '../store/slices/postSlice';
 import {removeFriendRequest} from '../store/slices/userSlice';
-
-const backIcon = require('../assets/icons/back.png');
-const likeIcon = require('../assets/icons/like.png');
-const likedIcon = require('../assets/icons/liked.png');
-const commentIcon = require('../assets/icons/comment.png');
-const viewIcon = require('../assets/icons/view.png');
-const shareIcon = require('../assets/icons/share.png');
+import Icons from 'react-native-vector-icons/Ionicons';
+import AntDesignIcons from 'react-native-vector-icons/AntDesign';
+import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
+import SimpleIcon from 'react-native-vector-icons/SimpleLineIcons';
 
 const UserProfile = ({route}) => {
   const {userId} = route.params;
@@ -360,18 +360,17 @@ const UserProfile = ({route}) => {
         <TouchableOpacity
           onPress={() => handleLike(item)}
           style={styles.actionButton}>
-          <Image
-            source={
-              item?.likes?.includes(currentUser?._id) ? likedIcon : likeIcon
-            }
-            style={styles.actionIcon}
-          />
+          {item?.likes?.includes(user?._id) ? (
+            <Icon name="heart" size={24} color="red" />
+          ) : (
+            <Icon name="heart-outline" size={24} color="#7B7B7B" />
+          )}
           <Text style={styles.actionText}>{item.likes.length} </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => toggleCommentSection(item._id)}
           style={styles.actionButton}>
-          <Image source={commentIcon} style={styles.actionIcon} />
+          <Icon name="chatbubble-outline" size={24} color="#7B7B7B" />
           <Text style={styles.actionText}>{item.comments.length}</Text>
         </TouchableOpacity>
         {/* <TouchableOpacity style={styles.actionButton}>
@@ -381,7 +380,7 @@ const UserProfile = ({route}) => {
         <TouchableOpacity
           onPress={() => handleSharePost(item)}
           style={styles.actionButton}>
-          <Image source={shareIcon} style={styles.actionIcon} />
+          <Icon name="arrow-redo-outline" size={24} color="#7B7B7B" />
           <Text style={styles.actionText}>{item.shares}</Text>
         </TouchableOpacity>
       </View>
@@ -434,165 +433,155 @@ const UserProfile = ({route}) => {
       {loading && <Loader isLoading={loading} />}
       {/* Profile Section */}
       <View style={styles.profileCard}>
-        <View style={styles.profileIconContainer}>
-          <TouchableOpacity
-            onPress={handleBackPress}
-            className="border h-8 w-8 border-white  rounded-full p-2 flex items-center justify-center">
-            <Image style={{height: 15, width: 15}} source={backIcon} />
-          </TouchableOpacity>
-          {connectionStatus === 'Connect' && (
-            <TouchableOpacity
-              onPress={handleConnect}
-              className="bg-[#242760] rounded-full p-2 px-4 flex items-center justify-center">
-              <Text className="text-white font-bold">{connectionStatus}</Text>
-            </TouchableOpacity>
-          )}
-          {currentUser.friendRequests?.some(
-            request => request.fromUser === userId,
-          ) && (
-            <View className="bg-[#4B164C] rounded-full p-2 px-4 flex flex-row items-center justify-center">
-              <Progress.Circle
-                size={30}
-                progress={0.7}
-                showsText
-                thickness={3}
-                textStyle={{color: 'white', fontSize: 8}}
-                color="#242760"
-                unfilledColor="#dd88cf62"
-                borderColor="#4B164C"
-              />
-              <Text className="text-white font-bold ml-2 ">Match</Text>
-            </View>
-          )}
-
-          {connectionStatus === 'Pending' && (
-            <View className="bg-pink-300 rounded-full p-2 px-4 flex items-center justify-center">
-              <Text className="text-white font-bold">Pending</Text>
-            </View>
-          )}
-        </View>
-        <View style={{width: '100%', position: 'relative'}}>
-          <ImageBackground
-            style={styles.coverPicture}
-            source={{
-              uri:
-                user?.coverPicture ||
-                'https://img.freepik.com/free-vector/gradient-network-connection-background_23-2148880712.jpg',
-            }}
-          />
-
+        <View
+          style={{
+            width: '100%',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 15,
+            borderBottomWidth: 1,
+            borderColor: '#E0DFDC',
+          }}>
           <View
             style={{
-              position: 'absolute',
-              alignSelf: 'center',
-              bottom: -90,
-              width: 150,
-              height: 150,
-              borderRadius: 75,
-              backgroundColor: '#FDF7FD',
-              padding: 5,
+              flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'space-around',
+              // gap: 10,
             }}>
-            <View
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <AntDesignIcons name="arrowleft" size={30} color="#585C60" />
+            </TouchableOpacity>
+            <TextInput
               style={{
-                width: 100,
-                height: 100,
-                position: 'absolute',
-                bottom: 60,
-                left: -85,
-                zIndex: -2,
-                transform: [{rotateZ: '43deg'}],
-                alignSelf: 'center',
-                borderColor: '#FDF7FD',
-                borderEndEndRadius: 80,
-                borderRightWidth: 20,
-                borderBottomWidth: 0,
+                color: 'black',
+                fontSize: 20,
+                borderBottomWidth: 1,
+                width: '80%',
               }}
             />
-
-            <View
-              style={{
-                width: 50,
-                height: 50,
-                position: 'absolute',
-                bottom: 72,
-                left: -45,
-                zIndex: -2,
-                transform: [{rotateZ: '-18deg'}],
-                alignSelf: 'center',
-                borderColor: '#FDF7FD',
-                borderEndEndRadius: 40,
-                borderRightWidth: 0,
-                borderBottomWidth: 20,
-              }}
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+            <Icons name="settings-sharp" size={30} color="black" />
+          </TouchableOpacity>
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            width: '100%',
+            padding: 5,
+            paddingTop: 14,
+            justifyContent: 'space-between',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 20,
+              // justifyContent: 'space-between',
+            }}>
+            <ProfilePicture
+              profilePictureUri={user.profilePicture}
+              width={120}
+              height={120}
+              borderRadius={60}
+              borderColor="#242760"
             />
-
-            <View
-              style={{
-                width: 100,
-                height: 100,
-                position: 'absolute',
-                bottom: 60,
-                right: -85,
-                zIndex: -2,
-                transform: [{rotateZ: '-43deg'}],
-                alignSelf: 'center',
-                borderColor: '#FDF7FD',
-                borderBottomStartRadius: 80,
-                borderLeftWidth: 20,
-                borderBottomWidth: 0,
-              }}
-            />
-            <View
-              style={{
-                width: 50,
-                height: 50,
-                position: 'absolute',
-                bottom: 70,
-                right: -50,
-                zIndex: -2,
-                transform: [{rotateZ: '22deg'}],
-                alignSelf: 'center',
-                borderColor: '#FDF7FD',
-                borderBottomStartRadius: 20,
-                borderLeftWidth: 0,
-                borderBottomWidth: 20,
-              }}
-            />
-            <View style={{zIndex: 4}}>
-              <ProfilePicture
-                profilePictureUri={user.profilePicture}
-                width={120}
-                height={120}
-                borderRadius={60}
-                borderColor="#242760"
-              />
+            <View style={{marginRight: 10}}>
+              <Text style={styles.userName}>{user.name}</Text>
+              <Text style={styles.userLocation}>
+                {user.location?.state || 'State'},{' '}
+                {user.location?.country || 'Country'}
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 7,
+                  marginTop: 8,
+                }}>
+                <Icons name="logo-linkedin" size={25} color="#0A66C2" />
+                <AntDesignIcons name="github" size={25} color="#24292F" />
+                <FontAwesome name="reddit" size={25} color="#FF4500" />
+                <FontAwesome name="whatsapp" size={25} color="#25D366" />
+              </View>
             </View>
           </View>
-          {/* <Image
-            source={{uri: user.profilePicture}}
-            style={styles.profilePicture}
-          /> */}
         </View>
       </View>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-around',
+          marginTop: 20,
+        }}>
+        <View>
+          <Text
+            style={{color: '#A274FF', textAlign: 'center', fontWeight: '500'}}>
+            125
+          </Text>
+          <Text style={{color: 'black', textAlign: 'center'}}>Connections</Text>
+        </View>
+        <View>
+          <Text
+            style={{color: '#A274FF', textAlign: 'center', fontWeight: '500'}}>
+            125
+          </Text>
+          <Text style={{color: 'black', textAlign: 'center'}}>Communities</Text>
+        </View>
+        <View>
+          <Text
+            style={{color: '#A274FF', textAlign: 'center', fontWeight: '500'}}>
+            125
+          </Text>
+          <Text style={{color: 'black', textAlign: 'center'}}>Events Done</Text>
+        </View>
+      </View>
+      <View style={styles.earthIconWrapper}>
+        <ImageBackground
+          style={styles.imageBackground}
+          imageStyle={styles.imageBackgroundImage}
+          source={require('../assets/majlis-earth.png')}
+        />
+      </View>
+      <Text style={styles.modalTitle}>MajlisAI</Text>
       <View style={{marginTop: 90}}>
-        <Text style={styles.userName}>{user.name}</Text>
-        <Text style={styles.userLocation}>
-          {user.location?.state || 'State'},{' '}
-          {user.location?.country || 'Country'}
-        </Text>
         {connectionStatus === 'Accept/Decline' && (
-          <View className="w-80 flex items-center mx-auto flex-row justify-around z-10 mt-5">
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 10,
+              gap: 15,
+              paddingHorizontal: 30,
+            }}>
             <TouchableOpacity
               onPress={handleAccept}
-              className="bg-[#DD88CF] rounded-full p-3 px-5 flex items-center justify-center">
-              <Text className="text-white font-bold">Accept</Text>
+              style={{
+                backgroundColor: '#A274FF',
+                padding: 13,
+                borderRadius: 30,
+                flex: 1,
+              }}>
+              <Text className="text-white font-bold text-center">Accept</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleDecline}
-              className="bg-[#855BFD] rounded-full p-3 px-5 flex items-center justify-center">
-              <Text className="text-white font-bold">Decline</Text>
+              style={{
+                backgroundColor: 'white',
+                padding: 12,
+                borderRadius: 30,
+                borderWidth: 1.4,
+                borderColor: '#585C60',
+                flex: 1,
+              }}>
+              <Text
+                style={{
+                  color: '#585C60',
+                  textAlign: 'center',
+                  fontWeight: '500',
+                }}>
+                Decline
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -605,23 +594,110 @@ const UserProfile = ({route}) => {
                 profilePicture: user.profilePicture,
               })
             }
-            className="bg-[#242760] z-10 w-48 rounded-full p-2 px-4 mx-auto flex items-center justify-center mt-4">
-            <Text className="text-white font-bold">Message</Text>
+            style={{
+              backgroundColor: '#A274FF',
+              padding: 13,
+              borderRadius: 30,
+              flex: 1,
+              width: 200,
+              alignSelf: 'center',
+            }}>
+            <Text className="text-white font-bold text-center">Message</Text>
           </TouchableOpacity>
+        )}
+        {connectionStatus === 'Connect' && (
+          <TouchableOpacity
+            onPress={handleConnect}
+            style={{
+              backgroundColor: '#A274FF',
+              padding: 13,
+              borderRadius: 30,
+              flex: 1,
+              width: 200,
+              alignSelf: 'center',
+            }}>
+            <Text className="text-white font-bold text-center">
+              {connectionStatus}
+            </Text>
+          </TouchableOpacity>
+        )}
+        {connectionStatus === 'Pending' && (
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 12,
+              borderRadius: 30,
+              borderWidth: 1.4,
+              borderColor: '#585C60',
+              flex: 1,
+              width: 200,
+              alignSelf: 'center',
+            }}>
+            <Text
+              style={{
+                color: '#585C60',
+                textAlign: 'center',
+                fontWeight: '500',
+              }}>
+              Pending
+            </Text>
+          </View>
         )}
       </View>
       <View style={styles.mainCard}>
         {/* About Section */}
-        <View style={styles.titleSection}>
+        {/* <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>About</Text>
         </View>
         <View style={styles.card}>
           <Text style={styles.sectionText}>{user.bio}</Text>
-        </View>
+        </View> */}
 
         {/* Experience Section */}
         <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>Experience</Text>
+          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
+            {/* <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+              <AntDesignIcons name="plus" size={21} color="#A274FF" />
+            </TouchableOpacity> */}
+            {/* <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+              <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
+            </TouchableOpacity> */}
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          {user.experience?.map((exp, index) => (
+            <View key={index} style={styles.experienceItem}>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <Text style={styles.experienceCompany}>{exp.company}</Text>
+                <Text style={styles.experienceDuration}>
+                  {formatDate(exp.startDate)}-
+                  {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                </Text>
+              </View>
+              <Text style={styles.experienceTitle}>{exp.role}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Education Section */}
+        <View style={styles.titleSection}>
+          <Text style={styles.sectionTitle}>Education</Text>
+          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
+            {/* <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+              <AntDesignIcons name="plus" size={21} color="#A274FF" />
+            </TouchableOpacity> */}
+            {/* <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+              <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
+            </TouchableOpacity> */}
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -646,7 +722,7 @@ const UserProfile = ({route}) => {
         </View>
 
         {/* Interest Section */}
-        <View style={styles.titleSection}>
+        {/* <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>Interests</Text>
         </View>
         <View
@@ -668,10 +744,10 @@ const UserProfile = ({route}) => {
               <Text style={styles.sectionText}>{interest}</Text>
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* On the Web Section */}
-        <View style={styles.titleSection}>
+        {/* <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>On the Web</Text>
         </View>
         <View style={styles.card}>
@@ -696,7 +772,7 @@ const UserProfile = ({route}) => {
           renderItem={renderPost}
           contentContainerStyle={{paddingBottom: 65}}
           ListEmptyComponent={<Text>No Posts yet</Text>}
-        />
+        /> */}
       </View>
     </ScrollView>
   );
@@ -705,13 +781,10 @@ const UserProfile = ({route}) => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#FDF7FD',
+    backgroundColor: 'white',
   },
   mainCard: {
-    backgroundColor: '#FDF7FD',
-    padding: 20,
-
-    // marginTop: -50,
+    backgroundColor: 'white',
     zIndex: 2,
   },
   profileCard: {
@@ -724,11 +797,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     resizeMode: 'cover',
   },
-  // profilePicture: {
-  //   width: '100%',
-  //   height: 500,
-  //   alignSelf: 'center',
-  // },
+  profilePicture: {
+    width: '100%',
+    height: 500,
+    alignSelf: 'center',
+  },
   overlay: {
     position: 'absolute',
     width: '100%',
@@ -751,52 +824,48 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   userName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#242760',
+    fontSize: 25,
+    fontWeight: '500',
+    textAlign: 'left',
+    color: 'black',
     zIndex: 2,
   },
   userLocation: {
-    fontSize: 12,
-    textAlign: 'center',
-    color: '#544C4C',
+    fontSize: 17,
+    textAlign: 'left',
+    color: '#585C60',
     marginTop: 5,
     zIndex: 2,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
+    // paddingVertical: 20,
     borderRadius: 10,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
   },
   titleSection: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingEnd: 5,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    marginBottom: 10,
+    padding: 15,
+    // marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#242760',
+    marginTop: 10,
+    color: 'black',
   },
   sectionText: {
     fontSize: 14,
     color: 'black',
   },
   experienceItem: {
-    marginBottom: 10,
+    // marginBottom: 10,
+    borderBottomWidth: 1,
+    padding: 20,
+    borderColor: '#E0DFDC',
   },
   modalContainer: {
     flex: 1,
@@ -822,93 +891,67 @@ const styles = StyleSheet.create({
   },
   experienceCompany: {
     color: 'black',
-    fontWeight: 'bold',
+    fontWeight: '500',
+    fontSize: 16,
   },
   experienceDuration: {
     color: 'black',
   },
-  postActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 10,
+  input: {
+    // borderWidth: 1,
+    // borderColor: '#DDD',
+    paddingHorizontal: 10,
+    // height: 200,
+    backgroundColor: 'white',
+    marginBottom: 15,
+    borderRadius: 5,
+    color: 'black',
   },
-  actionButton: {
-    flexDirection: 'row',
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  button: {
+    padding: 10,
+    backgroundColor: '#007BFF',
+    borderRadius: 5,
+    marginBottom: 20,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: 40,
   },
-  actionIcon: {
-    width: 22,
-    height: 22,
-    objectFit: 'cover',
+  uploadButton: {
+    padding: 10,
+    backgroundColor: '#28A745',
+    borderRadius: 5,
+    alignItems: 'center',
   },
-  actionText: {
-    color: '#7B7B7B',
+  imagePreview: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
   },
-  iconButtons: {
-    position: 'relative',
-    padding: 2,
-    height: 45,
-    width: 45,
-    borderRadius: 22.5,
-    borderColor: '#4b164c5a',
-    borderWidth: 2,
-    display: 'flex',
+  earthIconWrapper: {
+    height: 70,
+    width: 70,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  commentContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0', // Light grey divider
-  },
-  commentInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignSelf: 'center',
     marginTop: 10,
   },
-  commentInput: {
-    flex: 1,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+  imageBackground: {
+    height: '100%',
+    width: '100%',
   },
-  addCommentButton: {
-    marginLeft: 10,
-    backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 8,
+  imageBackgroundImage: {
+    resizeMode: 'contain', // Ensures the entire image is visible without cropping
   },
-  addCommentText: {
-    color: '#fff',
-  },
-  commentUserName: {
+
+  modalTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#333', // Darker text color for better readability
-    fontSize: 14,
-    marginBottom: 2, // Spacing between username and content
-  },
-  commentContent: {
-    color: '#555', // Slightly lighter text for the content
-    fontSize: 13,
-    lineHeight: 18, // Better readability with line spacing
-  },
-  noCommentsText: {
+    marginBottom: 10,
     textAlign: 'center',
-    color: '#999', // Grey text for "no comments" message
-    fontSize: 14,
-    paddingVertical: 10,
-  },
-  profilePicture: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 10, // Space between image and text
+    color: '#A274FF',
   },
 });
 

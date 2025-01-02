@@ -14,10 +14,7 @@ import {useSelector} from 'react-redux';
 import socket from '../socket';
 import FriendsModal from '../components/FriendsModal';
 import ProfilePicture from '../components/ProfilePicture';
-
-const backIcon = require('../assets/icons/black-back.png');
-const chatIcon = require('../assets/icons/conversation.png');
-const settingIcon = require('../assets/icons/settings.png');
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const MessageScreen = () => {
   const [searchText, setSearchText] = useState('');
@@ -87,7 +84,7 @@ const MessageScreen = () => {
           padding: 16,
         }}>
         <TouchableOpacity onPress={() => navigation.navigate('Dashboard')}>
-          <Image source={backIcon} style={styles.icon} />
+          <Ionicons name="chevron-back-outline" size={30} color="black" />
         </TouchableOpacity>
         <Text style={{fontSize: 24, fontWeight: 'bold', color: 'black'}}>
           Direct Message

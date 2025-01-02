@@ -11,11 +11,9 @@ import {
 } from 'react-native';
 import {axiosInstance} from '../api/axios';
 import {useNavigation} from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
 
-const lensIcon = require('../assets/icons/lens.png');
-const filterIcon = require('../assets/icons/filter.png');
-
-const SearchPeople = () => {
+const SearchPeople = ({iconColor}) => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -47,7 +45,12 @@ const SearchPeople = () => {
       <TouchableOpacity
         style={styles.iconButtons}
         onPress={() => setSearchVisible(true)}>
-        <Image source={lensIcon} style={styles.icon} />
+        {/* <Image source={lensIcon} style={styles.icon} /> */}
+        <Feather
+          name="search"
+          size={25}
+          color={iconColor ? iconColor : '#A274FF'}
+        />
       </TouchableOpacity>
 
       {/* Filter Icon */}
@@ -110,11 +113,11 @@ const SearchPeople = () => {
 const styles = StyleSheet.create({
   iconButtons: {
     padding: 2,
-    height: 40,
-    width: 40,
-    borderRadius: 20,
+    height: 50,
+    width: 50,
+    borderRadius: 25,
     borderColor: '#4b164c5a',
-    borderWidth: 1,
+    borderWidth: 1.2,
     alignItems: 'center',
     justifyContent: 'center',
   },

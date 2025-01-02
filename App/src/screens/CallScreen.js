@@ -109,34 +109,34 @@ const CallScreen = ({route}) => {
 
       <View style={styles.controls}>
         <TouchableOpacity onPress={handleMuteToggle}>
-          <Image
+          {/* <Image
             source={
               isMuted
                 ? require('../assets/icons/mute-button.png')
                 : require('../assets/icons/microphone.png')
             }
             style={styles.icon}
-          />
+          /> */}
         </TouchableOpacity>
 
         {isVideo && (
           <TouchableOpacity onPress={handleVideoToggle}>
-            <Image
+            {/* <Image
               source={
                 isVideoMuted
                   ? require('../assets/icons/cam-recorder.png')
                   : require('../assets/icons/no-video.png')
               }
               style={styles.icon}
-            />
+            /> */}
           </TouchableOpacity>
         )}
 
         <TouchableOpacity onPress={endCall}>
-          <Image
+          {/* <Image
             source={require('../assets/icons/end-call-icon.png')}
             style={styles.icon}
-          />
+          /> */}
         </TouchableOpacity>
       </View>
     </View>

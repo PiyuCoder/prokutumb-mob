@@ -6,7 +6,7 @@ const Loader = ({isLoading}) => {
 
   return (
     <View style={styles.loaderContainer}>
-      <ActivityIndicator size="large" color="#DD88CF" />
+      <ActivityIndicator size="large" color="#A274FF" />
     </View>
   );
 };

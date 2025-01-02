@@ -17,6 +17,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
+    console.log("Multer test: ", file);
     const allowedTypes = /jpeg|jpg|png|gif/;
     const extname = allowedTypes.test(
       path.extname(file.originalname).toLowerCase()
@@ -48,6 +49,17 @@ module.exports = (io, userSocketMap) => {
     "/join/:communityId",
     communityController.joinCommunity(io, userSocketMap)
   );
+  router.post(
+    "/events",
+    upload.single("profilePicture"),
+    communityController.createEvent
+  );
+  router.get(
+    "/events/fetchCommEvents/:communityId",
+    communityController.fetchCommEvents
+  );
+  router.get("/events/fetchAllEvents", communityController.fetchAllEvents);
+  router.get("/events/fetchAnEvent/:eventId", communityController.fetchAnEvent);
   router.delete("/:postId", communityController.deletePost);
   router.put("/like/:postId", communityController.likePost);
   router.put("/accept/:communityId", communityController.acceptRequest);

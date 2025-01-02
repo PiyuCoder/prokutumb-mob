@@ -12,8 +12,7 @@ import {
 import {axiosInstance} from '../api/axios';
 import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
-
-const backIcon = require('../assets/icons/black-back.png');
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ConnectionsScreen = ({route}) => {
   const {userId} = route.params;
@@ -102,7 +101,7 @@ const ConnectionsScreen = ({route}) => {
           gap: 80,
         }}>
         <TouchableOpacity onPress={handleBackPress}>
-          <Image source={backIcon} style={styles.icon} />
+          <Ionicons name="chevron-back-outline" size={30} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Connections</Text>
       </View>

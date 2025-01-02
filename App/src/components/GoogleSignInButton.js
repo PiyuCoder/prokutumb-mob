@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     width: 24,
   },
   customButton: {
-    backgroundColor: '#dd88cf45', // Google's blue color
+    backgroundColor: '#A274FF45', // Google's blue color
     borderRadius: 50,
     padding: 12,
     minWidth: 250, // Increase the width for larger screens
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     // shadowOffset: {width: 0, height: 2},
     // shadowOpacity: 0.8,
     // shadowRadius: 2,
-    elevation: 5, // Shadow effect for elevation
+    // elevation: 5, // Shadow effect for elevation
     paddingRight: 50,
   },
   customButtonText: {

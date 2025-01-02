@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   Image,
   FlatList,
@@ -9,62 +8,54 @@ import {
   StatusBar,
   Modal,
   TextInput,
-  Button,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
-import LinearGradient from 'react-native-linear-gradient';
+import CommunityCard from '../components/CommunityCard';
 import SearchPeople from '../components/SearchPeople';
 import {useSelector} from 'react-redux';
 import {axiosInstance, axiosInstanceForm} from '../api/axios';
 import {launchImageLibrary} from 'react-native-image-picker';
+import AntDesignIcons from 'react-native-vector-icons/AntDesign';
+import IonIcons from 'react-native-vector-icons/Ionicons';
+import {ScrollView} from 'react-native-gesture-handler';
+import {isAction} from '@reduxjs/toolkit';
+import EventCard from '../components/EventCard';
 
-const backIcon = require('../assets/icons/black-back.png');
-const plusIcon = require('../assets/icons/plus.png');
-
-// const communities = [
+// const events = [
 //   {
 //     _id: '1',
-//     name: 'John Doe',
-//     profilePicture: 'https://via.placeholder.com/150',
-//     distance: 120,
-//     location: 'New York',
+//     name: 'Event One',
+//     profilePicture:
+//       'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdkxaQMX4NW8V5JvJ1hV1laDEmbgbPNvNEUA&s',
+//     date: '12-Jan-2025',
+//     time: '12:00 PM',
+//     location: 'Queens, New York',
+//     followers: 100,
+//     createdBy: {name: 'John Doe'},
 //   },
 //   {
 //     _id: '2',
-//     name: 'Tony Stark',
-//     profilePicture: 'https://via.placeholder.com/150',
-//     distance: 120,
-//     location: 'California',
-//   },
-//   {
-//     _id: '3',
-//     name: 'Spiderman',
-//     profilePicture: 'https://via.placeholder.com/150',
-//     distance: 120,
-//     location: 'New York',
-//   },
-//   {
-//     _id: '4',
-//     name: 'Captain America',
-//     profilePicture: 'https://via.placeholder.com/150',
-//     distance: 120,
-//     location: 'Georgia',
-//   },
-//   {
-//     _id: '5',
-//     name: 'Thor',
-//     profilePicture: 'https://via.placeholder.com/150',
-//     distance: 120,
-//     location: 'New Jersey',
+//     name: 'Event Two',
+//     profilePicture:
+//       'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdkxaQMX4NW8V5JvJ1hV1laDEmbgbPNvNEUA&s',
+//     date: '19-Jan-2025',
+//     time: '02:00 PM',
+//     location: 'Queens, New York',
+//     followers: 100,
+//     createdBy: {name: 'Alice Doe'},
 //   },
 // ];
 
-export default function Communities({navigation}) {
+export default function Communities({navigation, route}) {
   const [communities, setCommunities] = useState([]);
+  const [events, setEvents] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
-  const [communityName, setCommunityName] = useState('');
-  const [profilePic, setProfilePic] = useState('');
-  const [description, setDescription] = useState('');
+  const [isEvent, setIsEvent] = useState(
+    route.params?.screen === 'Events' ? true : false,
+  );
+  const [modalType, setModalType] = useState(null);
+  const [isActionModalVisible, setActionModalVisible] = useState(false);
+
   const {user} = useSelector(state => state.auth);
 
   useEffect(() => {
@@ -73,7 +64,7 @@ export default function Communities({navigation}) {
         if (user?._id) {
           const res = await axiosInstance.get('/api/communities');
           if (res.status === 200) {
-            setCommunities(res?.data?.data || []); // Adjust based on backend response
+            setCommunities(res?.data?.data || []);
           }
         }
       } catch (error) {
@@ -81,215 +72,197 @@ export default function Communities({navigation}) {
       }
     };
 
-    fetchCommunities();
-  }, [user?._id]);
-
-  const handleImageSelection = async () => {
-    try {
-      const result = await launchImageLibrary({
-        mediaType: 'photo',
-        maxWidth: 300,
-        maxHeight: 300,
-        quality: 0.7,
-      });
-
-      if (!result.didCancel && result.assets?.length > 0) {
-        setProfilePic(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error selecting image:', error.message);
-    }
-  };
-
-  const handleCreateCommunity = async () => {
-    if (communityName && profilePic && description) {
+    const fetchEvents = async () => {
       try {
-        const formData = new FormData();
-        formData.append('name', communityName);
-        formData.append('description', description);
-        formData.append('profilePicture', {
-          uri: profilePic,
-          type: 'image/jpeg', // Adjust if selecting different formats
-          name: 'profile.jpg',
-        });
-        formData.append('createdBy', user?._id);
-
-        const res = await axiosInstanceForm.post('/api/communities', formData);
-
-        if (res.status === 201) {
-          setCommunities([...communities, res.data.data]); // Assuming response includes new community data
-          setCommunityName('');
-          setProfilePic(null);
-          setDescription('');
-          setModalVisible(false);
+        const res = await axiosInstance.get(
+          '/api/communities/events/fetchAllEvents',
+        );
+        if (res.status === 200) {
+          setEvents(res?.data?.data || []);
         }
       } catch (error) {
-        console.error('Error creating community:', error.message);
+        console.error('Error fetching events:', error.message);
       }
-    } else {
-      alert('Please fill all fields');
-    }
-  };
+    };
 
-  // console.log(communities);
+    fetchCommunities();
+    fetchEvents();
+  }, [user?._id, isEvent]);
 
-  const renderCommunityCard = ({item: community}) => (
-    <TouchableOpacity
-      onPress={() =>
-        navigation.navigate('CommunityHome', {communityId: community._id})
-      }
-      key={community._id}
-      style={styles.cardWrapper}>
-      <View style={styles.userCard}>
-        <ImageBackground
-          source={{uri: community.profilePicture}}
-          style={styles.profilePicture}
-          imageStyle={styles.profilePictureImage}>
-          <LinearGradient
-            colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
-            start={{x: 0, y: 0}}
-            end={{x: 0, y: 1}}
-            style={styles.overlay}
-          />
-          <View style={styles.overlayContent}>
-            <Text style={styles.userName}>{community.name}</Text>
-            <Text style={styles.userLocation}>{community.location}</Text>
-          </View>
-        </ImageBackground>
-      </View>
-    </TouchableOpacity>
-  );
-  const renderTrendingCommunityCard = ({item: community}) => (
-    <TouchableOpacity
-      onPress={() =>
-        navigation.navigate('CommunityHome', {communityId: community._id})
-      }
-      key={community._id}
-      style={styles.trendingCardWrapper}>
-      <View style={styles.trendingUserCard}>
-        <ImageBackground
-          source={{uri: community.profilePicture}}
-          style={styles.profilePicture}
-          imageStyle={styles.profilePictureImage}>
-          <LinearGradient
-            colors={['#4B164C00', '#4B164C99', '#4B164CF2']}
-            start={{x: 0, y: 0}}
-            end={{x: 0, y: 1}}
-            style={styles.overlay}
-          />
-          <View style={styles.overlayContent}>
-            <Text style={styles.userName}>{community.name}</Text>
-            <Text style={styles.userLocation}>{community.location}</Text>
-          </View>
-        </ImageBackground>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderTrending = () => (
-    <FlatList
-      data={communities}
-      horizontal
-      keyExtractor={item => item._id}
-      renderItem={renderTrendingCommunityCard}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.horizontalScroll}
-      ListEmptyComponent={() => (
-        <View style={styles.noTrendingContainer}>
-          <Image source={require('../assets/not-found.png')} />
-          <Text style={styles.noUsersText}>No trending communities found</Text>
-        </View>
-      )}
-    />
-  );
-
-  const renderHeader = () => (
-    <View style={styles.container}>
-      <StatusBar backgroundColor="white" />
-      <View style={styles.headerActions}>
-        <SearchPeople />
-        <TouchableOpacity
-          style={styles.iconButtons}
-          onPress={() => setModalVisible(true)}>
-          <Image style={{height: 20, width: 20}} source={plusIcon} />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Community</Text>
-      </View>
+  const renderHorizontalList = (data, title) => (
+    <View style={styles.sectionWrapper}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <FlatList
+        data={data}
+        horizontal
+        keyExtractor={item => item._id}
+        renderItem={({item}) =>
+          !isEvent ? (
+            <CommunityCard
+              community={item}
+              onPress={() =>
+                navigation.navigate('CommunityHome', {communityId: item._id})
+              }
+            />
+          ) : (
+            <EventCard
+              event={item}
+              height={280}
+              width={220}
+              picHeight={130}
+              full
+              onPress={() =>
+                navigation.navigate('EventHome', {eventId: item._id})
+              }
+            />
+          )
+        }
+        ListEmptyComponent={
+          <Text style={styles.noUsersText}>
+            No {isEvent ? 'Events' : 'Communities'} found
+          </Text>
+        }
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalScroll}
+      />
     </View>
   );
 
-  const renderFooter = () => (
-    <View>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Trending</Text>
-      </View>
-      {renderTrending()}
-    </View>
+  const myCommunities = communities?.filter(
+    community => community.createdBy?._id === user?._id,
+  );
+  const joinedCommunities = communities?.filter(
+    community =>
+      community.members.some(member => member._id === user?._id) &&
+      community.createdBy?._id !== user?._id,
+  );
+
+  const myEvents = events?.filter(event => event.createdBy?._id === user?._id);
+  const joinedEvents = events?.filter(
+    event =>
+      event.members?.some(member => member._id === user?._id) &&
+      event.createdBy?._id !== user?._id,
   );
 
   return (
-    <View>
-      <FlatList
-        data={communities}
-        keyExtractor={item => item._id}
-        renderItem={renderCommunityCard}
-        contentContainerStyle={styles.listContent}
-        numColumns={3} // Three columns
-        ListHeaderComponent={renderHeader}
-        ListFooterComponent={renderFooter}
-        ListEmptyComponent={() => (
-          <View style={styles.noTrendingContainer}>
-            <Image source={require('../assets/not-found.png')} />
-            <Text style={styles.noUsersText}>No communities found</Text>
+    <ScrollView style={styles.container}>
+      <StatusBar backgroundColor="white" barStyle={'dark-content'} />
+      <View style={styles.headerActions}>
+        <View>
+          <View style={styles.header}>
+            <Text
+              onPress={() => {
+                setIsEvent(!isEvent);
+                setModalType(null);
+              }}
+              style={styles.headerText}>
+              {isEvent ? 'Event' : 'Community'}
+            </Text>
+            <AntDesignIcons name="caretdown" size={15} color="#585C60" />
           </View>
-        )}
-      />
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create Community</Text>
-
-            <TextInput
-              placeholder="Community Name"
-              value={communityName}
-              onChangeText={setCommunityName}
-              style={styles.input}
-            />
-
-            <TextInput
-              placeholder="Description"
-              value={description}
-              onChangeText={setDescription}
-              style={styles.input}
-            />
-
-            <TouchableOpacity
-              style={styles.imagePickerButton}
-              onPress={handleImageSelection}>
-              <Text style={styles.imagePickerText}>
-                {profilePic ? 'Change Image' : 'Select Profile Picture'}
-              </Text>
+          <TouchableOpacity
+            style={{
+              width: 100,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderWidth: 1,
+              borderColor: '#4b164c5a',
+              borderRadius: 25,
+              paddingHorizontal: 5,
+              padding: 3,
+            }}>
+            <IonIcons name="earth" size={15} color="#585C60" />
+            <Text>Global</Text>
+            <AntDesignIcons name="caretdown" size={15} color="#585C60" />
+          </TouchableOpacity>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 7}}>
+            <TouchableOpacity style={styles.Btn}>
+              <Text style={styles.BtnText}>Filters</Text>
             </TouchableOpacity>
-
-            {profilePic && (
-              <Image source={{uri: profilePic}} style={styles.selectedImage} />
-            )}
-
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleCreateCommunity}>
-              <Text style={styles.submitButtonText}>Create</Text>
+            <TouchableOpacity style={styles.Btn}>
+              <Text style={styles.BtnText}>Category</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-    </View>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+          <SearchPeople iconColor={'black'} />
+          <TouchableOpacity
+            style={styles.iconButtons}
+            onPress={() => setActionModalVisible(!isActionModalVisible)}>
+            <AntDesignIcons name="plus" size={21} color="black" />
+          </TouchableOpacity>
+        </View>
+        {isActionModalVisible && (
+          <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={() => {
+                setActionModalVisible(false);
+                isEvent
+                  ? navigation.navigate('CreateEvent', {myCommunities})
+                  : navigation.navigate('CreateCommunity');
+              }}>
+              <Text style={styles.dropdownItemText}>
+                Create {isEvent ? 'Event' : 'Community'}
+              </Text>
+            </TouchableOpacity>
+            {modalType === 'myCommunities' || modalType === 'myEvents' ? (
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setActionModalVisible(false);
+                  setModalType(null);
+                }}>
+                <Text style={styles.dropdownItemText}>
+                  Other {isEvent ? 'Events' : 'Communities'}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setActionModalVisible(false);
+                  setModalType(isEvent ? 'myEvents' : 'myCommunities');
+                }}>
+                <Text style={styles.dropdownItemText}>
+                  My {isEvent ? 'Events' : 'Communities'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.dropdownItem}>
+              <Text style={[styles.dropdownItemText, {color: 'red'}]}>
+                Report
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {isEvent ? (
+        modalType === 'myEvents' ? (
+          <>
+            {renderHorizontalList(myEvents, 'My Events')}
+            {renderHorizontalList(joinedEvents, 'Registered Events')}
+          </>
+        ) : (
+          <>
+            {renderHorizontalList(events, 'Trending For You')}
+            {renderHorizontalList(events, 'Most Popular')}
+          </>
+        )
+      ) : modalType === 'myCommunities' ? (
+        <>
+          {renderHorizontalList(myCommunities, 'My Communities')}
+          {renderHorizontalList(joinedCommunities, 'Joined Communities')}
+        </>
+      ) : (
+        <>
+          {renderHorizontalList(communities, 'Trending For You')}
+          {renderHorizontalList(communities, 'Most Popular')}
+        </>
+      )}
+    </ScrollView>
   );
 }
 
@@ -300,8 +273,8 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     margin: 10,
     gap: 15,
     paddingEnd: 4,
@@ -333,10 +306,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 10,
   },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
   imagePickerButton: {
     backgroundColor: '#4B164C',
     padding: 10,
@@ -355,24 +324,30 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 10,
   },
-  buttonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 10,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: 10,
-    marginBottom: 30,
-    gap: 20,
+    gap: 7,
   },
   headerText: {
-    fontSize: 20,
+    fontSize: 23,
     fontWeight: 'bold',
     color: '#22172A',
-    marginTop: 5,
+  },
+  Btn: {
+    backgroundColor: '#A274FF',
+    padding: 3,
+    width: 100,
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  BtnText: {
+    color: 'white',
+    fontWeight: '500',
+    fontSize: 15,
+    textAlign: 'center',
   },
   listContent: {
     minHeight: '100%',
@@ -380,19 +355,44 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: 'white',
   },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 50, // Adjust position relative to the action icon
+    right: 30,
+    width: 160,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    elevation: 20, // Adds shadow for Android
+    shadowColor: 'black', // Adds shadow for iOS
+    shadowOpacity: 0.3,
+    shadowOffset: {width: 3, height: 3},
+    shadowRadius: 1,
+    zIndex: 2, // Ensures the dropdown is on top of other elements
+  },
+  dropdownItem: {
+    padding: 15,
+    // borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  dropdownItemText: {
+    fontSize: 13,
+    color: 'black',
+  },
   cardWrapper: {
     flex: 1,
     margin: 8,
-    maxWidth: '28%', // Ensure three columns fit evenly
+    maxWidth: '60%', // Ensure three columns fit evenly
+    borderWidth: 1,
+    borderRadius: 10,
   },
   trendingCardWrapper: {
     marginHorizontal: 8,
   },
   iconButtons: {
     padding: 2,
-    height: 40,
-    width: 40,
-    borderRadius: 20,
+    height: 50,
+    width: 50,
+    borderRadius: 25,
     borderColor: '#4b164c5a',
     borderWidth: 1,
     alignItems: 'center',
@@ -401,8 +401,8 @@ const styles = StyleSheet.create({
   userCard: {
     borderRadius: 10,
     overflow: 'hidden',
-    elevation: 3,
-    aspectRatio: 0.65,
+    aspectRatio: 0.75,
+    padding: 10,
   },
   trendingUserCard: {
     borderRadius: 10,
@@ -462,5 +462,15 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  sectionWrapper: {
+    paddingStart: 15,
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#191970',
+    marginBottom: 30,
   },
 });

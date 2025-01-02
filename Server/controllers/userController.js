@@ -617,7 +617,7 @@ exports.fetchFriends = async (req, res) => {
     // Fetch the user document with the given userId
     const user = await Member.findById(userId).populate({
       path: "friends",
-      select: "name profilePicture location", // Populate friends with name, profilePicture, etc.
+      select: "name profilePicture location email", // Populate friends with name, profilePicture, etc.
     });
 
     if (!user) {

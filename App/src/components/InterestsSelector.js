@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     borderColor: '#4B164C33',
   },
   selectedInterest: {
-    backgroundColor: '#DD88CF',
+    backgroundColor: '#A274FF',
   },
   interestText: {
     fontSize: 16,

@@ -12,8 +12,7 @@ import {
 import {axiosInstance} from '../api/axios';
 import {useNavigation} from '@react-navigation/native';
 import ProfilePicture from './ProfilePicture';
-
-const chatIcon = require('../assets/icons/conversation.png');
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const FriendsModal = ({userId}) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -55,7 +54,7 @@ const FriendsModal = ({userId}) => {
     <View>
       {/* Icon to Open Modal */}
       <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <Image source={chatIcon} style={styles.icon} />
+        <AntDesign name="message1" size={30} color="#333" />
       </TouchableOpacity>
 
       {/* Modal */}
@@ -182,7 +181,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#DD88CF',
+    backgroundColor: '#A274FF',
     paddingVertical: 10,
     borderRadius: 5,
   },

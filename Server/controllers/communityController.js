@@ -6,10 +6,13 @@ const streamifier = require("streamifier");
 const CommPost = require("../models/CommPost");
 const NotificationMob = require("../models/Notification");
 const Member = require("../models/Member");
+const Event = require("../models/Event");
 
 exports.fetchCommunities = async (req, res) => {
   try {
-    const communities = await Communitymob.find().populate("createdBy", "name"); // Populates creator details if needed
+    const communities = await Communitymob.find()
+      .populate("createdBy", "name")
+      .sort({ createdAt: -1 }); // Populates creator details if needed
     res.status(200).json({ success: true, data: communities });
   } catch (error) {
     res.status(500).json({
@@ -34,7 +37,11 @@ exports.fetchCommunity = async (req, res) => {
       .populate("community", "name")
       .sort({ createdAt: -1 }); // Sort by newest first
 
-    res.status(200).json({ success: true, data: community, posts });
+    const events = await Event.find({ community: communityId }).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json({ success: true, data: community, posts, events });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -47,6 +54,7 @@ exports.fetchCommunity = async (req, res) => {
 exports.createCommunity = async (req, res) => {
   try {
     const { name, description, isAnonymous, createdBy } = req.body;
+    console.log("Creating community");
 
     // Validate required fields
     if (!name || !description || !createdBy) {
@@ -248,6 +256,136 @@ const uploadToCloudinary = (file, resourceType) => {
 
     streamifier.createReadStream(file.buffer).pipe(uploadStream);
   });
+};
+
+exports.fetchAnEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const events = await Event.findById(eventId)
+      .populate("createdBy", "name profilePicture")
+      .populate("members", "name profilePicture");
+
+    res.status(200).json({ success: true, data: events });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch events",
+      error: error.message,
+    });
+  }
+};
+
+// Fetch all events
+exports.fetchAllEvents = async (req, res) => {
+  try {
+    const events = await Event.find()
+      .populate("createdBy", "name profilePicture")
+      .populate("members", "name profilePicture")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, data: events });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch events",
+      error: error.message,
+    });
+  }
+};
+
+// Fetch events for a specific community
+exports.fetchCommEvents = async (req, res) => {
+  try {
+    const { communityId } = req.params;
+
+    const events = await Event.find({ community: communityId })
+      .populate("createdBy", "name profilePicture")
+      .populate("members", "name profilePicture")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, data: events });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch community events",
+      error: error.message,
+    });
+  }
+};
+
+exports.createEvent = async (req, res) => {
+  try {
+    const {
+      name,
+      location,
+      description,
+      createdBy,
+      eventType,
+      ocassion,
+      date,
+      startTime,
+      endTime,
+      communityId,
+      tags,
+      address,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !description || !createdBy) {
+      return res
+        .status(400)
+        .json({ error: "Name, description, and createdBy are required" });
+    }
+
+    // Process file uploads
+    let profilePicture;
+
+    // Handle profile picture upload
+    if (req.file) {
+      // Save new profile picture
+      profilePicture = `http://${req.get("host")}/uploads/${req.file.filename}`;
+
+      // Check and delete the old profile picture if it exists
+      // const existingEvent = await Event.findOne({ createdBy });
+      // if (
+      //   existingEvent &&
+      //   existingEvent.profilePicture?.includes("/uploads/")
+      // ) {
+      //   const oldFilePath = path.join(
+      //     __dirname,
+      //     "../uploads/",
+      //     path.basename(existingEvent.profilePicture)
+      //   );
+      //   if (fs.existsSync(oldFilePath)) {
+      //     fs.unlinkSync(oldFilePath);
+      //   }
+      // }
+    }
+
+    // Create and save the event
+    const event = new Event({
+      name,
+      location,
+      description,
+      profilePicture,
+      createdBy,
+      eventType,
+      ocassion,
+      date,
+      startTime,
+      endTime,
+      community: communityId,
+      tags,
+      address,
+    });
+
+    await event.save();
+
+    res.status(201).json({ message: "Event created successfully", event });
+  } catch (error) {
+    console.error("Error creating event:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 };
 
 exports.createPost = async (req, res) => {

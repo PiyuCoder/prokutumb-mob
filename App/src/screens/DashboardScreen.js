@@ -5,70 +5,67 @@ import MessageScreen from './MessageScreen';
 import DiscoverScreen from './DiscoverScreen';
 import MatchScreen from './MatchScreen';
 import NetworkScreen from './NetworkScreen';
-import {View, Image, TouchableOpacity, StyleSheet} from 'react-native';
-
-import homeIcon from '../assets/icons/home.png';
-import messageIcon from '../assets/icons/message.png';
-import discoverIcon from '../assets/icons/discover.png';
-import matchIcon from '../assets/icons/match.png';
-import networkIcon from '../assets/icons/network.png';
+import {View, TouchableOpacity, StyleSheet} from 'react-native';
+import Icon from 'react-native-vector-icons/Foundation';
+import IonIcon from 'react-native-vector-icons/Ionicons';
+import FA6Icon from 'react-native-vector-icons/FontAwesome6';
 
 // Create the Tab Navigator
 const Tab = createBottomTabNavigator();
 
 const DashboardScreen = ({navigation}) => {
+  const getIconComponent = route => {
+    switch (route.name) {
+      case 'Discover':
+        return IonIcon;
+      case 'Match':
+        return FA6Icon;
+      case 'Network':
+        return IonIcon;
+      case 'Message':
+        return IonIcon;
+      default:
+        return Icon;
+    }
+  };
+
   return (
     <Tab.Navigator
-      screenOptions={({route}) => ({
-        tabBarIcon: ({color, size, focused}) => {
-          let iconSource;
-          let iconStyle = {width: 24, height: 24, tintColor: color};
+      screenOptions={({route}) => {
+        const IconComponent = getIconComponent(route);
+        const iconName =
+          route.name === 'Home'
+            ? 'home'
+            : route.name === 'Message'
+            ? 'chatbubble-outline'
+            : route.name === 'Discover'
+            ? 'compass'
+            : route.name === 'Match'
+            ? 'user-group'
+            : 'globe-outline';
 
-          // Assign custom icons based on the route name
-          if (route.name === 'Home') {
-            iconSource = homeIcon;
-          } else if (route.name === 'Message') {
-            iconSource = messageIcon;
-          } else if (route.name === 'Discover') {
-            iconSource = discoverIcon;
-          } else if (route.name === 'Match') {
-            iconSource = matchIcon;
-          } else if (route.name === 'Network') {
-            iconSource = networkIcon;
-            // Make the Network icon larger than others
-            iconStyle = {width: 50, height: 50, tintColor: color}; // Larger size for Network icon
-          }
-
-          // Render the custom icon
-          return (
-            <View style={{alignItems: 'center'}}>
-              {focused && (
-                <View style={styles.circle}>
-                  <Image source={iconSource} style={iconStyle} />
+        return {
+          tabBarIcon: ({color, size, focused}) => {
+            const iconSize =
+              route.name === 'Network' ? 60 : route.name === 'Match' ? 24 : 30; // Larger size for Network icon
+            return (
+              <View style={{alignItems: 'center'}}>
+                <View style={focused ? styles.circle : null}>
+                  <IconComponent
+                    name={iconName}
+                    size={iconSize}
+                    color={route.name === 'Network' ? 'black' : color}
+                  />
                 </View>
-              )}
-              {!focused && <Image source={iconSource} style={iconStyle} />}
-            </View>
-          );
-        },
-        tabBarShowLabel: false, // Hide the tab labels (text)
-        tabBarActiveTintColor: 'white',
-        tabBarInactiveTintColor: 'gray',
-        tabBarStyle: {
-          position: 'absolute', // Make it float
-          bottom: 10, // Height from the bottom of the screen
-          left: 20, // Space from the left edge
-          right: 20, // Space from the right edge
-          elevation: 5, // Shadow for Android
-          backgroundColor: '#ffffff', // Tab bar background color
-          borderRadius: 40, // Rounded corners
-          height: 60, // Height of the tab bar
-          shadowColor: '#000', // iOS shadow
-          shadowOpacity: 0.1, // Shadow transparency
-          shadowOffset: {width: 0, height: 10}, // Shadow offset
-          shadowRadius: 20, // Shadow blur radius
-        },
-      })}>
+              </View>
+            );
+          },
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: 'white',
+          tabBarInactiveTintColor: 'gray',
+          tabBarStyle: styles.tabBarStyle,
+        };
+      }}>
       <Tab.Screen
         name="Home"
         component={HomeScreen}
@@ -86,10 +83,7 @@ const DashboardScreen = ({navigation}) => {
           tabBarButton: props => (
             <TouchableOpacity
               {...props}
-              onPress={() => {
-                // Navigate to a new screen instead of just using the tab
-                navigation.navigate('Network');
-              }}
+              onPress={() => navigation.navigate('Network')}
             />
           ),
         }}
@@ -106,10 +100,7 @@ const DashboardScreen = ({navigation}) => {
           tabBarButton: props => (
             <TouchableOpacity
               {...props}
-              onPress={() => {
-                // Navigate to a new screen instead of just using the tab
-                navigation.navigate('Message');
-              }}
+              onPress={() => navigation.navigate('Message')}
             />
           ),
         }}
@@ -120,11 +111,26 @@ const DashboardScreen = ({navigation}) => {
 
 const styles = StyleSheet.create({
   circle: {
-    backgroundColor: '#DD88CF', // Circle color
-    borderRadius: 30, // Adjust to make a perfect circle
-    padding: 8, // Space between the icon and the circle
+    backgroundColor: '#A274FF',
+    borderRadius: 50,
+    padding: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    aspectRatio: 1,
+  },
+  tabBarStyle: {
+    position: 'absolute',
+    bottom: 10,
+    left: 20,
+    right: 20,
+    elevation: 5,
+    backgroundColor: '#ffffff',
+    borderRadius: 40,
+    height: 60,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 10},
+    shadowRadius: 20,
   },
 });
 

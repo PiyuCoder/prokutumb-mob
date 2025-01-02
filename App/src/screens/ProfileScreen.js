@@ -24,11 +24,10 @@ import {editAbout, editProfile} from '../store/slices/authSlice';
 import ExperienceModal from '../components/ExperienceModal';
 import ProfilePicture from '../components/ProfilePicture';
 import InterestsSelector from '../components/InterestsSelector';
-
-const editIcon = require('../assets/icons/edit.png');
-const penIcon = require('../assets/icons/pen.png');
-const settingIcon = require('../assets/icons/setting.png');
-const closeIcon = require('../assets/icons/close.png');
+import Icons from 'react-native-vector-icons/Ionicons';
+import AntDesignIcons from 'react-native-vector-icons/AntDesign';
+import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const ProfileScreen = () => {
   const {user} = useSelector(state => state.auth);
@@ -41,18 +40,6 @@ const ProfileScreen = () => {
 
   const [editedAbout, setEditedAbout] = useState(user.bio);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  // console.log(user);
-
-  // Hide the status bar when the screen is rendered
-  useEffect(() => {
-    StatusBar.setHidden(true);
-
-    return () => {
-      // Show the status bar when the screen is unmounted
-      StatusBar.setHidden(false);
-    };
-  }, []);
 
   // Fetch user info from external APIs (LinkedIn, etc.)
   const fetchUserWebInfo = async () => {
@@ -135,138 +122,84 @@ const ProfileScreen = () => {
     <ScrollView contentContainerStyle={styles.container}>
       {/* Profile Section */}
       <View style={styles.profileCard}>
-        {/* <View style={styles.profileIconContainer}>
-          <TouchableOpacity
-            onPress={handleBackPress}
-            className="border h-8 w-8 border-white  rounded-full p-2 flex items-center justify-center">
-            <Image style={{height: 15, width: 15}} source={backIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleEditPress}
-            className="border h-8 w-8 border-white rounded-full p-2 flex items-center justify-center">
-            <Image style={{height: 15, width: 15}} source={editIcon} />
-          </TouchableOpacity>
-        </View> */}
-
-        <View style={{width: '100%', position: 'relative'}}>
-          <ImageBackground
-            style={styles.coverPicture}
-            source={{
-              uri:
-                user?.coverPicture ||
-                'https://img.freepik.com/free-vector/gradient-network-connection-background_23-2148880712.jpg',
-            }}
-          />
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Settings')}
-            className=" absolute right-5 top-7 bg-white h-7 w-7 flex items-center justify-center rounded-full bg-opacity-20 shadow-lg">
-            <Image style={{height: 20, width: 20}} source={settingIcon} />
-          </TouchableOpacity>
-
-          <View
-            style={{
-              position: 'absolute',
-              alignSelf: 'center',
-              bottom: -90,
-              width: 150,
-              height: 150,
-              borderRadius: 75,
-              backgroundColor: '#FDF7FD',
-              padding: 5,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <View
-              style={{
-                width: 100,
-                height: 100,
-                position: 'absolute',
-                bottom: 60,
-                left: -85,
-                zIndex: -2,
-                transform: [{rotateZ: '43deg'}],
-                alignSelf: 'center',
-                borderColor: '#FDF7FD',
-                borderEndEndRadius: 80,
-                borderRightWidth: 20,
-                borderBottomWidth: 0,
-              }}
-            />
-
-            <View
-              style={{
-                width: 50,
-                height: 50,
-                position: 'absolute',
-                bottom: 72,
-                left: -45,
-                zIndex: -2,
-                transform: [{rotateZ: '-18deg'}],
-                alignSelf: 'center',
-                borderColor: '#FDF7FD',
-                borderEndEndRadius: 40,
-                borderRightWidth: 0,
-                borderBottomWidth: 20,
-              }}
-            />
-
-            <View
-              style={{
-                width: 100,
-                height: 100,
-                position: 'absolute',
-                bottom: 60,
-                right: -85,
-                zIndex: -2,
-                transform: [{rotateZ: '-43deg'}],
-                alignSelf: 'center',
-                borderColor: '#FDF7FD',
-                borderBottomStartRadius: 80,
-                borderLeftWidth: 20,
-                borderBottomWidth: 0,
-              }}
-            />
-            <View
-              style={{
-                width: 50,
-                height: 50,
-                position: 'absolute',
-                bottom: 70,
-                right: -50,
-                zIndex: -2,
-                transform: [{rotateZ: '22deg'}],
-                alignSelf: 'center',
-                borderColor: '#FDF7FD',
-                borderBottomStartRadius: 20,
-                borderLeftWidth: 0,
-                borderBottomWidth: 20,
-              }}
-            />
-            <View style={{zIndex: 4}}>
-              <ProfilePicture
-                profilePictureUri={user.profilePicture}
-                width={120}
-                height={120}
-                borderRadius={60}
-                borderColor="#242760"
-              />
-            </View>
-          </View>
-          {/* <Image
-            source={{uri: user.profilePicture}}
-            style={styles.profilePicture}
-          /> */}
-        </View>
-      </View>
-      <View style={{marginTop: 90}}>
-        <Text style={styles.userName}>{user.name}</Text>
-        <Text style={styles.userLocation}>
-          {user.location?.state || 'State'},{' '}
-          {user.location?.country || 'Country'}
-        </Text>
         <View
           style={{
-            width: '70%',
+            width: '100%',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 15,
+            borderBottomWidth: 1,
+            borderColor: '#E0DFDC',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              gap: 70,
+            }}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <AntDesignIcons name="arrowleft" size={30} color="#585C60" />
+            </TouchableOpacity>
+            <Text style={{color: 'black', fontSize: 20}}>MY PROFILE</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+            <Icons name="settings-sharp" size={30} color="black" />
+          </TouchableOpacity>
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            width: '100%',
+            padding: 5,
+            paddingTop: 14,
+            justifyContent: 'space-between',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 20,
+              // justifyContent: 'space-between',
+            }}>
+            <ProfilePicture
+              profilePictureUri={user.profilePicture}
+              width={120}
+              height={120}
+              borderRadius={60}
+              borderColor="#242760"
+            />
+            <View style={{marginRight: 10}}>
+              <Text style={styles.userName}>{user.name}</Text>
+              <Text style={styles.userLocation}>
+                {user.location?.state || 'State'},{' '}
+                {user.location?.country || 'Country'}
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 7,
+                  marginTop: 8,
+                }}>
+                <Icons name="logo-linkedin" size={25} color="#0A66C2" />
+                <AntDesignIcons name="github" size={25} color="#24292F" />
+                <FontAwesome name="reddit" size={25} color="#FF4500" />
+                <FontAwesome name="whatsapp" size={25} color="#25D366" />
+              </View>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={{marginRight: 15}}
+            onPress={() => navigation.navigate('EditProfile')}>
+            <SimpleLineIcons name="pencil" size={20} color="#585C60" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={{marginTop: 20}}>
+        <View
+          style={{
+            width: '100%',
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
@@ -280,26 +213,38 @@ const ProfileScreen = () => {
             }>
             <Text
               style={{
-                color: '#242760',
-                fontSize: 20,
-                fontWeight: 'bold',
+                color: '#A274FF',
+                fontSize: 22,
+                fontWeight: '500',
                 textAlign: 'center',
               }}>
               {user?.friends?.length}
             </Text>
-            <Text>Connections</Text>
+            <Text style={{color: 'black', fontWeight: '500'}}>Connections</Text>
           </TouchableOpacity>
           <View>
             <Text
               style={{
-                color: '#242760',
-                fontSize: 20,
-                fontWeight: 'bold',
+                color: '#A274FF',
+                fontSize: 22,
+                fontWeight: '500',
                 textAlign: 'center',
               }}>
               0
             </Text>
-            <Text>Communities</Text>
+            <Text style={{color: 'black', fontWeight: '500'}}>Communities</Text>
+          </View>
+          <View>
+            <Text
+              style={{
+                color: '#A274FF',
+                fontSize: 22,
+                fontWeight: '500',
+                textAlign: 'center',
+              }}>
+              0
+            </Text>
+            <Text style={{color: 'black', fontWeight: '500'}}>Events Done</Text>
           </View>
         </View>
         <View
@@ -307,40 +252,183 @@ const ProfileScreen = () => {
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             marginTop: 10,
             gap: 10,
+            paddingHorizontal: 20,
           }}>
           <TouchableOpacity
-            onPress={() => navigation.navigate('EditProfile')}
+            // onPress={() => navigation.navigate('EditProfile')}
             style={{
-              backgroundColor: '#242760',
-              padding: 6,
-              width: 100,
-              borderRadius: 8,
+              backgroundColor: '#A274FF',
+              padding: 13,
+              borderRadius: 30,
+              flex: 1,
             }}>
-            <Text style={{color: 'white', textAlign: 'center'}}>
-              Edit profile
+            <Text
+              style={{color: 'white', textAlign: 'center', fontWeight: '500'}}>
+              My Posts
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => navigation.navigate('Match')}
+            // onPress={() => navigation.navigate('Match')}
             style={{
-              backgroundColor: '#242760',
-              padding: 6,
-              width: 100,
-              borderRadius: 8,
+              backgroundColor: 'white',
+              padding: 12,
+              borderRadius: 30,
+              borderWidth: 1.4,
+              borderColor: '#585C60',
+              flex: 1,
             }}>
-            <Text style={{color: 'white', textAlign: 'center'}}>
-              Add friends
+            <Text
+              style={{
+                color: '#585C60',
+                textAlign: 'center',
+                fontWeight: '500',
+              }}>
+              Add Section
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1.4,
+              borderColor: '#585C60',
+            }}>
+            <SimpleLineIcons name="options" size={20} color="#585C60" />
+          </TouchableOpacity>
+        </View>
+        <View
+          style={{
+            backgroundColor: '#E9E5DF',
+            margin: 15,
+            padding: 15,
+            borderRadius: 10,
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={{fontWeight: 'bold', color: 'black'}}>
+              Networking Goal
+            </Text>
+            <TouchableOpacity>
+              <SimpleLineIcons name="pencil" size={15} color="#585C60" />
+            </TouchableOpacity>
+          </View>
+          <Text style={{color: 'black', marginBottom: 5}}>
+            Strategy at Youtube
+          </Text>
+          <TouchableOpacity>
+            <Text style={{color: '#A274FF'}}>See all details</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={{backgroundColor: '#A274FF', padding: 15}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+          <Text style={{fontSize: 17, fontWeight: '500', color: 'white'}}>
+            Your Dashboard
+          </Text>
+          <View>
+            <Text style={{fontSize: 17, fontWeight: '500', color: 'white'}}>
+              ALL-STAR
+            </Text>
+          </View>
+        </View>
+        <Text style={{fontStyle: 'italic', color: 'white', marginBottom: 8}}>
+          Private to you
+        </Text>
+        <View
+          style={{
+            backgroundColor: 'white',
+            // padding: 5,
+            borderRadius: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-evenly',
+          }}>
+          <View
+            style={{
+              borderRightWidth: 1,
+              padding: 5,
+              flex: 1,
+              justifyContent: 'flex-start',
+              borderColor: '#E0DFDC',
+              margin: 5,
+            }}>
+            <Text
+              style={{
+                textAlign: 'center',
+                color: '#0A66C2',
+                fontWeight: 'bold',
+                fontSize: 18,
+              }}>
+              22,25,200
+            </Text>
+            <Text style={{textAlign: 'center', color: '#585C60'}}>
+              Who viewed your profile
+            </Text>
+          </View>
+          <View
+            style={{
+              padding: 2,
+              flex: 1,
+              flexDirection: 'column',
+              alignSelf: 'flex-start',
+              height: '100%',
+              margin: 5,
+            }}>
+            <Text
+              style={{
+                textAlign: 'center',
+                color: '#0A66C2',
+                fontWeight: 'bold',
+                fontSize: 18,
+              }}>
+              22,25,200
+            </Text>
+            <Text style={{textAlign: 'center', color: '#585C60'}}>
+              Post views
+            </Text>
+          </View>
+          <View
+            style={{
+              borderLeftWidth: 1,
+              padding: 5,
+              flex: 1,
+              margin: 5,
+              borderColor: '#E0DFDC',
+            }}>
+            <Text
+              style={{
+                textAlign: 'center',
+                color: '#0A66C2',
+                fontWeight: 'bold',
+                fontSize: 18,
+              }}>
+              22,25,200
+            </Text>
+            <Text style={{textAlign: 'center', color: '#585C60'}}>
+              Search appearances
+            </Text>
+          </View>
         </View>
       </View>
 
       <View style={styles.mainCard}>
         {/* About Section */}
-        <View style={styles.titleSection}>
+        {/* <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>About</Text>
           <TouchableOpacity onPress={handleAboutEditPress}>
             <Image style={{height: 15, width: 15}} source={penIcon} />
@@ -348,14 +436,53 @@ const ProfileScreen = () => {
         </View>
         <View style={styles.card}>
           <Text style={styles.sectionText}>{user.bio}</Text>
-        </View>
+        </View> */}
 
         {/* Experience Section */}
         <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>Experience</Text>
-          <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
-            <Image style={{height: 15, width: 15}} source={penIcon} />
-          </TouchableOpacity>
+          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
+            <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+              <AntDesignIcons name="plus" size={21} color="#A274FF" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+              <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          {user.experience?.map((exp, index) => (
+            <View key={index} style={styles.experienceItem}>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <Text style={styles.experienceCompany}>{exp.company}</Text>
+                <Text style={styles.experienceDuration}>
+                  {formatDate(exp.startDate)}-
+                  {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                </Text>
+              </View>
+              <Text style={styles.experienceTitle}>{exp.role}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Education Section */}
+        <View style={styles.titleSection}>
+          <Text style={styles.sectionTitle}>Education</Text>
+          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
+            <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+              <AntDesignIcons name="plus" size={21} color="#A274FF" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+              <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -380,7 +507,7 @@ const ProfileScreen = () => {
         </View>
 
         {/* Interest Section */}
-        <View style={styles.titleSection}>
+        {/* <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>Interests</Text>
           <TouchableOpacity onPress={handleInterestEditPress}>
             <Image style={{height: 15, width: 15}} source={penIcon} />
@@ -405,10 +532,10 @@ const ProfileScreen = () => {
               <Text style={styles.sectionText}>{interest}</Text>
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* On the Web Section */}
-        <View style={styles.titleSection}>
+        {/* <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>On the Web</Text>
           <Image style={{height: 15, width: 15}} source={penIcon} />
         </View>
@@ -424,7 +551,7 @@ const ProfileScreen = () => {
           ) : (
             <Text style={styles.sectionText}>Loading web data...</Text>
           )}
-        </View>
+        </View> */}
       </View>
 
       {/* Edit About Modal */}
@@ -438,7 +565,7 @@ const ProfileScreen = () => {
           style={styles.modalContainer}>
           <View className="bg-white p-3">
             <TouchableOpacity onPress={() => setAboutModalVisible(false)}>
-              <Image source={closeIcon} />
+              <AntDesignIcons name="close" size={30} color="#585C60" />
             </TouchableOpacity>
           </View>
           <View style={styles.modalContent}>
@@ -456,7 +583,7 @@ const ProfileScreen = () => {
             />
 
             <View>
-              <Button color="#DD88CF" title="Save" onPress={handleAboutSave} />
+              <Button color="#A274FF" title="Save" onPress={handleAboutSave} />
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -488,13 +615,10 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#FDF7FD',
+    backgroundColor: 'white',
   },
   mainCard: {
-    backgroundColor: '#FDF7FD',
-    padding: 20,
-
-    // marginTop: -50,
+    backgroundColor: 'white',
     zIndex: 2,
   },
   profileCard: {
@@ -534,52 +658,48 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   userName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#242760',
+    fontSize: 25,
+    fontWeight: '500',
+    textAlign: 'left',
+    color: 'black',
     zIndex: 2,
   },
   userLocation: {
-    fontSize: 12,
-    textAlign: 'center',
-    color: '#544C4C',
+    fontSize: 17,
+    textAlign: 'left',
+    color: '#585C60',
     marginTop: 5,
     zIndex: 2,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
+    // paddingVertical: 20,
     borderRadius: 10,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
   },
   titleSection: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingEnd: 5,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    marginBottom: 10,
+    padding: 15,
+    // marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#242760',
+    marginTop: 10,
+    color: 'black',
   },
   sectionText: {
     fontSize: 14,
     color: 'black',
   },
   experienceItem: {
-    marginBottom: 10,
+    // marginBottom: 10,
+    borderBottomWidth: 1,
+    padding: 20,
+    borderColor: '#E0DFDC',
   },
   modalContainer: {
     flex: 1,
@@ -605,7 +725,8 @@ const styles = StyleSheet.create({
   },
   experienceCompany: {
     color: 'black',
-    fontWeight: 'bold',
+    fontWeight: '500',
+    fontSize: 16,
   },
   experienceDuration: {
     color: 'black',

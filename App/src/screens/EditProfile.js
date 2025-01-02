@@ -16,8 +16,8 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import {editProfile} from '../store/slices/authSlice';
 import {useSelector, useDispatch} from 'react-redux';
 import DatePicker from 'react-native-date-picker';
-
-const backIcon = require('../assets/icons/black-back.png');
+import IonIcons from 'react-native-vector-icons/Ionicons';
+import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 
 export default function EditProfile({navigation}) {
   const dispatch = useDispatch();
@@ -122,7 +122,7 @@ export default function EditProfile({navigation}) {
           marginBottom: 10,
         }}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Image source={backIcon} style={styles.icon} />
+          <IonIcons name="chevron-back-outline" size={30} color="black" />
         </TouchableOpacity>
         <View style={{flex: 1}}>
           <Text
@@ -144,10 +144,7 @@ export default function EditProfile({navigation}) {
             <TouchableOpacity
               onPress={selectCover}
               className=" absolute right-8 top-8 z-10 bg-white h-7 w-7 flex items-center justify-center rounded-full bg-opacity-20 shadow-lg">
-              <Image
-                style={{height: 15, width: 15}}
-                source={require('../assets/icons/pen.png')}
-              />
+              <SimpleLineIcons name="pencil" size={20} color="black" />
             </TouchableOpacity>
             <ImageBackground
               style={styles.coverPicture}
@@ -185,16 +182,7 @@ export default function EditProfile({navigation}) {
                     borderRadius: 60,
                   }}
                 />
-                <Image
-                  style={{
-                    position: 'absolute',
-                    bottom: 7,
-                    right: 4,
-                    width: 20,
-                    height: 20,
-                  }}
-                  source={require('../assets/icons/camera.png')}
-                />
+                <IonIcons name="camera" size={30} color="#242760" />
               </View>
             </TouchableOpacity>
 

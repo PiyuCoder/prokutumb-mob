@@ -7,30 +7,31 @@ import {
   StyleSheet,
 } from 'react-native';
 import React from 'react';
-
-const backIcon = require('../assets/icons/black-back.png');
+import Icon from 'react-native-vector-icons/Ionicons';
+import Octicons from 'react-native-vector-icons/Octicons';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const settingArray = [
   {
     section: 'Account',
     options: [
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Icon name="person-outline" size={20} color="#544C4C" />,
         name: 'Edit profile',
         toScreen: 'EditProfile',
       },
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Octicons name="shield" size={20} color="#544C4C" />,
         name: 'Security',
         toScreen: 'EditProfile',
       },
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Icon name="notifications-outline" size={20} color="#544C4C" />,
         name: 'Notifications',
         toScreen: 'Notifications',
       },
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Octicons name="lock" size={20} color="#544C4C" />,
         name: 'Privacy',
         toScreen: 'Notifications',
       },
@@ -40,17 +41,17 @@ const settingArray = [
     section: 'Support & About',
     options: [
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Octicons name="credit-card" size={20} color="#544C4C" />,
         name: 'My Subscriptions',
         toScreen: 'Subscriptions',
       },
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Octicons name="question" size={20} color="#544C4C" />,
         name: 'Help & Support',
         toScreen: 'Help',
       },
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Octicons name="info" size={20} color="#544C4C" />,
         name: 'Terms & Policies',
         toScreen: 'Help',
       },
@@ -60,12 +61,12 @@ const settingArray = [
     section: 'Cache & Cellular',
     options: [
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <AntDesign name="delete" size={20} color="#544C4C" />,
         name: 'Free up space',
         toScreen: 'Subscriptions',
       },
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Octicons name="database" size={20} color="#544C4C" />,
         name: 'Data saver',
         toScreen: 'Help',
       },
@@ -75,16 +76,19 @@ const settingArray = [
     section: 'Actions',
     options: [
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Icon name="flag-outline" size={20} color="#544C4C" />,
         name: 'Report a problem',
         toScreen: 'Subscriptions',
       },
       {
-        logo: require('../assets/icons/setting.png'),
+        logo: <Icon name="person-add-outline" size={20} color="#544C4C" />,
         name: 'Add account',
         toScreen: 'Subscriptions',
       },
-      {logo: require('../assets/icons/setting.png'), name: 'Logout'},
+      {
+        logo: <Icon name="exit-outline" size={20} color="#544C4C" />,
+        name: 'Logout',
+      },
     ],
   },
 ];
@@ -100,7 +104,7 @@ export default function SettingScreen({navigation}) {
             marginBottom: 10,
           }}>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Image source={backIcon} style={styles.icon} />
+            <Icon name="arrow-back-outline" size={30} color="black" />
           </TouchableOpacity>
           <View style={{flex: 1}}>
             <Text
@@ -134,10 +138,7 @@ export default function SettingScreen({navigation}) {
                   <TouchableOpacity
                     key={i}
                     style={{flexDirection: 'row', gap: 35}}>
-                    <Image
-                      style={{width: 20, height: 20}}
-                      source={option.logo}
-                    />
+                    <View style={{width: 30}}>{option.logo}</View>
                     <Text style={{color: '#000000', fontWeight: '500'}}>
                       {option.name}
                     </Text>

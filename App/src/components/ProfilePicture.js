@@ -10,6 +10,7 @@ const ProfilePicture = ({
   story,
   isUser,
   borderColor,
+  padding,
 }) => {
   const [imageSource, setImageSource] = useState({uri: profilePictureUri});
 
@@ -21,14 +22,14 @@ const ProfilePicture = ({
     <View
       style={{
         backgroundColor: 'white',
-        padding: 2,
-        width: width + 5,
-        height: height + 5,
-        borderRadius: width + 5 / 2,
+        padding: padding || 2,
+        width: isUser ? width + 4 : width + 5,
+        height: isUser ? height + 4 : height + 5,
+        borderRadius: isUser ? width + 4 / 2 : width + 5 / 2,
         marginRight,
         elevation: 2,
-        borderColor: borderColor,
-        borderWidth: borderColor && 1,
+        borderColor: isUser ? '#A274FF' : '#F5F5F5',
+        borderWidth: 2,
         alignItems: 'center',
         justifyContent: 'center',
       }}>
@@ -39,9 +40,8 @@ const ProfilePicture = ({
           width,
           height,
           borderRadius,
-
-          borderWidth: story && isUser ? 2 : 0,
-          borderColor: story && isUser ? '' : '#DD88CF',
+          // borderWidth: isUser ? 2 : 0,
+          // borderColor: isUser ? '' : '',
         }}
         onError={() => setImageSource(require('../assets/default-pp.png'))} // Android fallback
       />

@@ -19,8 +19,6 @@ import {
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import * as Progress from 'react-native-progress';
-import {fetchFriendRequests, logout} from '../store/slices/authSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {launchImageLibrary} from 'react-native-image-picker'; // Use react-native-image-picker
 import Loader from '../components/Loader';
 import ProfilePicture from '../components/ProfilePicture';
@@ -38,30 +36,13 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import ChatBotButton from '../components/ChatBotButton';
 import LinearGradient from 'react-native-linear-gradient';
-
-const likeIcon = require('../assets/icons/like.png');
-const likedIcon = require('../assets/icons/liked.png');
-const commentIcon = require('../assets/icons/comment.png');
-const viewIcon = require('../assets/icons/view.png');
-const shareIcon = require('../assets/icons/share.png');
-const bellIcon = require('../assets/icons/bell.png');
-
-const events = [
-  {
-    _id: '1',
-    name: 'Event One',
-    profilePicture: 'https://via.placeholder.com/150',
-    distance: 120,
-    location: 'New York',
-  },
-  {
-    _id: '2',
-    name: 'Event Two',
-    profilePicture: 'https://via.placeholder.com/150',
-    distance: 120,
-    location: 'California',
-  },
-];
+import Octicons from 'react-native-vector-icons/Octicons';
+import Feather from 'react-native-vector-icons/Feather';
+import AntDesignIcons from 'react-native-vector-icons/AntDesign';
+import EventCard from '../components/EventCard';
+import RenderUserCard from '../components/RenderUserCard';
+import Icon from 'react-native-vector-icons/Ionicons';
+import SimpleIcon from 'react-native-vector-icons/SimpleLineIcons';
 
 const CommunityHomeScreen = ({route}) => {
   const {communityId} = route.params;
@@ -71,6 +52,7 @@ const CommunityHomeScreen = ({route}) => {
     profilePicture: 'https://via.placeholder.com/150',
     description: 'Community for the cool developers',
   });
+  const [events, setEvents] = useState([]);
   const {user} = useSelector(state => state.auth);
   const {posts} = useSelector(state => state.commposts);
   const dispatch = useDispatch();
@@ -111,6 +93,7 @@ const CommunityHomeScreen = ({route}) => {
           setCommunity(res?.data?.data || []); // Adjust based on backend response
           dispatch(setPosts(res?.data?.posts || []));
           setMembers(res?.data?.data?.members);
+          setEvents(res?.data?.events || []);
         }
       }
     } catch (error) {
@@ -306,7 +289,7 @@ const CommunityHomeScreen = ({route}) => {
     <View
       className="border border-gray-200"
       style={{
-        marginBottom: 15,
+        margin: 10,
         padding: 10,
         backgroundColor: '#FFFFFF',
         borderRadius: 8,
@@ -343,10 +326,7 @@ const CommunityHomeScreen = ({route}) => {
                 toggleActionSection(item._id);
                 setActionModalVisible(!actionModalVisible);
               }}>
-              <Image
-                style={{height: 20, width: 20}}
-                source={require('../assets/icons/action.png')}
-              />
+              <SimpleIcon name="options" size={20} color="#585C60" />
             </TouchableOpacity>
             {actionModalVisible && openActionPostId === item._id && (
               <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
@@ -411,16 +391,17 @@ const CommunityHomeScreen = ({route}) => {
             dispatch(likePost({userId: user?._id, postId: item._id}))
           }
           style={styles.actionButton}>
-          <Image
-            source={item?.likes?.includes(user?._id) ? likedIcon : likeIcon}
-            style={styles.actionIcon}
-          />
+          {item?.likes?.includes(user?._id) ? (
+            <Icon name="heart" size={24} color="red" />
+          ) : (
+            <Icon name="heart-outline" size={24} color="#7B7B7B" />
+          )}
           <Text style={styles.actionText}>{item.likes.length} </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => toggleCommentSection(item._id)}
           style={styles.actionButton}>
-          <Image source={commentIcon} style={styles.actionIcon} />
+          <Icon name="chatbubble-outline" size={24} color="#7B7B7B" />
           <Text style={styles.actionText}>{item.comments.length}</Text>
         </TouchableOpacity>
         {/* <TouchableOpacity style={styles.actionButton}>
@@ -430,7 +411,7 @@ const CommunityHomeScreen = ({route}) => {
         <TouchableOpacity
           onPress={() => sharePost(item)}
           style={styles.actionButton}>
-          <Image source={shareIcon} style={styles.actionIcon} />
+          <Icon name="arrow-redo-outline" size={24} color="#7B7B7B" />
           <Text style={styles.actionText}>{item.shares}</Text>
         </TouchableOpacity>
       </View>
@@ -502,7 +483,7 @@ const CommunityHomeScreen = ({route}) => {
     <View
       style={{
         flex: 1,
-        paddingHorizontal: 7,
+        // paddingHorizontal: 7,
         // paddingBottom: 80,
         backgroundColor: 'white',
       }}>
@@ -537,56 +518,76 @@ const CommunityHomeScreen = ({route}) => {
           <View>
             <View
               style={{
+                width: '100%',
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'flex-end',
-                padding: 5,
+                justifyContent: 'space-between',
+                padding: 10,
+                position: 'absolute',
+                zIndex: 10,
               }}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('Notifications')}
-                style={styles.iconButtons}>
-                <Image source={bellIcon} style={{width: 28, height: 28}} />
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 10,
-                    width: 9,
-                    height: 9,
-                    borderRadius: 4,
-                    padding: 1,
-                    backgroundColor: 'white',
-                  }}>
-                  <View
-                    style={{
-                      backgroundColor: '#DD88CF',
-                      width: 7,
-                      height: 7,
-                      borderRadius: 3.5,
-                    }}
-                  />
-                </View>
+                style={styles.headerBtn}
+                onPress={() => navigation.goBack()}>
+                <Octicons name="arrow-left" size={25} color="black" />
               </TouchableOpacity>
+              <View style={{flexDirection: 'row', gap: 10}}>
+                <TouchableOpacity style={styles.headerBtn}>
+                  <Icon name="share-outline" size={25} color="black" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.headerBtn}>
+                  <Icon name="heart-outline" size={25} color="black" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.communityHeader}>
-              <ProfilePicture
-                profilePictureUri={community?.profilePicture || ''}
-                width={140}
-                height={140}
-                borderRadius={70}
+              <ImageBackground
+                source={{uri: community?.profilePicture || ''}}
+                style={styles.communityProfilePicture}
+                imageStyle={styles.profilePictureImage}
               />
               <Text style={styles.communityName}>{community?.name || ''}</Text>
-              {/* <Text style={styles.communityDescription}>
+              <Text style={styles.communityDescription}>
                 {community?.description || ''}
-              </Text> */}
+              </Text>
               <View
                 style={{
                   flexDirection: 'row',
-                  gap: 10,
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginHorizontal: 20,
+                }}>
+                <Text
+                  style={{
+                    color: '#A274FF',
+                    fontSize: 13,
+                    fontWeight: '500',
+
+                    marginTop: 5,
+                  }}>
+                  {events?.length || 0} events{' '}
+                  <Octicons name="dot-fill" size={8} color="#A274FF" />{' '}
+                  {community?.members?.length || 1} members
+                </Text>
+                {(community.members?.includes(user?._id) ||
+                  community.createdBy?._id == user?._id) && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setModalVisible(true); // Open modal
+                    }}>
+                    <Feather name="edit" size={20} color="#A274FF" />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  gap: 20,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  padding: 15,
                 }}>
                 {!community.members?.includes(user?._id) &&
                   community.createdBy?._id !== user?._id && (
@@ -608,7 +609,7 @@ const CommunityHomeScreen = ({route}) => {
                         });
                       }}
                       style={{
-                        backgroundColor: '#DD88CF',
+                        backgroundColor: '#A274FF',
                         padding: 10,
                         width: 90,
                         borderRadius: 30,
@@ -616,7 +617,7 @@ const CommunityHomeScreen = ({route}) => {
                       }}>
                       <Text
                         style={{
-                          color: 'whit  e',
+                          color: 'white',
                           fontWeight: '500',
                           textAlign: 'center',
                         }}>
@@ -631,50 +632,96 @@ const CommunityHomeScreen = ({route}) => {
                 {(community.members?.includes(user?._id) ||
                   community.createdBy?._id == user?._id) && (
                   <TouchableOpacity
-                    onPress={() => setIsChatBotVisible(true)}
+                    // onPress={() => setIsChatBotVisible(true)}
                     style={{
-                      backgroundColor: '#DD88CF',
+                      backgroundColor: '#A274FF',
                       padding: 10,
-                      width: 90,
-                      borderRadius: 30,
+                      flex: 1,
+                      borderRadius: 10,
                       marginTop: 10,
+                      marginHorizontal: 40,
                     }}>
                     <Text
                       style={{
-                        color: 'whit  e',
+                        color: 'white',
                         fontWeight: '500',
                         textAlign: 'center',
+                        fontSize: 15,
                       }}>
-                      Ask AI
+                      Dashboard
                     </Text>
                   </TouchableOpacity>
                 )}
-                {(community.members?.includes(user?._id) ||
-                  community.createdBy?._id == user?._id) && (
-                  <TouchableOpacity
-                    style={{
-                      backgroundColor: 'white',
-                      borderWidth: 1,
-                      borderColor: '#DD88CF',
-                      padding: 8,
-                      width: 90,
-                      borderRadius: 30,
-                      marginTop: 10,
-                    }}
-                    onPress={() => {
-                      setModalVisible(true); // Open modal
-                    }}>
-                    <Text
+                {!community.members?.includes(user?._id) &&
+                  community.createdBy?._id !== user?._id && (
+                    <TouchableOpacity
+                      onPress={() => setIsChatBotVisible(true)}
                       style={{
-                        color: '#DD88CF',
-                        fontWeight: '500',
-                        textAlign: 'center',
+                        backgroundColor: 'white',
+                        borderWidth: 1,
+                        borderColor: '#A274FF',
+                        padding: 8,
+                        flex: 1,
+                        borderRadius: 30,
+                        marginTop: 10,
                       }}>
-                      Add Post
-                    </Text>
-                  </TouchableOpacity>
-                )}
+                      <Text
+                        style={{
+                          color: '#A274FF',
+                          fontWeight: '500',
+                          textAlign: 'center',
+                        }}>
+                        Ask AI
+                      </Text>
+                    </TouchableOpacity>
+                  )}
               </View>
+            </View>
+
+            <View style={{flex: 1, justifyContent: 'flex-start'}}>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  marginHorizontal: 20,
+                }}>
+                <Text style={styles.title}>
+                  {community.createdBy?._id !== user?._id
+                    ? 'Upcoming Events'
+                    : 'Events'}
+                </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('CreateEvent', {
+                      myCommunities: [community],
+                      communityId,
+                    })
+                  }
+                  style={{marginRight: 40}}>
+                  <AntDesignIcons name="plus" size={25} color="#A274FF" />
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={events}
+                horizontal
+                keyExtractor={item => item._id}
+                renderItem={item => (
+                  <EventCard
+                    event={item.item}
+                    height={180}
+                    width={130}
+                    picHeight={80}
+                  />
+                )}
+                contentContainerStyle={styles.listContent}
+                ListEmptyComponent={() => (
+                  <View style={styles.noTrendingContainer}>
+                    <Text style={styles.noUsersText}>No Events found</Text>
+                  </View>
+                )}
+              />
             </View>
 
             {/* Toggle between Feed and Profile */}
@@ -684,15 +731,16 @@ const CommunityHomeScreen = ({route}) => {
                 style={{
                   flexDirection: 'row',
                   justifyContent: 'space-between',
-                  marginVertical: 10,
-                  backgroundColor: '#F8E7F6',
+                  marginBottom: 10,
+                  backgroundColor: '#EEEEEE',
                   borderRadius: 30,
                   padding: 5,
+                  marginHorizontal: 10,
                 }}>
                 <TouchableOpacity
                   onPress={() => setIsFeedView(true)}
                   style={{
-                    backgroundColor: isFeedView ? '#FFFFFF' : '#F8E7F6',
+                    backgroundColor: isFeedView ? '#A274FF' : '#EEEEEE',
                     paddingVertical: 10,
                     paddingHorizontal: 20,
                     borderRadius: 25,
@@ -702,18 +750,18 @@ const CommunityHomeScreen = ({route}) => {
                     style={[
                       styles.proku,
                       {
-                        fontSize: 12,
-                        color: isFeedView ? '#4B164C' : '#000',
+                        fontSize: 13,
+                        color: isFeedView ? 'white' : '#000',
                         textAlign: 'center',
                       },
                     ]}>
-                    Community Feed
+                    Feed
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setIsFeedView(false)}
                   style={{
-                    backgroundColor: !isFeedView ? '#FFFFFF' : '#F8E7F6',
+                    backgroundColor: !isFeedView ? '#A274FF' : '#EEEEEE',
                     paddingVertical: 10,
                     paddingHorizontal: 20,
                     borderRadius: 25,
@@ -723,8 +771,8 @@ const CommunityHomeScreen = ({route}) => {
                     style={[
                       styles.proku,
                       {
-                        fontSize: 12,
-                        color: !isFeedView ? '#4B164C' : '#000',
+                        fontSize: 13,
+                        color: !isFeedView ? 'white' : '#000',
                         textAlign: 'center',
                       },
                     ]}>
@@ -733,141 +781,62 @@ const CommunityHomeScreen = ({route}) => {
                 </TouchableOpacity>
               </View>
             )}
-            {!community.members?.includes(user?._id) &&
-              community.createdBy?._id !== user?._id && (
-                <View style={{flex: 1, justifyContent: 'flex-start'}}>
-                  <View
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'flex-start',
-                      margin: 10,
-                    }}>
-                    <Text style={styles.title}>About</Text>
-                    <Text style={{color: '#141414'}}>
-                      {community?.description}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'flex-start',
-                      margin: 10,
-                    }}>
-                    <Text style={styles.title}>Upcoming Events</Text>
-                  </View>
-                  <FlatList
-                    data={events}
-                    keyExtractor={item => item._id}
-                    renderItem={renderEventCard}
-                    contentContainerStyle={styles.listContent}
-                    numColumns={2} // Three columns
-                    // ListHeaderComponent={renderHeader}
-                    // ListFooterComponent={renderFooter}
-                    ListEmptyComponent={() => (
-                      <View style={styles.noTrendingContainer}>
-                        <Image source={require('../assets/not-found.png')} />
-                        <Text style={styles.noUsersText}>No Events found</Text>
-                      </View>
-                    )}
-                  />
-                </View>
-              )}
 
-            {/* {!isFeedView && (
-              <View>
-                <Text
-                  style={{
-                    color: '#141414',
-                    fontSize: 15,
-                    fontWeight: 'bold',
-                    marginVertical: 15,
-                  }}>
-                  Members
-                </Text>
-              </View>
-            )} */}
-
-            {!isFeedView && (
-              <TouchableOpacity onPress={() => {}}>
-                <View style={styles.friendItem}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginBottom: 7,
-                      padding: 5,
-                    }}>
-                    <ProfilePicture
-                      profilePictureUri={community?.createdBy?.profilePicture}
-                      width={40}
-                      height={40}
-                      borderRadius={20}
-                      marginRight={10}
-                    />
-
-                    <Text style={styles.friendName}>
-                      {community?.createdBy?.name}
-                    </Text>
-                  </View>
-                  <View className="bg-[#4B164C] rounded-full p-2 px-4 flex flex-row items-center justify-center">
-                    <Progress.Circle
-                      size={30}
-                      progress={0.7}
-                      showsText
-                      thickness={3}
-                      textStyle={{color: 'white', fontSize: 8}}
-                      color="#242760"
-                      unfilledColor="#dd88cf62"
-                      borderColor="#4B164C"
-                    />
-                    <Text className="text-white font-bold ml-2 ">Match</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
+            {/* Feed or Members */}
             {!isFeedView && (
               <FlatList
-                data={members}
+                data={
+                  community.createdBy?._id === user?._id
+                    ? members
+                    : [user, ...members]
+                }
+                contentContainerStyle={{
+                  flexDirection: 'row',
+                  // flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 10,
+                  marginTop: 10,
+                }}
+                numColumns={2}
                 keyExtractor={item => item._id} // Assuming each friend has a unique `id`
                 renderItem={({item}) => (
-                  <TouchableOpacity onPress={() => {}}>
-                    <View style={styles.friendItem}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          marginBottom: 7,
-                          padding: 5,
-                        }}>
-                        <ProfilePicture
-                          profilePictureUri={item.profilePicture}
-                          width={40}
-                          height={40}
-                          borderRadius={20}
-                          marginRight={10}
-                        />
+                  <RenderUserCard item={item} />
+                  // <TouchableOpacity onPress={() => {}}>
+                  //   <View style={styles.friendItem}>
+                  //     <View
+                  //       style={{
+                  //         flexDirection: 'row',
+                  //         alignItems: 'center',
+                  //         marginBottom: 7,
+                  //         padding: 5,
+                  //       }}>
+                  //       <ProfilePicture
+                  //         profilePictureUri={item.profilePicture}
+                  //         width={40}
+                  //         height={40}
+                  //         borderRadius={20}
+                  //         marginRight={10}
+                  //       />
 
-                        <Text style={styles.friendName}>{item.name}</Text>
-                      </View>
-                      <View className="bg-[#4B164C] rounded-full p-2 px-4 flex flex-row items-center justify-center">
-                        <Progress.Circle
-                          size={30}
-                          progress={0.7}
-                          showsText
-                          thickness={3}
-                          textStyle={{color: 'white', fontSize: 8}}
-                          color="#242760"
-                          unfilledColor="#dd88cf62"
-                          borderColor="#4B164C"
-                        />
-                        <Text className="text-white font-bold ml-2 ">
-                          Match
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
+                  //       <Text style={styles.friendName}>{item.name}</Text>
+                  //     </View>
+                  //     <View className="bg-[#4B164C] rounded-full p-2 px-4 flex flex-row items-center justify-center">
+                  //       <Progress.Circle
+                  //         size={30}
+                  //         progress={0.7}
+                  //         showsText
+                  //         thickness={3}
+                  //         textStyle={{color: 'white', fontSize: 8}}
+                  //         color="#242760"
+                  //         unfilledColor="#A274FF62"
+                  //         borderColor="#4B164C"
+                  //       />
+                  //       <Text className="text-white font-bold ml-2 ">
+                  //         Match
+                  //       </Text>
+                  //     </View>
+                  //   </View>
+                  // </TouchableOpacity>
                 )}
                 ListEmptyComponent={() => (
                   <Text style={styles.emptyMessage}></Text>
@@ -938,7 +907,7 @@ const CommunityHomeScreen = ({route}) => {
               <TouchableOpacity
                 onPress={() => pickMedia('image')}
                 style={{
-                  backgroundColor: '#DD88CF',
+                  backgroundColor: '#A274FF',
                   paddingVertical: 10,
                   paddingHorizontal: 20,
                   borderRadius: 20,
@@ -948,7 +917,7 @@ const CommunityHomeScreen = ({route}) => {
               {/* <TouchableOpacity
                 onPress={() => pickMedia('video')}
                 style={{
-                  backgroundColor: '#DD88CF',
+                  backgroundColor: '#A274FF',
                   paddingVertical: 10,
                   paddingHorizontal: 20,
                   borderRadius: 20,
@@ -991,7 +960,7 @@ const CommunityHomeScreen = ({route}) => {
               <TouchableOpacity
                 onPress={handleAddPost}
                 style={{
-                  backgroundColor: '#DD88CF',
+                  backgroundColor: '#A274FF',
                   paddingVertical: 10,
                   paddingHorizontal: 20,
                   borderRadius: 20,
@@ -1070,6 +1039,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     minHeight: '100%',
+    paddingStart: 30,
     paddingHorizontal: 10,
     paddingBottom: 20,
     backgroundColor: 'white',
@@ -1090,9 +1060,15 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-
+  communityProfilePicture: {
+    width: '100%',
+    height: 250,
+    overflow: 'hidden',
+    backgroundColor: '#a274ff6e',
+  },
   profilePictureImage: {
-    borderRadius: 10,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
   },
   overlay: {
     position: 'absolute',
@@ -1116,17 +1092,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#FFFFFF',
   },
-  communityHeader: {
+  headerBtn: {
+    padding: 5,
+    backgroundColor: 'white',
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+  },
+  communityHeader: {
+    // alignItems: 'center',
     backgroundColor: '#FFFFFF',
     marginBottom: 10,
+    borderRadius: 10,
   },
   communityName: {
+    textAlign: 'left',
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 10,
+    margin: 20,
     color: '#141414',
+  },
+  communityDescription: {
+    color: 'black',
+    marginLeft: 20,
   },
   iconButtons: {
     position: 'relative',
@@ -1162,7 +1152,7 @@ const styles = StyleSheet.create({
   },
   addCommentButton: {
     marginLeft: 10,
-    backgroundColor: '#DD88CF',
+    backgroundColor: '#A274FF',
     padding: 15,
     borderRadius: 8,
   },

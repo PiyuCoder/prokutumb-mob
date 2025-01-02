@@ -15,6 +15,9 @@ import Voice from '@react-native-voice/voice';
 import {PermissionsAndroid, Platform} from 'react-native';
 import {axiosInstance} from '../api/axios';
 import {useSelector} from 'react-redux';
+import Icon from 'react-native-vector-icons/Ionicons';
+import FAIcon from 'react-native-vector-icons/FontAwesome';
+import EntypoIcon from 'react-native-vector-icons/Entypo';
 
 const NetworkScreen = () => {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
@@ -185,10 +188,10 @@ const NetworkScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={'#4B164C'} barStyle={'light-content'} />
+      <StatusBar backgroundColor={'#A274FF'} barStyle={'light-content'} />
       <View style={styles.chatContainer}>
         <Text style={styles.chatText}>
-          You're talking with <Text style={{color: '#DD88CF'}}>Proku</Text>
+          You're talking with <Text style={{color: 'white'}}>MajlisAI</Text>
         </Text>
       </View>
       <ScrollView ref={scrollViewRef}>
@@ -240,20 +243,22 @@ const NetworkScreen = () => {
             <TouchableOpacity
               onPress={openAttachmentPicker}
               style={styles.button}>
-              <Image
+              {/* <Image
                 source={require('../assets/icons/attachment.png')}
                 style={styles.icon}
-              />
+              /> */}
+              <EntypoIcon name="attachment" size={30} color="#4B164C" />
             </TouchableOpacity>
           </View>
           <View className="bg-white flex-1 h-20 rounded-r-full rounded-tl-full flex items-center justify-center">
             <TouchableOpacity
               onPress={() => setKeyboardVisible(prev => !prev)}
               style={styles.button}>
-              <Image
+              {/* <Image
                 source={require('../assets/icons/keyboard.png')}
                 style={styles.icon}
-              />
+              /> */}
+              <FAIcon name="keyboard-o" size={30} color="#4B164C" />
             </TouchableOpacity>
           </View>
           <View
@@ -274,10 +279,11 @@ const NetworkScreen = () => {
             onPressIn={startVoiceRecognition} // Start recording on press
             onPressOut={stopVoiceRecognition}
             style={styles.micButton}>
-            <Image
+            {/* <Image
               source={require('../assets/icons/mic.png')}
               style={styles.icon}
-            />
+            /> */}
+            <Icon name="mic-outline" size={30} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -288,7 +294,7 @@ const NetworkScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#4B164C',
+    backgroundColor: '#A274FF',
   },
   chatContainer: {
     // width: '100%',
@@ -298,7 +304,7 @@ const styles = StyleSheet.create({
   },
   chatText: {
     fontSize: 24,
-    color: 'white',
+    color: 'black',
     fontWeight: 'bold',
   },
   inputContainer: {
@@ -319,11 +325,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginRight: 10,
     color: 'black',
-    // borderColor: '#DD88CF',
+    // borderColor: '#A274FF',
     // borderWidth: 1,
   },
   sendButton: {
-    backgroundColor: '#DD88CF',
+    backgroundColor: '#A274FF',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -341,18 +347,18 @@ const styles = StyleSheet.create({
     marginLeft: -50,
     bottom: 30,
     zIndex: 50,
-    backgroundColor: '#4B164C',
+    backgroundColor: '#A274FF',
     borderRadius: 50,
   },
   micButton: {
-    backgroundColor: '#DD88CF',
+    backgroundColor: '#6219F4',
     padding: 10,
     height: 100,
     width: 100,
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: '#4B164C',
+    borderColor: '#a274ff11',
     borderWidth: 15,
   },
   floatingContainer: {
@@ -380,29 +386,32 @@ const styles = StyleSheet.create({
     height: 25,
   },
   messageContainer: {
-    marginVertical: 15,
+    marginVertical: 10,
     padding: 10,
     borderRadius: 10,
     flexDirection: 'column', // Stack the messages vertically
   },
+
   userMessage: {
-    padding: 5,
+    padding: 8,
     paddingHorizontal: 10,
-    backgroundColor: '#DD88CF',
+    backgroundColor: '#6219F4',
     alignSelf: 'flex-end',
-    color: 'black',
-    borderRadius: 5,
+    color: 'white',
+    borderRadius: 10,
+    // borderBottomRightRadius: 0,
     elevation: 10,
     maxWidth: '70%',
     margin: 3,
   },
   aiMessage: {
-    padding: 5,
+    padding: 8,
     paddingHorizontal: 10,
     backgroundColor: '#f0f0f0',
     alignSelf: 'flex-start',
     color: 'black',
-    borderRadius: 5,
+    // borderRadius: 10,
+    borderTopLeftRadius: 10,
     elevation: 10,
     maxWidth: '70%',
     margin: 3,

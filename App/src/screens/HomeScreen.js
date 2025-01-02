@@ -15,6 +15,8 @@ import {
   Share,
   TouchableWithoutFeedback,
   Alert,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {fetchFriendRequests, logout} from '../store/slices/authSlice';
@@ -37,14 +39,13 @@ import {connectSocket, disconnectSocket} from '../socket';
 import socket from '../socket';
 import ConnectionRequests from '../components/ConnectionRequests';
 import ProfilePicture from '../components/ProfilePicture';
+import Icon from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
+import SimpleIcon from 'react-native-vector-icons/SimpleLineIcons';
 import {axiosInstance} from '../api/axios';
+import SideNavigationScreen from '../components/SideNavigationScreen';
 
-const likeIcon = require('../assets/icons/like.png');
-const likedIcon = require('../assets/icons/liked.png');
-const commentIcon = require('../assets/icons/comment.png');
-const viewIcon = require('../assets/icons/view.png');
-const shareIcon = require('../assets/icons/share.png');
-const bellIcon = require('../assets/icons/bell.png');
+const {width, height} = Dimensions.get('window');
 
 const HomeScreen = ({navigation}) => {
   const [isFeedView, setIsFeedView] = useState(true); // Toggle between Feed and Profile
@@ -67,6 +68,8 @@ const HomeScreen = ({navigation}) => {
   const [currentComment, setCurrentComment] = useState('');
   const totalPages = useSelector(state => state.posts.totalPages);
   const [stories, setStories] = useState([]);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const sidebarAnimation = useRef(new Animated.Value(-width * 0.7)).current;
 
   const flatListRef = useRef(null);
 
@@ -123,7 +126,7 @@ const HomeScreen = ({navigation}) => {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setIsLoading(true);
+    // setIsLoading(true);
     dispatch(fetchFriendRequests(user?._id));
     fetchStories();
     loadMorePosts();
@@ -168,7 +171,7 @@ const HomeScreen = ({navigation}) => {
           height={50}
           borderRadius={25}
           marginRight={10}
-          borderColor={'#DD88CF'}
+          borderColor={'#A274FF'}
           isUser={false}
           story
         />
@@ -179,7 +182,7 @@ const HomeScreen = ({navigation}) => {
             height: 60,
             borderRadius: 30,
             borderWidth: item.isUser ? 2 : 0,
-            borderColor: item.isUser ? '' : '#DD88CF',
+            borderColor: item.isUser ? '' : '#A274FF',
           }}
         /> */}
         <Text style={{fontSize: 12, marginTop: 5}}>{item.name}</Text>
@@ -335,12 +338,13 @@ const HomeScreen = ({navigation}) => {
   console.log(selectedMedia);
   const renderPost = ({item}) => (
     <View
-      className="border border-gray-200"
+      className="border border-[#A274FF]"
       style={{
         marginBottom: 15,
-        padding: 10,
+        padding: 12,
+        paddingHorizontal: 15,
         backgroundColor: '#FFFFFF',
-        borderRadius: 8,
+        borderRadius: 20,
       }}>
       {/* User info (Profile Picture and Name) */}
       <View
@@ -368,16 +372,17 @@ const HomeScreen = ({navigation}) => {
           </Text>
         </View>
         {user?._id === item.user._id && (
-          <View style={{position: 'relative', zIndex: 100}}>
+          <View style={{position: 'relative', zIndex: 100, marginRight: 8}}>
             <TouchableOpacity
               onPress={() => {
                 toggleActionSection(item._id);
                 setActionModalVisible(!actionModalVisible);
               }}>
-              <Image
+              {/* <Image
                 style={{height: 20, width: 20}}
                 source={require('../assets/icons/action.png')}
-              />
+              /> */}
+              <SimpleIcon name="options" size={20} color="#585C60" />
             </TouchableOpacity>
             {actionModalVisible && openActionPostId === item._id && (
               <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
@@ -410,7 +415,9 @@ const HomeScreen = ({navigation}) => {
       </View>
 
       {/* Post Content */}
-      <Text style={{marginTop: 10, color: '#141414'}}>{item.content}</Text>
+      <Text style={{marginTop: 10, color: '#676767', fontSize: 16}}>
+        {item.content}
+      </Text>
 
       {/* Display media if it exists */}
       {item.mediaUrl && item.mediaType === 'image' && (
@@ -418,7 +425,8 @@ const HomeScreen = ({navigation}) => {
           source={{uri: item.mediaUrl}}
           style={{
             width: '100%',
-            height: 200,
+            height: 400,
+            objectFit: 'cover',
             borderRadius: 8,
             marginTop: 10,
           }}
@@ -447,16 +455,22 @@ const HomeScreen = ({navigation}) => {
             dispatch(likePost({userId: user?._id, postId: item._id}))
           }
           style={styles.actionButton}>
-          <Image
+          {/* <Image
             source={item?.likes?.includes(user?._id) ? likedIcon : likeIcon}
             style={styles.actionIcon}
-          />
+          /> */}
+          {item?.likes?.includes(user?._id) ? (
+            <Icon name="heart" size={24} color="red" />
+          ) : (
+            <Icon name="heart-outline" size={24} color="#7B7B7B" />
+          )}
           <Text style={styles.actionText}>{item.likes.length} </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => toggleCommentSection(item._id)}
           style={styles.actionButton}>
-          <Image source={commentIcon} style={styles.actionIcon} />
+          {/* <Image source={commentIcon} style={styles.actionIcon} /> */}
+          <Icon name="chatbubble-outline" size={24} color="#7B7B7B" />
           <Text style={styles.actionText}>{item.comments.length}</Text>
         </TouchableOpacity>
         {/* <TouchableOpacity style={styles.actionButton}>
@@ -466,7 +480,8 @@ const HomeScreen = ({navigation}) => {
         <TouchableOpacity
           onPress={() => sharePost(item)}
           style={styles.actionButton}>
-          <Image source={shareIcon} style={styles.actionIcon} />
+          {/* <Image source={shareIcon} style={styles.actionIcon} /> */}
+          <Icon name="arrow-redo-outline" size={24} color="#7B7B7B" />
           <Text style={styles.actionText}>{item.shares}</Text>
         </TouchableOpacity>
       </View>
@@ -534,16 +549,27 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
+  // Open Sidebar
+  const openSidebar = () => {
+    setIsSidebarVisible(true); // Show overlay
+    Animated.timing(sidebarAnimation, {
+      toValue: 0, // Slide in
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
     <View
       style={{
         flex: 1,
         paddingHorizontal: 7,
+        paddingTop: 10,
         // paddingBottom: 80,
-        backgroundColor: '#FDF7FD',
+        backgroundColor: 'white',
       }}>
-      <StatusBar backgroundColor="#FDF7FD" barStyle="dark-content" />
-      <Loader isLoading={isLoading} />
+      <StatusBar backgroundColor="white" barStyle="dark-content" />
+      {/* <Loader isLoading={isLoading} /> */}
       <FlatList
         ref={flatListRef}
         refreshControl={
@@ -569,23 +595,60 @@ const HomeScreen = ({navigation}) => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: 5,
+                gap: 10,
+                marginBottom: 10,
               }}>
-              <Image
+              {/* <Image
                 style={{height: 35, width: 75}}
                 source={require('../assets/proku-home-logo.png')}
-              />
+              /> */}
               {/* <Text style={[styles.proku, {color: '#4B164C', fontSize: 24}]}>
                 ProKu
               </Text> */}
+              <TouchableOpacity onPress={openSidebar}>
+                <ProfilePicture
+                  profilePictureUri={user?.profilePicture}
+                  width={60}
+                  height={60}
+                  borderRadius={30}
+                  isUser={true}
+                />
+              </TouchableOpacity>
+
+              <View
+                style={{
+                  backgroundColor: '#ECF2F6',
+                  flex: 1,
+                  borderRadius: 40,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  paddingHorizontal: 10,
+                }}>
+                <Icon name="search" size={20} color="#585C60" />
+                <TextInput style={{flex: 1, paddingStart: 8}} />
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(true); // Open modal
+                }}>
+                <Feather name="edit" size={30} color="#A274FF" />
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate('Notifications')}
                 style={styles.iconButtons}>
-                <Image source={bellIcon} style={{width: 28, height: 28}} />
+                <View style={{borderWidth: 1}}>
+                  <Icon
+                    name="notifications-outline"
+                    size={24}
+                    color="#4B164C"
+                  />
+                </View>
                 <View
                   style={{
                     position: 'absolute',
-                    top: 8,
-                    right: 10,
+                    top: 12,
+                    right: 12,
                     width: 9,
                     height: 9,
                     borderRadius: 4,
@@ -594,7 +657,7 @@ const HomeScreen = ({navigation}) => {
                   }}>
                   <View
                     style={{
-                      backgroundColor: '#DD88CF',
+                      backgroundColor: '#A274FF',
                       width: 7,
                       height: 7,
                       borderRadius: 3.5,
@@ -603,7 +666,7 @@ const HomeScreen = ({navigation}) => {
                 </View>
               </TouchableOpacity>
             </View>
-            <View
+            {/* <View
               style={{height: 100, paddingVertical: 10, flexDirection: 'row'}}>
               <TouchableOpacity
                 onPress={() => {
@@ -652,12 +715,12 @@ const HomeScreen = ({navigation}) => {
                 keyExtractor={item => item.id}
                 renderItem={renderStory}
               />
-            </View>
+            </View> */}
 
             {/* <View>
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#DD88CF',
+                  backgroundColor: '#A274FF',
                   padding: 10,
                   borderRadius: 10,
                   alignItems: 'center',
@@ -668,7 +731,7 @@ const HomeScreen = ({navigation}) => {
             </View> */}
 
             {/* Toggle between Feed and Profile */}
-            <View
+            {/* <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
@@ -719,28 +782,14 @@ const HomeScreen = ({navigation}) => {
                   My Profile
                 </Text>
               </TouchableOpacity>
-            </View>
-            {/* QR Code for sharing profile */}
-            {!isFeedView && (
-              <LinearGradient
-                colors={['#DD88CF', '#DD88CF', '#DD88CF']}
-                style={styles.qrContainer}>
-                {/* <Text style={styles.qrText}>Scan to connect:</Text> */}
-                <QRCode
-                  // value={`prokutumb://profile/${user?._id}`}
-                  value={`https://prokutumb-mob.onrender.com/redirect.html?userId=${user?._id}`}
-                  size={120}
-                  color="black"
-                  backgroundColor="transparent"
-                />
-              </LinearGradient>
-            )}
+            </View> */}
+
             {!isFeedView && (
               <View>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('Profile')}
                   style={{
-                    backgroundColor: '#DD88CF',
+                    backgroundColor: '#A274FF',
                     padding: 12,
                     borderRadius: 10,
                     alignItems: 'center',
@@ -769,7 +818,10 @@ const HomeScreen = ({navigation}) => {
           </View>
         }
       />
-
+      {/* Sidebar */}
+      {isSidebarVisible && (
+        <SideNavigationScreen setIsSidebarVisible={setIsSidebarVisible} />
+      )}
       {/* Modal for adding post */}
       <Modal
         animationType="slide"
@@ -831,7 +883,7 @@ const HomeScreen = ({navigation}) => {
               <TouchableOpacity
                 onPress={() => pickMedia('image')}
                 style={{
-                  backgroundColor: '#DD88CF',
+                  backgroundColor: '#A274FF',
                   paddingVertical: 10,
                   paddingHorizontal: 20,
                   borderRadius: 20,
@@ -841,7 +893,7 @@ const HomeScreen = ({navigation}) => {
               {/* <TouchableOpacity
                 onPress={() => pickMedia('video')}
                 style={{
-                  backgroundColor: '#DD88CF',
+                  backgroundColor: '#A274FF',
                   paddingVertical: 10,
                   paddingHorizontal: 20,
                   borderRadius: 20,
@@ -884,7 +936,7 @@ const HomeScreen = ({navigation}) => {
               <TouchableOpacity
                 onPress={handleAddPost}
                 style={{
-                  backgroundColor: '#DD88CF',
+                  backgroundColor: '#A274FF',
                   paddingVertical: 10,
                   paddingHorizontal: 20,
                   borderRadius: 20,
@@ -939,13 +991,13 @@ const styles = StyleSheet.create({
   postActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 10,
+    marginTop: 25,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    width: 40,
+    gap: 5,
   },
   actionIcon: {
     width: 22,
@@ -957,11 +1009,11 @@ const styles = StyleSheet.create({
   },
   iconButtons: {
     position: 'relative',
-    padding: 2,
-    height: 45,
-    width: 45,
-    borderRadius: 22.5,
-    borderColor: '#4b164c5a',
+    padding: 5,
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+    borderColor: '#EEEEEE',
     borderWidth: 2,
     display: 'flex',
     alignItems: 'center',
@@ -989,7 +1041,7 @@ const styles = StyleSheet.create({
   },
   addCommentButton: {
     marginLeft: 10,
-    backgroundColor: '#DD88CF',
+    backgroundColor: '#A274FF',
     padding: 15,
     borderRadius: 8,
   },

@@ -4,6 +4,8 @@ const { Schema } = mongoose;
 const communitySchema = new Schema(
   {
     name: { type: String, required: true },
+    about: { type: String },
+    location: { type: String },
     description: { type: String, required: true },
     isAnonymous: { type: Boolean, default: false },
     profilePicture: { type: String },
@@ -29,6 +31,10 @@ const communitySchema = new Schema(
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "Member",
+    },
+    communityType: {
+      type: String,
+      default: "public",
     },
   },
   { timestamps: true }
