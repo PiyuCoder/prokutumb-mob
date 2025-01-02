@@ -343,7 +343,9 @@ exports.createEvent = async (req, res) => {
     // Handle profile picture upload
     if (req.file) {
       // Save new profile picture
-      profilePicture = `http://${req.get("host")}/uploads/${req.file.filename}`;
+      profilePicture = `https://${req.get("host")}/uploads/${
+        req.file.filename
+      }`;
 
       // Check and delete the old profile picture if it exists
       // const existingEvent = await Event.findOne({ createdBy });
