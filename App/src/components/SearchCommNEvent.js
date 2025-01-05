@@ -16,7 +16,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import ProfilePicture from './ProfilePicture';
 import {useSelector} from 'react-redux';
 
-const SearchPeople = ({iconColor, home}) => {
+const SearchCommNEvent = ({iconColor, isEvent}) => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -25,8 +25,9 @@ const SearchPeople = ({iconColor, home}) => {
 
   const fetchSearchResults = async searchQuery => {
     try {
+      const type = isEvent ? 'event' : 'community';
       const response = await axiosInstance.get(
-        `/api/search-people?q=${searchQuery}`,
+        `/api/search-${type}?q=${searchQuery}`,
       );
       setSearchResults(response?.data);
     } catch (error) {
@@ -46,38 +47,17 @@ const SearchPeople = ({iconColor, home}) => {
   return (
     <>
       {/* Lens Icon */}
-      {home ? (
-        <TouchableOpacity
-          activeOpacity={0.6}
-          onPress={() => setSearchVisible(true)}
-          style={{
-            backgroundColor: '#ECF2F6',
-            flex: 1,
-            borderRadius: 40,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            paddingHorizontal: 10,
-          }}>
-          <Icon name="search" size={20} color="#585C60" />
-          <TextInput
-            placeholderTextColor={'gray'}
-            editable={false}
-            style={{flex: 1, paddingStart: 8, color: 'black'}}
-          />
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          style={styles.iconButtons}
-          onPress={() => setSearchVisible(true)}>
-          {/* <Image source={lensIcon} style={styles.icon} /> */}
-          <Feather
-            name="search"
-            size={25}
-            color={iconColor ? iconColor : '#A274FF'}
-          />
-        </TouchableOpacity>
-      )}
+
+      <TouchableOpacity
+        style={styles.iconButtons}
+        onPress={() => setSearchVisible(true)}>
+        {/* <Image source={lensIcon} style={styles.icon} /> */}
+        <Feather
+          name="search"
+          size={25}
+          color={iconColor ? iconColor : '#A274FF'}
+        />
+      </TouchableOpacity>
 
       {/* Filter Icon */}
       {/* <TouchableOpacity style={styles.iconButtons}>
@@ -88,36 +68,14 @@ const SearchPeople = ({iconColor, home}) => {
       <Modal visible={searchVisible} transparent={true} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.searchContainer}>
-            {home ? (
-              <View
-                style={{
-                  backgroundColor: '#ECF2F6',
-                  flex: 1,
-                  borderRadius: 40,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  paddingHorizontal: 10,
-                }}>
-                <Icon name="search" size={20} color="#585C60" />
-                <TextInput
-                  value={query}
-                  autoFocus
-                  placeholderTextColor={'gray'}
-                  onChangeText={setQuery}
-                  style={{flex: 1, paddingStart: 8, color: 'black'}}
-                />
-              </View>
-            ) : (
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search people..."
-                placeholderTextColor={'gray'}
-                value={query}
-                onChangeText={setQuery}
-                autoFocus
-              />
-            )}
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search people..."
+              value={query}
+              onChangeText={setQuery}
+              autoFocus
+              placeholderTextColor={'gray'}
+            />
 
             <TouchableOpacity
               style={styles.cancelButton}
@@ -137,7 +95,13 @@ const SearchPeople = ({iconColor, home}) => {
               <TouchableOpacity
                 onPress={() => {
                   setSearchVisible(false);
-                  navigation.navigate('UserProfile', {userId: item._id});
+                  const typeId = isEvent
+                    ? {eventId: item._id}
+                    : {communityId: item?._id};
+                  navigation.navigate(
+                    isEvent ? 'EventHome' : 'CommunityHome',
+                    typeId,
+                  );
                 }}>
                 <View style={styles.resultItem}>
                   <ProfilePicture
@@ -233,4 +197,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SearchPeople;
+export default SearchCommNEvent;

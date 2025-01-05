@@ -4,6 +4,8 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { SessionsClient } = require("@google-cloud/dialogflow-cx");
 const Feed = require("../models/Feed");
 const Notification = require("../models/Notification");
+const Communitymob = require("../models/Community");
+const Event = require("../models/Event");
 
 const updateUserLocation = async (userId, latitude, longitude) => {
   try {
@@ -188,6 +190,42 @@ exports.searchPeople = async (req, res) => {
 
     // console.log(users);
     res.status(200).json(users);
+  } catch (error) {
+    console.error("Error in searchPeople:", error); // Added for easier debugging
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.searchCommunity = async (req, res) => {
+  try {
+    const { q } = req.query; // Use req.query to get query parameters
+
+    const communitites = await Communitymob.find({
+      $or: [
+        { name: { $regex: q, $options: "i" } }, // Corrected `$option` to `$options`
+      ],
+    }).limit(7);
+
+    // console.log(users);
+    res.status(200).json(communitites);
+  } catch (error) {
+    console.error("Error in searchPeople:", error); // Added for easier debugging
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.searchEvent = async (req, res) => {
+  try {
+    const { q } = req.query; // Use req.query to get query parameters
+
+    const events = await Event.find({
+      $or: [
+        { name: { $regex: q, $options: "i" } }, // Corrected `$option` to `$options`
+      ],
+    }).limit(7);
+
+    // console.log(users);
+    res.status(200).json(events);
   } catch (error) {
     console.error("Error in searchPeople:", error); // Added for easier debugging
     res.status(500).json({ message: "Server error" });

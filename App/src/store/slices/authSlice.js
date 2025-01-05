@@ -46,8 +46,8 @@ export const editProfile = createAsyncThunk(
 
 // Thunk for adding a new experience
 export const editUserExperience = createAsyncThunk(
-  'user/editExperience',
-  async ({userId, experience}, {rejectWithValue, getState}) => {
+  'auth/editUserExperience',
+  async ({userId, experience}, {rejectWithValue}) => {
     try {
       // const { token } = getState().auth; // Get token from auth state
       const response = await axiosInstance.put(
@@ -56,7 +56,7 @@ export const editUserExperience = createAsyncThunk(
           experience,
         },
       );
-      console.log(response.data.user);
+      console.log('Experience user', response.data);
       return response.data; // Return updated user data
     } catch (error) {
       return rejectWithValue(
@@ -68,7 +68,7 @@ export const editUserExperience = createAsyncThunk(
 
 // Thunk for deleting an experience
 export const deleteUserExperience = createAsyncThunk(
-  'user/deleteExperience',
+  'auth/deleteExperience',
   async ({userId, experienceId}, {rejectWithValue, getState}) => {
     try {
       // const { token } = getState().auth;
@@ -135,16 +135,37 @@ export const saveUserInterests = createAsyncThunk(
   },
 );
 
-const updateAsyncStorage = user => {
-  // Update AsyncStorage with the new user data
-  AsyncStorage.setItem('user', JSON.stringify(user))
-    .then(() => {
-      console.log('User data saved to AsyncStorage');
-    })
-    .catch(error => {
-      console.error('Failed to save user data to AsyncStorage:', error);
-    });
+export const follow = createAsyncThunk(
+  'auth/follow',
+  async ({userId, followerId}, {rejectWithValue}) => {
+    try {
+      const response = await axiosInstance.put(
+        `/api/user/follow/${followerId}/${userId}`,
+      );
+      return response.data; // Return the updated user data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to save interests',
+      );
+    }
+  },
+);
+
+export const updateAsyncStorage = async user => {
+  console.log('Updating user in AsyncStorage:', user);
+
+  try {
+    await AsyncStorage.setItem('user', JSON.stringify(user));
+    console.log('User data saved to AsyncStorage successfully');
+
+    // Retrieve and log the data for verification
+    const storedUser = await AsyncStorage.getItem('user');
+    console.log('Retrieved user from AsyncStorage:', JSON.parse(storedUser));
+  } catch (error) {
+    console.error('Failed to update AsyncStorage:', error);
+  }
 };
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -200,10 +221,29 @@ const authSlice = createSlice({
       })
       .addCase(editUserExperience.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        console.log(action.payload);
-        state.user = action.payload.user;
-        updateAsyncStorage(action.payload.user);
+
+        if (action.payload && action.payload.user) {
+          state.user = action.payload.user; // Update user in state
+          console.log('User successfully updated:', action.payload.user);
+
+          // Update async storage
+          updateAsyncStorage(action.payload.user);
+        } else {
+          console.error('No user data in action payload:', action.payload);
+        }
       })
+      .addCase(follow.fulfilled, (state, action) => {
+        if (action.payload && action.payload.user) {
+          state.user = action.payload.user; // Update user in state
+          console.log('User successfully updated:', action.payload.user);
+
+          // Update async storage
+          updateAsyncStorage(action.payload.user);
+        } else {
+          console.error('No user data in action payload:', action.payload);
+        }
+      })
+
       .addCase(editUserExperience.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;

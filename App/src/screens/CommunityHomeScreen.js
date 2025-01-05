@@ -614,6 +614,7 @@ const CommunityHomeScreen = ({route}) => {
                         width: 90,
                         borderRadius: 30,
                         marginTop: 10,
+                        flex: 1,
                       }}>
                       <Text
                         style={{
@@ -692,16 +693,18 @@ const CommunityHomeScreen = ({route}) => {
                     ? 'Upcoming Events'
                     : 'Events'}
                 </Text>
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate('CreateEvent', {
-                      myCommunities: [community],
-                      communityId,
-                    })
-                  }
-                  style={{marginRight: 40}}>
-                  <AntDesignIcons name="plus" size={25} color="#A274FF" />
-                </TouchableOpacity>
+                {community.createdBy?._id === user?._id && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate('CreateEvent', {
+                        myCommunities: [community],
+                        communityId,
+                      })
+                    }
+                    style={{marginRight: 40}}>
+                    <AntDesignIcons name="plus" size={25} color="#A274FF" />
+                  </TouchableOpacity>
+                )}
               </View>
               <FlatList
                 data={events}

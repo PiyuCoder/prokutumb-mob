@@ -18,6 +18,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import DatePicker from 'react-native-date-picker';
 import IonIcons from 'react-native-vector-icons/Ionicons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import ProfilePicture from '../components/ProfilePicture';
 
 export default function EditProfile({navigation}) {
   const dispatch = useDispatch();
@@ -173,7 +174,15 @@ export default function EditProfile({navigation}) {
                 style={{
                   position: 'relative',
                 }}>
-                <Image
+                <ProfilePicture
+                  profilePictureUri={
+                    profilePicture?.uri || user?.profilePicture
+                  }
+                  width={120}
+                  height={120}
+                  borderRadius={60}
+                />
+                {/* <Image
                   source={{uri: profilePicture?.uri || user?.profilePicture}}
                   defaultSource={require('../assets/default-pp.png')} // iOS only
                   style={{
@@ -181,8 +190,10 @@ export default function EditProfile({navigation}) {
                     height: 120,
                     borderRadius: 60,
                   }}
-                />
-                <IonIcons name="camera" size={30} color="#242760" />
+                /> */}
+                <View style={{position: 'absolute', bottom: 5}}>
+                  <IonIcons name="camera" size={30} color="#242760" />
+                </View>
               </View>
             </TouchableOpacity>
 
@@ -277,7 +288,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-start',
-    backgroundColor: '#FDF7FD',
+    backgroundColor: 'white',
   },
   icon: {
     width: 30,
@@ -292,7 +303,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   modalContent: {
-    backgroundColor: '#FDF7FD',
+    backgroundColor: 'white',
     padding: 20,
     borderBottomStartRadius: 10,
     borderBottomEndRadius: 10,

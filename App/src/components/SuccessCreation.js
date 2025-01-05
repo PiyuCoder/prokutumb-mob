@@ -11,7 +11,7 @@ import React from 'react';
 import {useSelector} from 'react-redux';
 
 const SuccessCreation = ({navigation, route}) => {
-  const {isEvent} = route?.params;
+  const {isEvent, isRegistered} = route?.params;
   const {user} = useSelector(state => state.auth);
 
   const sharePost = async () => {
@@ -51,7 +51,11 @@ const SuccessCreation = ({navigation, route}) => {
           color: 'black',
           marginTop: 7,
         }}>
-        Your {isEvent ? 'Event' : 'Community'} is Live!!!
+        {!isRegistered
+          ? isEvent
+            ? 'Your Event is Live!!!'
+            : 'Your Community is Live!!!'
+          : 'You are Registered'}
       </Text>
       <TouchableOpacity
         onPress={sharePost}

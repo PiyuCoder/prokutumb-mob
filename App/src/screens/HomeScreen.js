@@ -44,6 +44,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import SimpleIcon from 'react-native-vector-icons/SimpleLineIcons';
 import {axiosInstance} from '../api/axios';
 import SideNavigationScreen from '../components/SideNavigationScreen';
+import SearchPeople from '../components/SearchPeople';
 
 const {width, height} = Dimensions.get('window');
 
@@ -367,7 +368,11 @@ const HomeScreen = ({navigation}) => {
                 ? navigation.navigate('Profile')
                 : handleUserPress(item.user._id)
             }
-            style={{fontWeight: 'bold', color: '#141414'}}>
+            style={{
+              fontWeight: 'bold',
+              color: '#141414',
+              fontFamily: 'Inter_24pt-Bold',
+            }}>
             {item.user.name}
           </Text>
         </View>
@@ -415,7 +420,13 @@ const HomeScreen = ({navigation}) => {
       </View>
 
       {/* Post Content */}
-      <Text style={{marginTop: 10, color: '#676767', fontSize: 16}}>
+      <Text
+        style={{
+          marginTop: 10,
+          color: '#676767',
+          fontSize: 16,
+          fontFamily: 'Inter_18pt-Regular',
+        }}>
         {item.content}
       </Text>
 
@@ -615,7 +626,8 @@ const HomeScreen = ({navigation}) => {
                 />
               </TouchableOpacity>
 
-              <View
+              <SearchPeople home />
+              {/* <View
                 style={{
                   backgroundColor: '#ECF2F6',
                   flex: 1,
@@ -627,7 +639,7 @@ const HomeScreen = ({navigation}) => {
                 }}>
                 <Icon name="search" size={20} color="#585C60" />
                 <TextInput style={{flex: 1, paddingStart: 8}} />
-              </View>
+              </View> */}
               <TouchableOpacity
                 onPress={() => {
                   setModalVisible(true); // Open modal

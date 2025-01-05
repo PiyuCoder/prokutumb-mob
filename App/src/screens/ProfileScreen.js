@@ -28,9 +28,11 @@ import Icons from 'react-native-vector-icons/Ionicons';
 import AntDesignIcons from 'react-native-vector-icons/AntDesign';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {axiosInstance} from '../api/axios';
 
 const ProfileScreen = () => {
   const {user} = useSelector(state => state.auth);
+  const [userInfo, setUserInfo] = useState({});
   const dispatch = useDispatch();
   const [webData, setWebData] = useState(null);
   const navigation = useNavigation();
@@ -40,34 +42,27 @@ const ProfileScreen = () => {
 
   const [editedAbout, setEditedAbout] = useState(user.bio);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isEdu, setIsEdu] = useState(false);
 
   // Fetch user info from external APIs (LinkedIn, etc.)
-  const fetchUserWebInfo = async () => {
+  const fetchUserInfo = async () => {
     try {
-      // Fetch GitHub user info using email
-      const githubResponse = await axios.get(
-        `https://api.github.com/search/users?q=${user?.email}`,
-      ); // This will work if you have the username
-
-      console.log(githubResponse);
-
-      // For LinkedIn, you cannot fetch by email without OAuth, but you can assume a function exists
-      // const linkedInProfile = await fetchLinkedInProfile(email); // Placeholder function
-
-      const webData = {
-        github: githubResponse.data,
-        // linkedIn: linkedInProfile
-      };
-
-      setWebData(webData);
+      console.log(user?._id);
+      const res = await axiosInstance.get(
+        `/api/user/fetchUserInfo/${user?._id}`,
+      );
+      if (res.status === 200) {
+        console.log(res?.data?.info);
+        setUserInfo(res?.data?.info);
+      }
     } catch (error) {
-      console.error('Error fetching web data:', error);
+      console.error('Error fetching data:', error);
     }
   };
 
   useEffect(() => {
-    // fetchUserWebInfo();
-  }, []);
+    fetchUserInfo();
+  }, [user?._id, isExperienceModalVisible]);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -230,7 +225,7 @@ const ProfileScreen = () => {
                 fontWeight: '500',
                 textAlign: 'center',
               }}>
-              0
+              {userInfo?.communities?.total}
             </Text>
             <Text style={{color: 'black', fontWeight: '500'}}>Communities</Text>
           </View>
@@ -322,9 +317,7 @@ const ProfileScreen = () => {
               <SimpleLineIcons name="pencil" size={15} color="#585C60" />
             </TouchableOpacity>
           </View>
-          <Text style={{color: 'black', marginBottom: 5}}>
-            Strategy at Youtube
-          </Text>
+          <Text style={{color: 'black', marginBottom: 5}}>{user?.bio}</Text>
           <TouchableOpacity>
             <Text style={{color: '#A274FF'}}>See all details</Text>
           </TouchableOpacity>
@@ -476,17 +469,25 @@ const ProfileScreen = () => {
         <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>Education</Text>
           <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-            <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+            <TouchableOpacity
+              onPress={() => {
+                setExperienceModalVisible(true);
+                setIsEdu(true);
+              }}>
               <AntDesignIcons name="plus" size={21} color="#A274FF" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
+            <TouchableOpacity
+              onPress={() => {
+                setExperienceModalVisible(true);
+                setIsEdu(true);
+              }}>
               <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.card}>
-          {user.experience?.map((exp, index) => (
+          {userInfo?.education?.map((edu, index) => (
             <View key={index} style={styles.experienceItem}>
               <View
                 style={{
@@ -495,13 +496,12 @@ const ProfileScreen = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}>
-                <Text style={styles.experienceCompany}>{exp.company}</Text>
+                <Text style={styles.experienceCompany}>{edu.school}</Text>
                 <Text style={styles.experienceDuration}>
-                  {formatDate(exp.startDate)}-
-                  {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                  {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
                 </Text>
               </View>
-              <Text style={styles.experienceTitle}>{exp.role}</Text>
+              <Text style={styles.experienceTitle}>{edu.degree}</Text>
             </View>
           ))}
         </View>
@@ -592,7 +592,12 @@ const ProfileScreen = () => {
       {/* Experience Modal */}
       <ExperienceModal
         isVisible={isExperienceModalVisible}
-        onClose={() => setExperienceModalVisible(false)}
+        onClose={() => {
+          setExperienceModalVisible(false);
+          setIsEdu(false);
+        }}
+        isEdu={isEdu}
+        userInfo={userInfo}
       />
 
       {interestEditing && (

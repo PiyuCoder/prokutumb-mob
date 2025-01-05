@@ -97,9 +97,10 @@ const styles = StyleSheet.create({
   userName: {
     color: 'black',
     fontSize: 19,
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 10,
     textAlign: 'center',
+    fontFamily: 'Roboto-Bold',
   },
   userLocation: {
     color: '#585C60',

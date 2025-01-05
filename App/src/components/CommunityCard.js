@@ -48,8 +48,8 @@ const CommunityCard = ({community, onPress, style}) => {
             <TouchableOpacity
               style={styles.dropdownItem}
               onPress={() => {
-                setActionModalVisible(false);
-                setModalVisible(true);
+                navigation.navigate('Network');
+                setActionModalVisible(true);
               }}>
               <Text style={styles.dropdownItemText}>Ask AI</Text>
             </TouchableOpacity>
@@ -74,7 +74,7 @@ const CommunityCard = ({community, onPress, style}) => {
         )}
         {community?.createdBy?._id !== user?._id &&
           !community?.members?.includes(user?._id) && (
-            <TouchableOpacity style={styles.Btn}>
+            <TouchableOpacity onPress={onPress} style={styles.Btn}>
               <Text style={styles.BtnText}>Join</Text>
             </TouchableOpacity>
           )}

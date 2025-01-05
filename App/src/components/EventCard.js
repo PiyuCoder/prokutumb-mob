@@ -52,7 +52,7 @@ const EventCard = ({event, onPress, height, width, picHeight, full}) => {
               style={styles.dropdownItem}
               onPress={() => {
                 setActionModalVisible(false);
-                setModalVisible(true);
+                navigation.navigate('Network');
               }}>
               <Text style={styles.dropdownItemText}>Ask AI</Text>
             </TouchableOpacity>
@@ -152,6 +152,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'black',
+    fontFamily: 'Jost-Bold',
   },
   userLocation: {
     marginBottom: 10,

@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import CommunityCard from '../components/CommunityCard';
-import SearchPeople from '../components/SearchPeople';
 import {useSelector} from 'react-redux';
 import {axiosInstance, axiosInstanceForm} from '../api/axios';
 import {launchImageLibrary} from 'react-native-image-picker';
@@ -20,6 +19,7 @@ import IonIcons from 'react-native-vector-icons/Ionicons';
 import {ScrollView} from 'react-native-gesture-handler';
 import {isAction} from '@reduxjs/toolkit';
 import EventCard from '../components/EventCard';
+import SearchCommNEvent from '../components/SearchCommNEvent';
 
 // const events = [
 //   {
@@ -149,17 +149,17 @@ export default function Communities({navigation, route}) {
       <StatusBar backgroundColor="white" barStyle={'dark-content'} />
       <View style={styles.headerActions}>
         <View>
-          <View style={styles.header}>
-            <Text
-              onPress={() => {
-                setIsEvent(!isEvent);
-                setModalType(null);
-              }}
-              style={styles.headerText}>
+          <TouchableOpacity
+            onPress={() => {
+              setIsEvent(!isEvent);
+              setModalType(null);
+            }}
+            style={styles.header}>
+            <Text style={styles.headerText}>
               {isEvent ? 'Event' : 'Community'}
             </Text>
             <AntDesignIcons name="caretdown" size={15} color="#585C60" />
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity
             style={{
               width: 100,
@@ -173,7 +173,7 @@ export default function Communities({navigation, route}) {
               padding: 3,
             }}>
             <IonIcons name="earth" size={15} color="#585C60" />
-            <Text>Global</Text>
+            <Text style={{color: 'gray'}}>Global</Text>
             <AntDesignIcons name="caretdown" size={15} color="#585C60" />
           </TouchableOpacity>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 7}}>
@@ -186,7 +186,7 @@ export default function Communities({navigation, route}) {
           </View>
         </View>
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-          <SearchPeople iconColor={'black'} />
+          <SearchCommNEvent isEvent={isEvent} iconColor={'black'} />
           <TouchableOpacity
             style={styles.iconButtons}
             onPress={() => setActionModalVisible(!isActionModalVisible)}>
@@ -328,6 +328,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
+    width: 200,
   },
   headerText: {
     fontSize: 23,
@@ -469,8 +470,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#191970',
     marginBottom: 30,
+    fontFamily: 'Jost-Bold',
   },
 });

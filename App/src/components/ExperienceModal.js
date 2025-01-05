@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -15,13 +15,19 @@ import {
   deleteUserExperience,
   editUserExperience,
 } from '../store/slices/authSlice';
+import {axiosInstance} from '../api/axios';
 
-const ExperienceModal = ({isVisible, onClose}) => {
+const ExperienceModal = ({isVisible, onClose, isEdu, userInfo}) => {
   const dispatch = useDispatch();
   const {user} = useSelector(state => state.auth);
 
   // Local state to toggle between "view" and "add" modes
   const [isAddMode, setIsAddMode] = useState(false);
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    setData(isEdu ? userInfo?.education || [] : user?.experience || []);
+  }, [isEdu, userInfo, user]);
 
   // Local state to hold new experience data
   const [newExperience, setNewExperience] = useState({
@@ -32,36 +38,80 @@ const ExperienceModal = ({isVisible, onClose}) => {
     description: '',
     isPresent: false, // Toggle for "Present" checkbox
   });
+  const [newEducation, setNewEducation] = useState({
+    school: '',
+    degree: '',
+    startDate: new Date(),
+    endDate: new Date(),
+    fieldOfStudy: '',
+    isPresent: false, // Toggle for "Present" checkbox
+  });
 
   // States to control date pickers visibility
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
 
   // Handle adding a new experience
-  const handleAddExperience = () => {
-    dispatch(
-      editUserExperience({
-        userId: user._id,
-        experience: {
-          ...newExperience,
-          startDate: newExperience.startDate.toISOString().split('T')[0],
-          endDate: newExperience.isPresent
-            ? null
-            : newExperience.endDate.toISOString().split('T')[0],
-        },
-      }),
-    ).then(() => {
-      // Clear form after adding experience
-      setNewExperience({
-        company: '',
-        role: '',
-        startDate: new Date(),
-        endDate: new Date(),
-        description: '',
-        isPresent: false,
+  const handleAddExperience = async () => {
+    if (isEdu) {
+      const education = {
+        ...newEducation,
+        startDate: newEducation.startDate.toISOString().split('T')[0],
+        endDate: newEducation.isPresent
+          ? null
+          : newEducation.endDate.toISOString().split('T')[0],
+      };
+      const res = await axiosInstance.put(`/api/user/${user?._id}/education`, {
+        education,
       });
-      setIsAddMode(false); // Switch back to view mode after saving
-    });
+      if (res?.status === 200) {
+        setData([...data, {...newEducation, _id: Date.now()}]);
+        setNewEducation({
+          school: '',
+          degree: '',
+          startDate: new Date(),
+          endDate: new Date(),
+          fieldOfStudy: '',
+          isPresent: false,
+        });
+
+        setIsAddMode(false);
+      }
+    } else {
+      dispatch(
+        editUserExperience({
+          userId: user._id,
+          experience: {
+            ...newExperience,
+            startDate: newExperience.startDate.toISOString().split('T')[0],
+            endDate: newExperience.isPresent
+              ? null
+              : newExperience.endDate.toISOString().split('T')[0],
+          },
+        }),
+      ).then(action => {
+        if (editUserExperience.fulfilled.match(action)) {
+          // Ensure backend returns the updated user object
+          // console.log('Edit experience fulfilled:', action.payload);
+
+          // Update local data list
+          setData([...data, {...newExperience, _id: Date.now()}]);
+
+          // Reset form
+          setNewExperience({
+            company: '',
+            role: '',
+            startDate: new Date(),
+            endDate: new Date(),
+            description: '',
+            isPresent: false,
+          });
+          setIsAddMode(false);
+        } else {
+          console.error('Edit experience failed:', action.error);
+        }
+      });
+    }
   };
 
   // Handle deleting an experience
@@ -98,20 +148,24 @@ const ExperienceModal = ({isVisible, onClose}) => {
           <View>
             <TextInput
               style={styles.input}
-              placeholder="Company"
+              placeholder={isEdu ? 'Institution' : 'Company'}
               placeholderTextColor={'gray'}
-              value={newExperience.company}
+              value={isEdu ? newEducation.school : newExperience.company}
               onChangeText={text =>
-                setNewExperience({...newExperience, company: text})
+                isEdu
+                  ? setNewEducation({...newEducation, school: text})
+                  : setNewExperience({...newExperience, company: text})
               }
             />
             <TextInput
               style={styles.input}
               placeholderTextColor={'gray'}
-              placeholder="Role"
-              value={newExperience.role}
+              placeholder={isEdu ? 'Degree' : 'Role'}
+              value={isEdu ? newEducation.degree : newExperience.role}
               onChangeText={text =>
-                setNewExperience({...newExperience, role: text})
+                isEdu
+                  ? setNewEducation({...newEducation, degree: text})
+                  : setNewExperience({...newExperience, role: text})
               }
             />
 
@@ -121,7 +175,11 @@ const ExperienceModal = ({isVisible, onClose}) => {
                 style={styles.input}
                 placeholderTextColor={'gray'}
                 placeholder="Start Date"
-                value={newExperience.startDate.toISOString().split('T')[0]}
+                value={
+                  isEdu
+                    ? newEducation.startDate.toISOString().split('T')[0]
+                    : newExperience.startDate.toISOString().split('T')[0]
+                }
                 editable={false}
               />
             </TouchableOpacity>
@@ -132,7 +190,9 @@ const ExperienceModal = ({isVisible, onClose}) => {
               mode="date"
               onConfirm={date => {
                 setStartDatePickerVisible(false);
-                setNewExperience({...newExperience, startDate: date});
+                isEdu
+                  ? setNewEducation({...newEducation, startDate: date})
+                  : setNewExperience({...newExperience, startDate: date});
               }}
               onCancel={() => {
                 setStartDatePickerVisible(false);
@@ -141,11 +201,15 @@ const ExperienceModal = ({isVisible, onClose}) => {
 
             {/* Checkbox for 'Present' job */}
             <View style={styles.presentSwitch}>
-              <Text style={{color: 'black'}}>Currently Working Here</Text>
+              <Text style={{color: 'black'}}>
+                {isEdu ? 'Currently Pursuing' : 'Currently Working Here'}
+              </Text>
               <Switch
-                value={newExperience.isPresent}
+                value={isEdu ? newEducation.isPresent : newExperience.isPresent}
                 onValueChange={value =>
-                  setNewExperience({...newExperience, isPresent: value})
+                  isEdu
+                    ? setNewEducation({...newEducation, isPresent: value})
+                    : setNewExperience({...newExperience, isPresent: value})
                 }
               />
             </View>
@@ -158,7 +222,11 @@ const ExperienceModal = ({isVisible, onClose}) => {
                     style={styles.input}
                     placeholderTextColor={'gray'}
                     placeholder="End Date"
-                    value={newExperience.endDate.toISOString().split('T')[0]}
+                    value={
+                      isEdu
+                        ? newEducation.endDate.toISOString().split('T')[0]
+                        : newExperience.endDate.toISOString().split('T')[0]
+                    }
                     editable={false}
                   />
                 </TouchableOpacity>
@@ -169,7 +237,9 @@ const ExperienceModal = ({isVisible, onClose}) => {
                   mode="date"
                   onConfirm={date => {
                     setEndDatePickerVisible(false);
-                    setNewExperience({...newExperience, endDate: date});
+                    isEdu
+                      ? setNewEducation({...newEducation, endDate: date})
+                      : setNewExperience({...newExperience, endDate: date});
                   }}
                   onCancel={() => {
                     setEndDatePickerVisible(false);
@@ -180,11 +250,15 @@ const ExperienceModal = ({isVisible, onClose}) => {
 
             <TextInput
               style={styles.input}
-              placeholder="Description"
+              placeholder={isEdu ? 'Field of study' : 'Description'}
               placeholderTextColor={'gray'}
-              value={newExperience.description}
+              value={
+                isEdu ? newEducation.fieldOfStudy : newExperience.description
+              }
               onChangeText={text =>
-                setNewExperience({...newExperience, description: text})
+                isEdu
+                  ? setNewEducation({...newEducation, fieldOfStudy: text})
+                  : setNewExperience({...newExperience, description: text})
               }
             />
 
@@ -192,25 +266,32 @@ const ExperienceModal = ({isVisible, onClose}) => {
             <TouchableOpacity
               onPress={handleAddExperience}
               style={styles.saveButton}>
-              <Text style={styles.saveButtonText}>Save Experience</Text>
+              <Text style={styles.saveButtonText}>
+                {isEdu ? 'Save Education' : 'Save Experience'}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : (
           // List of existing experiences when not in add mode
           <FlatList
-            data={user.experience}
+            data={data}
             keyExtractor={item => item._id}
             renderItem={({item}) => (
               <View style={styles.experienceCard}>
                 <Text style={styles.experienceTitle}>
-                  {item.role} at {item.company}
+                  {isEdu ? item.degree : item.role} at{' '}
+                  {isEdu ? item.school : item.company}
                 </Text>
                 <Text style={styles.experienceDates}>
                   {formatDate(item.startDate)} -{' '}
-                  {item.isPresent ? 'Present' : formatDate(item.endDate)}
+                  {!isEdu
+                    ? item.isPresent
+                      ? 'Present'
+                      : formatDate(item.endDate)
+                    : formatDate(item.endDate)}
                 </Text>
                 <Text style={styles.experienceDescription}>
-                  {item.description}
+                  {isEdu ? item?.fieldOfStudy : item.description}
                 </Text>
                 {/* Delete button */}
                 {/* <TouchableOpacity

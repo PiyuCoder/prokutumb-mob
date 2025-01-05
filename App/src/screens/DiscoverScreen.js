@@ -103,7 +103,11 @@ const DiscoverScreen = ({navigation}) => {
     'Leads',
     'Strategy',
   ];
-  Geocoder.init('AIzaSyDeS8-47CWqq5QKl0NHnba5cU_Ft2_k8ww');
+
+  useEffect(() => {
+    Geocoder.init('AIzaSyDeS8-47CWqq5QKl0NHnba5cU_Ft2_k8ww');
+    fetchLocationPermission();
+  }, []);
 
   const fetchLocationName = async (lat, long) => {
     try {
@@ -119,18 +123,18 @@ const DiscoverScreen = ({navigation}) => {
       setLocationName('Location unavailable');
     }
   };
-  const fetchLocationForUser = async (lat, long, userId) => {
-    try {
-      const response = await Geocoder.from(lat, long);
-      const locality = response.results[0].address_components.find(component =>
-        component.types.includes('locality'),
-      );
-      const location = locality ? locality.long_name : 'Unknown location';
-      setUserLocations(prev => ({...prev, [userId]: location}));
-    } catch (error) {
-      console.warn(`Error fetching location for user ${userId}:`, error);
-    }
-  };
+  // const fetchLocationForUser = async (lat, long, userId) => {
+  //   try {
+  //     const response = await Geocoder.from(lat, long);
+  //     const locality = response.results[0].address_components.find(component =>
+  //       component.types.includes('locality'),
+  //     );
+  //     const location = locality ? locality.long_name : 'Unknown location';
+  //     setUserLocations(prev => ({...prev, [userId]: location}));
+  //   } catch (error) {
+  //     console.warn(`Error fetching location for user ${userId}:`, error);
+  //   }
+  // };
   const fetchLocationPermission = async () => {
     setLoading(true);
     const result = await request(
@@ -152,8 +156,8 @@ const DiscoverScreen = ({navigation}) => {
   const fetchLocation = () => {
     Geolocation.getCurrentPosition(
       position => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
+        // setLatitude(position.coords.latitude);
+        // setLongitude(position.coords.longitude);
         fetchLocationName(position.coords.latitude, position.coords.longitude);
         setLoading(false);
         setRefreshing(false);
@@ -163,7 +167,7 @@ const DiscoverScreen = ({navigation}) => {
         setLoading(false);
         setRefreshing(false);
       },
-      {enableHighAccuracy: true, timeout: 485000, maximumAge: 10000},
+      {enableHighAccuracy: false, timeout: 485000, maximumAge: 10000},
     );
   };
 
@@ -192,10 +196,6 @@ const DiscoverScreen = ({navigation}) => {
     setLoading(true);
     fetchLocationPermission();
     // fetchCommunities();
-  }, []);
-
-  useEffect(() => {
-    fetchLocationPermission();
   }, []);
 
   // useEffect(() => {
@@ -361,10 +361,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginLeft: 10,
     marginTop: 10,
     color: 'black',
+    fontFamily: 'Inter_24pt-Bold',
   },
   error: {
     color: 'red',

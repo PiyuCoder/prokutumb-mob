@@ -23,6 +23,7 @@ const uploadPictures = multer({ storage: storage }).fields([
 module.exports = (io, userSocketMap) => {
   router.post("/google-signin", checkRegistration, userController.googleLogin);
   router.get("/fetchUser/:userId/:currentUserId", userController.fetchUser);
+  router.get("/fetchUserInfo/:userId", userController.fetchUserInfo);
   router.put("/about/:userId", userController.editAbout);
   router.put("/profile/:userId", uploadPictures, userController.editProfile);
 
@@ -35,9 +36,11 @@ module.exports = (io, userSocketMap) => {
     "/fetchMessages/:userId/:recipientId",
     userController.fetchMessages
   );
+  router.put("/follow/:followerId/:userId", userController.follow);
   router.post("/acceptFriendRequest", userController.acceptRequest);
   router.post("/declineFriendRequest", userController.declineRequest);
   router.put("/:userId/experience", userController.addExperience);
+  router.put("/:userId/education", userController.addEducation);
   router.get("/conversations/:userId", userController.fetchConversations);
   router.put("/interests/:userId", userController.updateInterests);
   router.get("/friends/:userId", userController.fetchFriends);

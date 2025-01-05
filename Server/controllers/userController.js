@@ -6,6 +6,7 @@ const Message = require("../models/Message");
 const mongoose = require("mongoose");
 const Feed = require("../models/Feed");
 const NotificationMob = require("../models/Notification");
+const Communitymob = require("../models/Community");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -28,14 +29,60 @@ exports.googleLogin = (req, res) => {
       profilePicture: user.profilePicture,
       coverPicture: user.coverPicture,
       experience: user.experience,
+      education: user.education,
       bio: user.bio,
       dob: user.dob,
       interests: user.interests,
       location: user.location,
       friends: user.friends,
       friendRequests: user.friendRequests,
+      following: user.following,
     },
   });
+};
+
+exports.fetchUserInfo = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    console.log(userId);
+
+    // Fetch user details
+    const user = await Member.findById(userId);
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found." });
+    }
+
+    // Count communities where the user is the creator
+    const createdCommunitiesCount = await Communitymob.countDocuments({
+      createdBy: userId,
+    });
+
+    // Count communities where the user is a member
+    const memberCommunitiesCount = await Communitymob.countDocuments({
+      members: { $in: [userId] },
+    });
+
+    // Combine counts for total communities associated with the user
+    const totalCommunities = createdCommunitiesCount + memberCommunitiesCount;
+
+    // Return user details along with community association info
+    res.status(200).json({
+      success: true,
+      info: {
+        education: user.education,
+        communities: {
+          createdCount: createdCommunitiesCount,
+          memberCount: memberCommunitiesCount,
+          total: totalCommunities,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Server error while fetching user:", error.message);
+    res.status(500).json({ message: "Server error while fetching user" });
+  }
 };
 
 exports.fetchUser = async (req, res) => {
@@ -78,11 +125,13 @@ exports.fetchUser = async (req, res) => {
         profilePicture: user.profilePicture,
         coverPicture: user.coverPicture,
         experience: user.experience,
+        education: user.education,
         bio: user.bio,
         dob: user.dob,
         interests: user.interests,
         location: user.location,
         friendRequests: user.friendRequests,
+        friends: user.friends,
         whyConnect,
         isAlreadyConnected,
       },
@@ -125,6 +174,7 @@ exports.editAbout = async (req, res) => {
         location: user.location,
         friends: user.friends,
         friendRequests: user.friendRequests,
+        following: user.following,
       },
     });
   } catch (error) {
@@ -215,6 +265,7 @@ exports.editProfile = async (req, res) => {
         location: user.location,
         friends: user.friends,
         friendRequests: user.friendRequests,
+        following: user.following,
       },
     });
   } catch (error) {
@@ -225,10 +276,38 @@ exports.editProfile = async (req, res) => {
   }
 };
 
+exports.addEducation = async (req, res) => {
+  try {
+    const { education } = req.body; // Extract the experience from the request body
+    const { userId } = req.params; // Extract userId from the request params
+
+    console.log("adding education");
+
+    // Find the user by userId and push the new experience into their experience array
+    const updatedUser = await Member.findByIdAndUpdate(
+      userId,
+      { $push: { education: education } }, // Add the new experience
+      { new: true } // Return the updated user document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "Education added successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
 exports.addExperience = async (req, res) => {
   try {
     const { experience } = req.body; // Extract the experience from the request body
     const { userId } = req.params; // Extract userId from the request params
+
+    console.log("updated experirience");
 
     // Find the user by userId and push the new experience into their experience array
     const updatedUser = await Member.findByIdAndUpdate(
@@ -252,10 +331,11 @@ exports.addExperience = async (req, res) => {
         experience: updatedUser.experience,
         bio: updatedUser.bio,
         dob: updatedUser.dob,
-        interests: user.interests,
+        interests: updatedUser.interests,
         location: updatedUser.location,
         friends: updatedUser.friends,
         friendRequests: updatedUser.friendRequests,
+        following: updatedUser.following,
       },
     });
   } catch (error) {
@@ -303,6 +383,55 @@ exports.sendRequest = (io, userSocketMap) => async (req, res) => {
   } catch (error) {
     console.error("Error sending connection request:", error);
     res.status(500).json({ message: "Server error while sending request." });
+  }
+};
+
+exports.follow = async (req, res) => {
+  try {
+    const { followerId, userId } = req.params;
+
+    // Validate follower
+    const follower = await Member.findById(followerId);
+    if (!follower) {
+      return res.status(400).json({ message: "Follower not found." });
+    }
+
+    // Validate user to follow
+    const userToFollow = await Member.findById(userId);
+    if (!userToFollow) {
+      return res.status(400).json({ message: "User to follow not found." });
+    }
+
+    // Prevent duplicate following
+    if (!follower.following.includes(userId)) {
+      follower.following.push(userId);
+      await follower.save();
+    } else {
+      return res.status(400).json({ message: "Already following this user." });
+    }
+
+    // Respond with updated user info
+    res.status(200).json({
+      message: "Following",
+      user: {
+        _id: follower._id,
+        email: follower.email,
+        name: follower.name,
+        profilePicture: follower.profilePicture,
+        coverPicture: follower.coverPicture,
+        experience: follower.experience,
+        bio: follower.bio,
+        dob: follower.dob,
+        interests: follower.interests,
+        location: follower.location,
+        friends: follower.friends,
+        friendRequests: follower.friendRequests,
+        following: follower.following,
+      },
+    });
+  } catch (error) {
+    console.error("Follow API error:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -676,6 +805,7 @@ exports.updateInterests = async (req, res) => {
         location: user.location,
         friends: user.friends,
         friendRequests: user.friendRequests,
+        following: user.following,
       },
     });
   } catch (error) {

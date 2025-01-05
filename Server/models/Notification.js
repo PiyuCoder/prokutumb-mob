@@ -28,6 +28,10 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Communitymob",
     },
+    eventId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+    },
     status: {
       type: String, // The status of the notification (e.g., "unread", "read")
       default: "unread", // By default, notifications are unread

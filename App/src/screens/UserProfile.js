@@ -48,8 +48,9 @@ const UserProfile = ({route}) => {
   const navigation = useNavigation(); // Hook for navigation
   const dispatch = useDispatch();
 
-  // console.log('Current User: ', currentUser);
-  // console.log('userId: ', userId);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
   // Hide the status bar when the screen is rendered
   useEffect(() => {
@@ -102,6 +103,27 @@ const UserProfile = ({route}) => {
 
     fetchUser();
   }, [userId]);
+
+  useEffect(() => {
+    if (query) {
+      // setSearchVisible(true);
+      const delayDebounce = setTimeout(() => fetchSearchResults(query), 300);
+      return () => clearTimeout(delayDebounce);
+    } else {
+      setSearchResults([]); // Clear results when query is empty
+    }
+  }, [query]);
+
+  const fetchSearchResults = async searchQuery => {
+    try {
+      const response = await axiosInstance.get(
+        `/api/search-people?q=${searchQuery}`,
+      );
+      setSearchResults(response?.data);
+    } catch (error) {
+      console.error('Error fetching search results:', error);
+    }
+  };
 
   const toggleCommentSection = postId => {
     setOpenCommentPostId(prevPostId => (prevPostId === postId ? null : postId));
@@ -454,6 +476,10 @@ const UserProfile = ({route}) => {
               <AntDesignIcons name="arrowleft" size={30} color="#585C60" />
             </TouchableOpacity>
             <TextInput
+              value={query}
+              onChangeText={setQuery}
+              onFocus={() => setSearchVisible(true)}
+              // autoFocus
               style={{
                 color: 'black',
                 fontSize: 20,
@@ -462,6 +488,7 @@ const UserProfile = ({route}) => {
               }}
             />
           </View>
+
           <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
             <Icons name="settings-sharp" size={30} color="black" />
           </TouchableOpacity>
@@ -511,30 +538,52 @@ const UserProfile = ({route}) => {
       </View>
       <View
         style={{
+          width: '100%',
+          display: 'flex',
           flexDirection: 'row',
+          alignItems: 'center',
           justifyContent: 'space-around',
-          marginTop: 20,
+          alignSelf: 'center',
+          marginTop: 10,
         }}>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('Connections', {userId: user?._id})
+          }>
+          <Text
+            style={{
+              color: '#A274FF',
+              fontSize: 22,
+              fontWeight: '500',
+              textAlign: 'center',
+            }}>
+            {user?.friends?.length}
+          </Text>
+          <Text style={{color: 'black', fontWeight: '500'}}>Connections</Text>
+        </TouchableOpacity>
         <View>
           <Text
-            style={{color: '#A274FF', textAlign: 'center', fontWeight: '500'}}>
-            125
+            style={{
+              color: '#A274FF',
+              fontSize: 22,
+              fontWeight: '500',
+              textAlign: 'center',
+            }}>
+            0
           </Text>
-          <Text style={{color: 'black', textAlign: 'center'}}>Connections</Text>
+          <Text style={{color: 'black', fontWeight: '500'}}>Communities</Text>
         </View>
         <View>
           <Text
-            style={{color: '#A274FF', textAlign: 'center', fontWeight: '500'}}>
-            125
+            style={{
+              color: '#A274FF',
+              fontSize: 22,
+              fontWeight: '500',
+              textAlign: 'center',
+            }}>
+            0
           </Text>
-          <Text style={{color: 'black', textAlign: 'center'}}>Communities</Text>
-        </View>
-        <View>
-          <Text
-            style={{color: '#A274FF', textAlign: 'center', fontWeight: '500'}}>
-            125
-          </Text>
-          <Text style={{color: 'black', textAlign: 'center'}}>Events Done</Text>
+          <Text style={{color: 'black', fontWeight: '500'}}>Events Done</Text>
         </View>
       </View>
       <View style={styles.earthIconWrapper}>
@@ -690,18 +739,16 @@ const UserProfile = ({route}) => {
         {/* Education Section */}
         <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>Education</Text>
-          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-            {/* <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
-              <AntDesignIcons name="plus" size={21} color="#A274FF" />
-            </TouchableOpacity> */}
-            {/* <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
-              <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
-            </TouchableOpacity> */}
-          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 10,
+              alignItems: 'center',
+            }}></View>
         </View>
 
         <View style={styles.card}>
-          {user.experience?.map((exp, index) => (
+          {user?.education?.map((edu, index) => (
             <View key={index} style={styles.experienceItem}>
               <View
                 style={{
@@ -710,17 +757,15 @@ const UserProfile = ({route}) => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}>
-                <Text style={styles.experienceCompany}>{exp.company}</Text>
+                <Text style={styles.experienceCompany}>{edu.school}</Text>
                 <Text style={styles.experienceDuration}>
-                  {formatDate(exp.startDate)}-
-                  {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                  {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
                 </Text>
               </View>
-              <Text style={styles.experienceTitle}>{exp.role}</Text>
+              <Text style={styles.experienceTitle}>{edu.degree}</Text>
             </View>
           ))}
         </View>
-
         {/* Interest Section */}
         {/* <View style={styles.titleSection}>
           <Text style={styles.sectionTitle}>Interests</Text>
@@ -774,6 +819,67 @@ const UserProfile = ({route}) => {
           ListEmptyComponent={<Text>No Posts yet</Text>}
         /> */}
       </View>
+      {searchResults?.length > 0 && searchVisible && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 60, // Adjust this based on where your TextInput ends
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            backgroundColor: 'white',
+            borderRadius: 8,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 5, // For Android shadow
+            margin: 20,
+            padding: 10,
+            maxHeight: '60%', // To prevent overflow on smaller screens
+          }}>
+          {searchResults
+            ?.filter(res => res._id !== currentUser?._id)
+            ?.map((item, index) => (
+              <TouchableOpacity
+                style={{
+                  position: 'relative',
+                  zIndex: 50,
+                  borderBottomWidth: 1,
+                  borderColor: '#F5F5F5',
+                }}
+                key={item._id || index} // Ensure unique keys
+                onPress={() => {
+                  setSearchVisible(false);
+                  setQuery(item.name);
+                  setSearchResults([]);
+                  navigation.navigate('UserProfile', {userId: item._id});
+                }}>
+                <View
+                  style={[
+                    styles.resultItem,
+                    {flexDirection: 'row', padding: 10},
+                  ]}>
+                  <ProfilePicture
+                    profilePictureUri={item.profilePicture}
+                    width={40}
+                    height={40}
+                    borderRadius={20}
+                    marginRight={10}
+                  />
+                  <View>
+                    <Text style={styles.userName} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.userLocation} numberOfLines={1}>
+                      {item.location?.state || 'Unknown Location'}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -782,6 +888,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: 'white',
+    position: 'relative',
   },
   mainCard: {
     backgroundColor: 'white',
@@ -790,6 +897,7 @@ const styles = StyleSheet.create({
   profileCard: {
     position: 'relative',
     alignItems: 'center',
+    zIndex: 50,
   },
   coverPicture: {
     width: '100%',
@@ -952,6 +1060,68 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'center',
     color: '#A274FF',
+  },
+  iconButtons: {
+    padding: 2,
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+    borderColor: '#4b164c5a',
+    borderWidth: 1.2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    width: 25,
+    height: 25,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    padding: 4,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    padding: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  cancelButton: {
+    marginLeft: 10,
+  },
+  cancelText: {
+    color: '#4B164C',
+    fontWeight: 'bold',
+  },
+  resultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  profilePicture: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#22172A',
+  },
+  userLocation: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 

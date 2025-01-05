@@ -52,7 +52,7 @@ module.exports = (io, userSocketMap) => {
   router.post(
     "/events",
     upload.single("profilePicture"),
-    communityController.createEvent
+    communityController.createEvent(io, userSocketMap)
   );
   router.get(
     "/events/fetchCommEvents/:communityId",
@@ -60,6 +60,7 @@ module.exports = (io, userSocketMap) => {
   );
   router.get("/events/fetchAllEvents", communityController.fetchAllEvents);
   router.get("/events/fetchAnEvent/:eventId", communityController.fetchAnEvent);
+  router.put("/events/bookseat/:eventId", communityController.bookSeat);
   router.delete("/:postId", communityController.deletePost);
   router.put("/like/:postId", communityController.likePost);
   router.put("/accept/:communityId", communityController.acceptRequest);
@@ -70,7 +71,7 @@ module.exports = (io, userSocketMap) => {
   router.post(
     "/",
     upload.single("profilePicture"),
-    communityController.createCommunity
+    communityController.createCommunity(io, userSocketMap)
   );
 
   return router;

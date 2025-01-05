@@ -12,9 +12,14 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import {axiosInstance} from '../api/axios';
 import ProfilePicture from '../components/ProfilePicture';
+import {useDispatch, useSelector} from 'react-redux';
+import {follow, updateAsyncStorage} from '../store/slices/authSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EventScreen = ({navigation, route}) => {
   const {eventId} = route.params;
+  const {user} = useSelector(state => state.auth);
+  const dispatch = useDispatch();
   const [event, setEvent] = useState({
     _id: '1',
     name: 'Event One',
@@ -30,6 +35,14 @@ const EventScreen = ({navigation, route}) => {
     description:
       'Lorem ipsum dolor sit amet consectetur. Adipiscing metus tristique nec tortor dignissim nunc iaculis urna rhoncus. Ut.',
   });
+
+  const [isFollowing, setIsFollowing] = useState(
+    user?.following?.includes(event?.createdBy?._id) || false,
+  );
+
+  console.log(user);
+
+  // console.log(user);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -47,7 +60,36 @@ const EventScreen = ({navigation, route}) => {
     fetchEvent();
   }, [eventId]);
 
-  console.log(event);
+  // console.log(event);
+
+  const bookSeat = async () => {
+    const res = await axiosInstance.put(
+      `/api/communities/events/bookseat/${eventId}`,
+      {userId: user?._id},
+    );
+
+    if (res?.status === 200) {
+      navigation.replace('SuccessCreation', {
+        isEvent: false,
+        isRegistered: true,
+      });
+    }
+  };
+
+  const followHandler = async () => {
+    try {
+      dispatch(
+        follow({userId: event.createdBy?._id, followerId: user?._id}),
+      ).then(action => {
+        if (follow.fulfilled.match(action)) {
+          setIsFollowing(true);
+        }
+      });
+    } catch (error) {
+      console.error('Error while following the user:', error);
+    }
+  };
+
   return (
     <ScrollView style={{flex: 1, backgroundColor: 'white'}}>
       <View
@@ -95,12 +137,12 @@ const EventScreen = ({navigation, route}) => {
             borderRadius: 10,
           }}>
           {event?.members?.slice(0, 2)?.map(member => (
-            <ImageBackground
-              style={{height: 40, width: 40}}
-              imageStyle={{borderRadius: 20}}
-              source={{
-                uri: member?.profilePicture,
-              }}
+            <ProfilePicture
+              key={member?._id}
+              profilePictureUri={member?.profilePicture}
+              height={30}
+              width={30}
+              borderRadius={15}
             />
           ))}
           <Text style={{color: 'white'}}>
@@ -197,8 +239,19 @@ const EventScreen = ({navigation, route}) => {
           <Text style={{color: 'white', fontSize: 16, fontWeight: '500'}}>
             {event?.createdBy?.name}
           </Text>
-          <TouchableOpacity style={styles.Btn}>
-            <Text style={styles.BtnText}>Follow</Text>
+          <TouchableOpacity
+            disabled={
+              event?.createdBy?._id === user?._id ||
+              isFollowing ||
+              user?.following?.includes(event?.createdBy?._id)
+            }
+            onPress={followHandler}
+            style={styles.Btn}>
+            <Text style={styles.BtnText}>
+              {isFollowing || user?.following?.includes(event?.createdBy?._id)
+                ? 'Following'
+                : 'Follow'}
+            </Text>
           </TouchableOpacity>
         </View>
         {/* Show tags here */}
@@ -238,21 +291,44 @@ const EventScreen = ({navigation, route}) => {
             </Text>
           ))}
         </View>
-        <TouchableOpacity
-          style={{
-            backgroundColor: '#A274FF',
-            padding: 20,
-            width: 220,
-            borderRadius: 10,
-            paddingHorizontal: 15,
-            alignItems: 'center',
-            alignSelf: 'center',
-            marginTop: 40,
-          }}>
-          <Text style={[styles.BtnText, {letterSpacing: 1}]}>
-            Book your seat Now
-          </Text>
-        </TouchableOpacity>
+
+        {!event?.members?.find(mem => mem._id === user?._id) ? (
+          <TouchableOpacity
+            disabled={event?.createdBy?._id === user?._id}
+            onPress={bookSeat}
+            style={{
+              backgroundColor: '#A274FF',
+              padding: 20,
+              width: 220,
+              borderRadius: 10,
+              paddingHorizontal: 15,
+              alignItems: 'center',
+              alignSelf: 'center',
+              marginTop: 40,
+            }}>
+            <Text style={[styles.BtnText, {letterSpacing: 1}]}>
+              Book your seat Now
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            disabled={event?.createdBy?._id === user?._id}
+            onPress={() => navigation.navigate('TicketScreen')}
+            style={{
+              backgroundColor: '#A274FF',
+              padding: 20,
+              width: 220,
+              borderRadius: 10,
+              paddingHorizontal: 15,
+              alignItems: 'center',
+              alignSelf: 'center',
+              marginTop: 40,
+            }}>
+            <Text style={[styles.BtnText, {letterSpacing: 1}]}>
+              View Ticket
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );
@@ -270,9 +346,10 @@ const styles = StyleSheet.create({
   eventName: {
     textAlign: 'left',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     margin: 20,
     color: '#141414',
+    fontFamily: 'Jost-Bold',
   },
   profilePicture: {
     width: '100%',
@@ -291,6 +368,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 250,
     overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
   },
   profilePictureImage: {
     borderBottomLeftRadius: 15,

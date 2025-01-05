@@ -50,6 +50,14 @@ const CreateEvent = ({navigation, route}) => {
   const [selectedInvitees, setSelectedInvitees] = useState([]);
 
   useEffect(() => {
+    if (route.params?.communityId || myCommunities?.length) {
+      setCommunityId(myCommunities[0]?._id || '');
+    }
+  }, [route.params, myCommunities]);
+
+  console.log('commId', communityId);
+
+  useEffect(() => {
     const fetchConnections = async () => {
       try {
         const response = await axiosInstance.get(
@@ -129,6 +137,7 @@ const CreateEvent = ({navigation, route}) => {
 
         formData.append('createdBy', user?._id); // Ensure user object is passed correctly
 
+        formData.append('invitees', selectedInvitees);
         // console.log('FormData', formData);
         const res = await axiosInstanceForm.post(
           '/api/communities/events',
@@ -136,7 +145,7 @@ const CreateEvent = ({navigation, route}) => {
         );
 
         if (res.status === 201) {
-          alert('Event created successfully!');
+          // alert('Event created successfully!');
           // Reset form state
           setEventName('');
           setProfilePic(null);
@@ -147,7 +156,10 @@ const CreateEvent = ({navigation, route}) => {
           setEventStartTime('');
           setEventEndTime('');
 
-          navigation.replace('SuccessCreation', {isEvent: true});
+          navigation.replace('SuccessCreation', {
+            isEvent: true,
+            isRegistered: false,
+          });
         }
       } catch (error) {
         console.error('Error creating event:', error.message);
@@ -162,10 +174,11 @@ const CreateEvent = ({navigation, route}) => {
 
   const handleAddConnection = () => {
     if (newConnectionName && newConnectionEmail) {
-      setConnections([
-        ...connections,
-        {name: newConnectionName, email: newConnectionEmail},
-      ]);
+      // setConnections([
+      //   ...connections,
+      //   {name: newConnectionName, email: newConnectionEmail},
+      // ]);
+      setSelectedInvitees([...selectedInvitees, newConnectionEmail]);
       setNewConnectionName('');
       setNewConnectionEmail('');
       alert('Connection added successfully!');
@@ -175,7 +188,7 @@ const CreateEvent = ({navigation, route}) => {
   };
 
   // console.log(selectedInvitees);
-  console.log('communityId:', communityId);
+  console.log('communityId:', selectedInvitees);
 
   return (
     <View style={styles.container}>
@@ -228,24 +241,28 @@ const CreateEvent = ({navigation, route}) => {
             value={eventName}
             onChangeText={setEventName}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             placeholder="Event Type"
             value={eventType}
             onChangeText={setEventType}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             placeholder="Ocassion"
             value={eventOcassion}
             onChangeText={setEventOcassion}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             placeholder="Date eg. 12/12/2021"
             value={eventDate}
             onChangeText={setEventDate}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <View
             style={{
@@ -259,12 +276,14 @@ const CreateEvent = ({navigation, route}) => {
               value={eventStartTime}
               onChangeText={setEventStartTime}
               style={[styles.input, {flex: 1}]}
+              placeholderTextColor={'gray'}
             />
             <TextInput
               placeholder="End time"
               value={eventEndTime}
               onChangeText={setEventEndTime}
               style={[styles.input, {flex: 1}]}
+              placeholderTextColor={'gray'}
             />
           </View>
           <TextInput
@@ -272,18 +291,21 @@ const CreateEvent = ({navigation, route}) => {
             value={eventLocation}
             onChangeText={setEventLocation}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             placeholder="Full Address"
             value={address}
             onChangeText={setAddress}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             placeholder="Tags eg. Music,Concert,"
             value={tags}
             onChangeText={setTags}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             numberOfLines={4}
@@ -292,6 +314,7 @@ const CreateEvent = ({navigation, route}) => {
             onChangeText={setDescription}
             style={styles.input}
             multiline
+            placeholderTextColor={'gray'}
           />
           <View style={[styles.input, {marginBottom: 30}]}>
             <Text>Select your community</Text>
@@ -303,7 +326,7 @@ const CreateEvent = ({navigation, route}) => {
               }>
               {myCommunities?.map(comm => (
                 <Picker.Item
-                  style={{padding: 30}}
+                  style={{padding: 30, color: 'black'}}
                   key={comm._id}
                   label={comm?.name}
                   value={comm?._id}
@@ -379,7 +402,7 @@ const CreateEvent = ({navigation, route}) => {
                       styles.connectionItem,
                       {
                         backgroundColor: selectedInvitees.includes(
-                          connection._id,
+                          connection.email,
                         )
                           ? '#a274ff6e'
                           : '#fff',
@@ -399,12 +422,12 @@ const CreateEvent = ({navigation, route}) => {
                         {connection.email}
                       </Text>
                     </View>
-                    {!selectedInvitees.includes(connection._id) ? (
+                    {!selectedInvitees.includes(connection.email) ? (
                       <TouchableOpacity
                         onPress={() =>
                           setSelectedInvitees([
                             ...selectedInvitees,
-                            connection._id,
+                            connection.email,
                           ])
                         }
                         style={{
@@ -422,7 +445,7 @@ const CreateEvent = ({navigation, route}) => {
                       <TouchableOpacity
                         onPress={() => {
                           const filtered = selectedInvitees.filter(
-                            item => item !== connection._id,
+                            item => item !== connection.email,
                           );
                           setSelectedInvitees(filtered);
                         }}
@@ -451,7 +474,7 @@ const CreateEvent = ({navigation, route}) => {
                       styles.connectionItem,
                       {
                         backgroundColor: selectedInvitees.includes(
-                          connection._id,
+                          connection.email,
                         )
                           ? '#a274ff6e'
                           : '#fff',
@@ -471,12 +494,12 @@ const CreateEvent = ({navigation, route}) => {
                         {connection.email}
                       </Text>
                     </View>
-                    {!selectedInvitees.includes(connection._id) ? (
+                    {!selectedInvitees.includes(connection.email) ? (
                       <TouchableOpacity
                         onPress={() =>
                           setSelectedInvitees([
                             ...selectedInvitees,
-                            connection._id,
+                            connection.email,
                           ])
                         }
                         style={{
@@ -493,7 +516,7 @@ const CreateEvent = ({navigation, route}) => {
                       <TouchableOpacity
                         onPress={() => {
                           const filtered = selectedInvitees.filter(
-                            item => item !== connection._id,
+                            item => item !== connection.email,
                           );
                           setSelectedInvitees(filtered);
                         }}
@@ -615,6 +638,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 7,
     backgroundColor: 'white',
+    color: 'black',
   },
   addButton: {
     backgroundColor: 'white',

@@ -75,6 +75,7 @@ const memberSchema = new mongoose.Schema({
       fieldOfStudy: String,
       startDate: Date,
       endDate: Date,
+      isPresent: Boolean,
     },
   ],
   friends: [
@@ -97,6 +98,12 @@ const memberSchema = new mongoose.Schema({
         default: "pending",
       },
       requestedAt: { type: Date, default: Date.now },
+    },
+  ],
+  following: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Member",
     },
   ],
   potentialConnections: [

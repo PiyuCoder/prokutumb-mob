@@ -40,6 +40,7 @@ import ShareScreen from './src/screens/ShareScreen';
 import CreateCommunity from './src/screens/CreateCommunity';
 import CreateEvent from './src/screens/CreateEvent';
 import SuccessCreation from './src/components/SuccessCreation';
+import Ticket from './src/screens/Ticket';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -273,6 +274,11 @@ export default function App() {
             <Stack.Screen
               name="ShareScreen"
               component={ShareScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="TicketScreen"
+              component={Ticket}
               options={{headerShown: false}}
             />
             <Stack.Screen

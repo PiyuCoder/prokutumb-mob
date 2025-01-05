@@ -51,10 +51,10 @@ exports.fetchCommunity = async (req, res) => {
   }
 };
 
-exports.createCommunity = async (req, res) => {
+exports.createCommunity = (io, userSocketMap) => async (req, res) => {
   try {
-    const { name, description, isAnonymous, createdBy } = req.body;
-    console.log("Creating community");
+    const { name, description, isAnonymous, createdBy, invitees } = req.body;
+    console.log(invitees);
 
     // Validate required fields
     if (!name || !description || !createdBy) {
@@ -68,12 +68,10 @@ exports.createCommunity = async (req, res) => {
 
     // Handle profile picture upload
     if (req.file) {
-      // Save new profile picture
       profilePicture = `https://${req.get("host")}/uploads/${
         req.file.filename
       }`;
 
-      // Check and delete the old profile picture if it exists
       const community = await Communitymob.findOne({ createdBy });
       if (community && community.profilePicture?.includes("/uploads/")) {
         const oldFilePath = path.join(
@@ -98,9 +96,39 @@ exports.createCommunity = async (req, res) => {
 
     await newCommunity.save();
 
+    // Parse invitees and find existing users
+    if (invitees) {
+      const emails = invitees.split(",").map((email) => email.trim());
+      const users = await Member.find({ email: { $in: emails } });
+
+      for (const user of users) {
+        const notification = new NotificationMob({
+          recipientId: user._id, // The invitee
+          senderId: createdBy, // The creator of the community
+          message: `You have been invited to join the community "${name}".`,
+          type: "invitation",
+          isCommunity: true,
+          communityId: newCommunity._id,
+        });
+
+        await notification.save();
+
+        // Send real-time notification if the user is online
+        const inviteeSocketId = userSocketMap[user._id.toString()];
+        if (inviteeSocketId) {
+          io.to(inviteeSocketId).emit("notification", {
+            message: notification.message,
+            type: notification.type,
+            timestamp: notification.timestamp,
+          });
+        }
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: "Community created successfully",
+      message:
+        "Community created successfully and notifications sent to invitees.",
       data: newCommunity,
     });
   } catch (error) {
@@ -275,6 +303,33 @@ exports.fetchAnEvent = async (req, res) => {
   }
 };
 
+exports.bookSeat = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { userId } = req.body;
+
+    console.log(eventId);
+
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      res.status(400).json({ message: "Event Not Found." });
+    }
+
+    event.members.push(userId);
+    // if (event.createdBy.toString() !== userId.toString()) {
+    // }
+
+    console.log("booked");
+
+    await event.save();
+
+    res.status(200).json({ message: "Booked seats!" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 // Fetch all events
 exports.fetchAllEvents = async (req, res) => {
   try {
@@ -313,7 +368,7 @@ exports.fetchCommEvents = async (req, res) => {
   }
 };
 
-exports.createEvent = async (req, res) => {
+exports.createEvent = (io, userSocketMap) => async (req, res) => {
   try {
     const {
       name,
@@ -328,6 +383,7 @@ exports.createEvent = async (req, res) => {
       communityId,
       tags,
       address,
+      invitees,
     } = req.body;
 
     // Validate required fields
@@ -382,6 +438,35 @@ exports.createEvent = async (req, res) => {
     });
 
     await event.save();
+
+    // Parse invitees and find existing users
+    if (invitees) {
+      const emails = invitees.split(",").map((email) => email.trim());
+      const users = await Member.find({ email: { $in: emails } });
+
+      for (const user of users) {
+        const notification = new NotificationMob({
+          recipientId: user._id, // The invitee
+          senderId: createdBy, // The creator of the community
+          message: `You have been invited to attend the event "${name}".`,
+          type: "invitation",
+          isCommunity: false,
+          eventId: event._id,
+        });
+
+        await notification.save();
+
+        // Send real-time notification if the user is online
+        const inviteeSocketId = userSocketMap[user._id.toString()];
+        if (inviteeSocketId) {
+          io.to(inviteeSocketId).emit("notification", {
+            message: notification.message,
+            type: notification.type,
+            timestamp: notification.timestamp,
+          });
+        }
+      }
+    }
 
     res.status(201).json({ message: "Event created successfully", event });
   } catch (error) {

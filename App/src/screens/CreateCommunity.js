@@ -103,15 +103,19 @@ const CreateCommunity = ({navigation}) => {
           name: 'profile.jpg',
         });
         formData.append('createdBy', user?._id); // Replace with actual user ID
+        formData.append('invitees', selectedInvitees);
 
         const res = await axiosInstanceForm.post('/api/communities', formData);
 
         if (res.status === 201) {
-          alert('Community created successfully!');
+          // alert('Community created successfully!');
           setCommunityName('');
           setProfilePic(null);
           setDescription('');
-          navigation.replace('SuccessCreation', {isEvent: false});
+          navigation.replace('SuccessCreation', {
+            isEvent: false,
+            isRegistered: false,
+          });
         }
       } catch (error) {
         console.error('Error creating community:', error.message);
@@ -123,10 +127,15 @@ const CreateCommunity = ({navigation}) => {
 
   const handleAddConnection = () => {
     if (newConnectionName && newConnectionEmail) {
-      setConnections([
-        ...connections,
-        {name: newConnectionName, email: newConnectionEmail},
-      ]);
+      // setFilteredConnections([
+      //   {
+      //     name: newConnectionName,
+      //     email: newConnectionEmail,
+      //     profilePicture: '',
+      //   },
+      //   ...connections,
+      // ]);
+      setSelectedInvitees([...selectedInvitees, newConnectionEmail]);
       setNewConnectionName('');
       setNewConnectionEmail('');
       alert('Connection added successfully!');
@@ -276,7 +285,7 @@ const CreateCommunity = ({navigation}) => {
                       styles.connectionItem,
                       {
                         backgroundColor: selectedInvitees.includes(
-                          connection._id,
+                          connection.email,
                         )
                           ? '#a274ff6e'
                           : '#fff',
@@ -296,12 +305,12 @@ const CreateCommunity = ({navigation}) => {
                         {connection.email}
                       </Text>
                     </View>
-                    {!selectedInvitees.includes(connection._id) ? (
+                    {!selectedInvitees.includes(connection.email) ? (
                       <TouchableOpacity
                         onPress={() =>
                           setSelectedInvitees([
                             ...selectedInvitees,
-                            connection._id,
+                            connection?.email,
                           ])
                         }
                         style={{
@@ -318,7 +327,7 @@ const CreateCommunity = ({navigation}) => {
                       <TouchableOpacity
                         onPress={() => {
                           const filtered = selectedInvitees.filter(
-                            item => item !== connection._id,
+                            item => item !== connection.email,
                           );
                           setSelectedInvitees(filtered);
                         }}
