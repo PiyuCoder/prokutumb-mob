@@ -308,19 +308,15 @@ exports.bookSeat = async (req, res) => {
     const { eventId } = req.params;
     const { userId } = req.body;
 
-    console.log(eventId);
-
     const event = await Event.findById(eventId);
 
     if (!event) {
       res.status(400).json({ message: "Event Not Found." });
     }
 
-    event.members.push(userId);
-    // if (event.createdBy.toString() !== userId.toString()) {
-    // }
-
-    console.log("booked");
+    if (event.createdBy.toString() !== userId.toString()) {
+      event.members.push(userId);
+    }
 
     await event.save();
 
