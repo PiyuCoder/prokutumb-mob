@@ -70,7 +70,7 @@ const SearchCommNEvent = ({iconColor, isEvent}) => {
           <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search people..."
+              placeholder="Search..."
               value={query}
               onChangeText={setQuery}
               autoFocus

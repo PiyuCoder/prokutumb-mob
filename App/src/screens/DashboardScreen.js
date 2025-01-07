@@ -9,6 +9,7 @@ import {View, TouchableOpacity, StyleSheet} from 'react-native';
 import Icon from 'react-native-vector-icons/Foundation';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import FA6Icon from 'react-native-vector-icons/FontAwesome6';
+import Communities from './Communities';
 
 // Create the Tab Navigator
 const Tab = createBottomTabNavigator();
@@ -47,7 +48,7 @@ const DashboardScreen = ({navigation}) => {
         return {
           tabBarIcon: ({color, size, focused}) => {
             const iconSize =
-              route.name === 'Network' ? 60 : route.name === 'Match' ? 24 : 30; // Larger size for Network icon
+              route.name === 'Network' ? 60 : route.name === 'Match' ? 23 : 30; // Larger size for Network icon
             return (
               <View style={{alignItems: 'center'}}>
                 <View style={focused ? styles.circle : null}>
@@ -90,7 +91,7 @@ const DashboardScreen = ({navigation}) => {
       />
       <Tab.Screen
         name="Match"
-        component={MatchScreen}
+        component={Communities}
         options={{headerShown: false}}
       />
       <Tab.Screen
@@ -111,12 +112,12 @@ const DashboardScreen = ({navigation}) => {
 
 const styles = StyleSheet.create({
   circle: {
-    backgroundColor: '#A274FF',
-    borderRadius: 50,
-    padding: 8,
+    backgroundColor: '#A274FF', // Highlight background for focused icons
+    borderRadius: 40, // Half of width/height for a perfect circle
+    height: 50, // Circle size, must match width
+    width: 50,
+    justifyContent: 'center', // Center the icon within the circle
     alignItems: 'center',
-    justifyContent: 'center',
-    aspectRatio: 1,
   },
   tabBarStyle: {
     position: 'absolute',

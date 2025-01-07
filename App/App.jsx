@@ -41,6 +41,7 @@ import CreateCommunity from './src/screens/CreateCommunity';
 import CreateEvent from './src/screens/CreateEvent';
 import SuccessCreation from './src/components/SuccessCreation';
 import Ticket from './src/screens/Ticket';
+import Post from './src/screens/Post';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -51,6 +52,7 @@ const linking = {
     screens: {
       UserProfile: 'profile/:userId', // Define the path and params
       MatchScreen: 'auth/callback',
+      Post: 'post/:postId',
     },
   },
 };
@@ -219,6 +221,11 @@ export default function App() {
             <Stack.Screen
               name="Network"
               component={NetworkScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Post"
+              component={Post}
               options={{headerShown: false}}
             />
             <Stack.Screen

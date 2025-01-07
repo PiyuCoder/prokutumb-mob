@@ -183,6 +183,25 @@ exports.fetchPosts = async (req, res) => {
   }
 };
 
+exports.fetchPost = async (req, res) => {
+  const { id } = req.params;
+  const post = await Feed.findById(id)
+    .populate("user", "name profilePicture") // Populate post creator
+    .populate({
+      path: "comments.user", // Populate comment user
+      select: "name profilePicture", // Include name and profilePicture
+    })
+    .lean();
+  if (post) {
+    res.json(post); // API response for post data
+    // res.redirect(`prokutumb://post/${post.id}`);
+
+    // Or render an HTML page for web apps
+  } else {
+    res.status(404).send("Post not found");
+  }
+};
+
 exports.likePost = async (req, res) => {
   try {
     const { userId } = req.body; // User ID from the client

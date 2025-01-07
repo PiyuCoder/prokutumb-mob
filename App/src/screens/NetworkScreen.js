@@ -18,8 +18,10 @@ import {useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FAIcon from 'react-native-vector-icons/FontAwesome';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
+import Sound from 'react-native-sound';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
-const NetworkScreen = () => {
+const NetworkScreen = ({navigation}) => {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -41,6 +43,26 @@ const NetworkScreen = () => {
     // Scroll to the end of the ScrollView when messages change
     scrollViewRef.current?.scrollToEnd({animated: true});
   }, [messages]);
+
+  useEffect(() => {
+    // Monitor keyboard visibility
+    const keyboardShowListener = Keyboard.addListener('keyboardDidShow', () =>
+      setKeyboardVisible(true),
+    );
+    const keyboardHideListener = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboardVisible(false),
+    );
+
+    // Cleanup listeners on unmount
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
+  }, []);
+
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
 
   useEffect(() => {
     const initializeVoice = async () => {
@@ -169,6 +191,25 @@ const NetworkScreen = () => {
   const startVoiceRecognition = async () => {
     // setKeyboardVisible(true);
     console.log('Starting voice recognition...');
+
+    // Vibrate the phone
+    ReactNativeHapticFeedback.trigger('impactLight', {
+      enableVibrateFallback: true,
+      ignoreAndroidSystemSettings: false,
+    });
+
+    // Play a sound
+    const beep = new Sound('beep.mp3', Sound.MAIN_BUNDLE, error => {
+      if (error) {
+        console.log('Failed to load sound:', error);
+        return;
+      }
+      beep.play(success => {
+        if (!success) {
+          console.log('Sound playback failed.');
+        }
+      });
+    });
     // setMessage('Speak now...');
     try {
       await Voice.start('en-US');
@@ -189,6 +230,11 @@ const NetworkScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={'#A274FF'} barStyle={'light-content'} />
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={styles.iconButtons}>
+        <EntypoIcon name="chevron-left" size={20} color="white" />
+      </TouchableOpacity>
       <View style={styles.chatContainer}>
         <Text style={styles.chatText}>
           You're talking with <Text style={{color: 'white'}}>MajlisAI</Text>
@@ -198,12 +244,15 @@ const NetworkScreen = () => {
         <View
           style={[
             styles.container,
-            {paddingBottom: isKeyboardVisible ? 10 : 100},
+            {paddingBottom: isKeyboardVisible ? 10 : 150},
           ]}>
           {messages.map((msg, index) => (
             <View key={index} style={styles.messageContainer}>
               <Text style={[styles.messageText, styles.userMessage]}>
                 {msg.query}
+              </Text>
+              <Text style={styles.queryTimeText}>
+                {formatTime(msg.createdAt)}
               </Text>
               <Text style={[styles.messageText, styles.aiMessage]}>
                 {msg.response}
@@ -215,8 +264,13 @@ const NetworkScreen = () => {
       </ScrollView>
 
       {isKeyboardVisible && (
-        <View style={styles.inputContainer}>
+        <View
+          style={[
+            styles.inputContainer,
+            {marginBottom: isKeyboardVisible ? 20 : 140},
+          ]}>
           <TextInput
+            autoFocus
             style={styles.textInput}
             value={message}
             onChangeText={setMessage}
@@ -237,56 +291,58 @@ const NetworkScreen = () => {
         </View>
       )}
 
-      <View style={styles.floatingContainer}>
-        <View style={styles.floatingSubContainer}>
-          <View className="bg-white flex-1 h-20 rounded-l-full rounded-tr-full flex items-center justify-center">
-            <TouchableOpacity
-              onPress={openAttachmentPicker}
-              style={styles.button}>
-              {/* <Image
+      {!isKeyboardVisible && (
+        <View style={styles.floatingContainer}>
+          <View style={styles.floatingSubContainer}>
+            <View className="bg-white flex-1 h-20 rounded-l-full rounded-tr-full flex items-center justify-center">
+              <TouchableOpacity
+                onPress={openAttachmentPicker}
+                style={styles.button}>
+                {/* <Image
                 source={require('../assets/icons/attachment.png')}
                 style={styles.icon}
               /> */}
-              <EntypoIcon name="attachment" size={30} color="#4B164C" />
-            </TouchableOpacity>
-          </View>
-          <View className="bg-white flex-1 h-20 rounded-r-full rounded-tl-full flex items-center justify-center">
-            <TouchableOpacity
-              onPress={() => setKeyboardVisible(prev => !prev)}
-              style={styles.button}>
-              {/* <Image
+                <EntypoIcon name="attachment" size={30} color="#4B164C" />
+              </TouchableOpacity>
+            </View>
+            <View className="bg-white flex-1 h-20 rounded-r-full rounded-tl-full flex items-center justify-center">
+              <TouchableOpacity
+                onPress={() => setKeyboardVisible(prev => !prev)}
+                style={styles.button}>
+                {/* <Image
                 source={require('../assets/icons/keyboard.png')}
                 style={styles.icon}
               /> */}
-              <FAIcon name="keyboard-o" size={30} color="#4B164C" />
-            </TouchableOpacity>
+                <FAIcon name="keyboard-o" size={30} color="#4B164C" />
+              </TouchableOpacity>
+            </View>
+            <View
+              style={{
+                position: 'absolute',
+                backgroundColor: 'white',
+                height: 54,
+                width: 150,
+                left: '50%',
+                bottom: 0,
+                transform: [{translateX: -75}],
+              }}
+            />
           </View>
-          <View
-            style={{
-              position: 'absolute',
-              backgroundColor: 'white',
-              height: 54,
-              width: 150,
-              left: '50%',
-              bottom: 0,
-              transform: [{translateX: -75}],
-            }}
-          />
-        </View>
 
-        <View style={styles.micButtonWrapper}>
-          <TouchableOpacity
-            onPressIn={startVoiceRecognition} // Start recording on press
-            onPressOut={stopVoiceRecognition}
-            style={styles.micButton}>
-            {/* <Image
+          <View style={styles.micButtonWrapper}>
+            <TouchableOpacity
+              onPressIn={startVoiceRecognition} // Start recording on press
+              onPressOut={stopVoiceRecognition}
+              style={styles.micButton}>
+              {/* <Image
               source={require('../assets/icons/mic.png')}
               style={styles.icon}
             /> */}
-            <Icon name="mic-outline" size={30} color="white" />
-          </TouchableOpacity>
+              <Icon name="mic-outline" size={30} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 };
@@ -315,7 +371,6 @@ const styles = StyleSheet.create({
     margin: 10,
     // paddingHorizontal: 10,
     elevation: 5,
-    marginBottom: 140,
   },
   textInput: {
     flex: 1,
@@ -327,6 +382,18 @@ const styles = StyleSheet.create({
     color: 'black',
     // borderColor: '#A274FF',
     // borderWidth: 1,
+  },
+  iconButtons: {
+    padding: 2,
+    height: 40,
+    width: 40,
+    borderRadius: 25,
+    borderColor: 'white',
+    borderWidth: 0.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 20,
+    marginTop: 10,
   },
   sendButton: {
     backgroundColor: '#A274FF',
@@ -386,7 +453,7 @@ const styles = StyleSheet.create({
     height: 25,
   },
   messageContainer: {
-    marginVertical: 10,
+    // marginVertical: 10,
     padding: 10,
     borderRadius: 10,
     flexDirection: 'column', // Stack the messages vertically
@@ -399,7 +466,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     color: 'white',
     borderRadius: 10,
-    // borderBottomRightRadius: 0,
+    borderBottomLeftRadius: 0,
     elevation: 10,
     maxWidth: '70%',
     margin: 3,
@@ -410,8 +477,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     alignSelf: 'flex-start',
     color: 'black',
-    // borderRadius: 10,
-    borderTopLeftRadius: 10,
+    borderRadius: 10,
+    borderTopLeftRadius: 0,
     elevation: 10,
     maxWidth: '70%',
     margin: 3,
@@ -424,8 +491,14 @@ const styles = StyleSheet.create({
 
   timeText: {
     fontSize: 10,
-    color: 'gray',
+    color: 'black',
     marginLeft: 5,
+  },
+  queryTimeText: {
+    fontSize: 10,
+    color: 'black',
+    marginRight: 5,
+    textAlign: 'right',
   },
 });
 

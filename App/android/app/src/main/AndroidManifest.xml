@@ -49,6 +49,7 @@ xmlns:tools="http://schemas.android.com/tools">
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="prokutumb" android:host="profile" />
             <data android:scheme="prokutumb" android:host="auth" android:pathPrefix="/callback" />
+            <data android:scheme="prokutumb" android:host="post" android:pathPrefix="/"/>
         </intent-filter>
 
       </activity>

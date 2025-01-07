@@ -197,24 +197,28 @@ const CreateCommunity = ({navigation}) => {
             value={communityName}
             onChangeText={setCommunityName}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             placeholder="Community Type"
             value={communityType}
             onChangeText={setCommunityType}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             placeholder="About(Community goal)"
             value={communityAbout}
             onChangeText={setCommunityAbout}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             placeholder="Location"
             value={communityLocation}
             onChangeText={setCommunityLocation}
             style={styles.input}
+            placeholderTextColor={'gray'}
           />
           <TextInput
             numberOfLines={4}
@@ -223,6 +227,7 @@ const CreateCommunity = ({navigation}) => {
             onChangeText={setDescription}
             style={styles.input}
             multiline
+            placeholderTextColor={'gray'}
           />
         </View>
       )}
@@ -448,6 +453,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 7,
     backgroundColor: 'white',
+    color: 'black',
   },
   addButton: {
     backgroundColor: 'white',
@@ -517,6 +523,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     elevation: 7,
     backgroundColor: 'white',
+    color: 'black',
   },
   inviteeText: {
     fontSize: 18,

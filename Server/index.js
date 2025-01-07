@@ -23,6 +23,7 @@ const userSocketMap = {};
 const userRouter = require("./routes/userRoute")(io, userSocketMap);
 const postRouter = require("./routes/postRoutes");
 const otherRouter = require("./routes/otherRoutes");
+const Feed = require("./models/Feed");
 const communityRouter = require("./routes/communityRoutes")(io, userSocketMap);
 
 // Serve static files from the "uploads" directory
@@ -74,6 +75,18 @@ app.use("/api/user", userRouter);
 app.use("/api/posts", postRouter);
 app.use("/api", otherRouter);
 app.use("/api/communities", communityRouter);
+app.get("/posts/:id", async (req, res) => {
+  const { id } = req.params;
+  const post = await Feed.findById(id);
+  if (post) {
+    // res.json(post); // API response for post data
+    res.redirect(`prokutumb://post/${post.id}`);
+
+    // Or render an HTML page for web apps
+  } else {
+    res.status(404).send("Post not found");
+  }
+});
 
 socketHandler(io, userSocketMap);
 

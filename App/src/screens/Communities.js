@@ -90,7 +90,11 @@ export default function Communities({navigation, route}) {
   }, [user?._id, isEvent]);
 
   const renderHorizontalList = (data, title) => (
-    <View style={styles.sectionWrapper}>
+    <View
+      style={[
+        styles.sectionWrapper,
+        {marginBottom: title === 'Most Popular' ? 100 : 10},
+      ]}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <FlatList
         data={data}
@@ -270,6 +274,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+    // paddingBottom: 500,
   },
   headerActions: {
     flexDirection: 'row',

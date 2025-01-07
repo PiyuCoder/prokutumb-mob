@@ -111,7 +111,7 @@ const SearchPeople = ({iconColor, home}) => {
             ) : (
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search people..."
+                placeholder="Search..."
                 placeholderTextColor={'gray'}
                 value={query}
                 onChangeText={setQuery}
