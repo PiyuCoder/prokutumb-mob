@@ -40,6 +40,8 @@ module.exports = (io, userSocketMap) => {
   router.post("/acceptFriendRequest", userController.acceptRequest);
   router.post("/declineFriendRequest", userController.declineRequest);
   router.put("/:userId/experience", userController.addExperience);
+  router.put("/:userId/edit-experience/:expId", userController.editExperience);
+  router.put("/:userId/edit-education/:eduId", userController.editEdu);
   router.put("/:userId/education", userController.addEducation);
   router.get("/conversations/:userId", userController.fetchConversations);
   router.put("/interests/:userId", userController.updateInterests);

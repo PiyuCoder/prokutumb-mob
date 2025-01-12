@@ -15,13 +15,14 @@ import socket from '../socket';
 import FriendsModal from '../components/FriendsModal';
 import ProfilePicture from '../components/ProfilePicture';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Loader from '../components/Loader';
 
 const MessageScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [onlineStatus, setOnlineStatus] = useState({});
   const [conversations, setConversations] = useState([]);
   const [frequentContacts, setFrequentContacts] = useState([]);
-  // const [modalVisible, setModalVisible] = useState(false)
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const {user} = useSelector(state => state.auth);
 
@@ -46,6 +47,7 @@ const MessageScreen = () => {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
+        setLoading(true);
         const res = await axiosInstance.get(
           `/api/user/conversations/${user?._id}`,
         );
@@ -56,6 +58,8 @@ const MessageScreen = () => {
         }
       } catch (error) {
         console.error('Error fetching conversations:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -75,6 +79,7 @@ const MessageScreen = () => {
 
   return (
     <View style={styles.container}>
+      {loading && <Loader isLoading={loading} />}
       <View
         style={{
           flexDirection: 'row',

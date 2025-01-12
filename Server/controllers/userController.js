@@ -168,6 +168,7 @@ exports.editAbout = async (req, res) => {
         profilePicture: user.profilePicture,
         coverPicture: user.coverPicture,
         experience: user.experience,
+        education: user.education,
         bio: user.bio,
         dob: user.dob,
         interests: user.interests,
@@ -259,6 +260,7 @@ exports.editProfile = async (req, res) => {
         profilePicture: user.profilePicture,
         coverPicture: user.coverPicture,
         experience: user.experience,
+        education: user.education,
         bio: user.bio,
         dob: user.dob,
         interests: user.interests,
@@ -296,6 +298,22 @@ exports.addEducation = async (req, res) => {
 
     res.status(200).json({
       message: "Education added successfully",
+      user: {
+        _id: updatedUser._id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        profilePicture: updatedUser.profilePicture, // Profile picture from Google
+        coverPicture: updatedUser.coverPicture,
+        experience: updatedUser.experience,
+        education: user.education,
+        bio: updatedUser.bio,
+        dob: updatedUser.dob,
+        interests: updatedUser.interests,
+        location: updatedUser.location,
+        friends: updatedUser.friends,
+        friendRequests: updatedUser.friendRequests,
+        following: updatedUser.following,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -329,6 +347,7 @@ exports.addExperience = async (req, res) => {
         profilePicture: updatedUser.profilePicture, // Profile picture from Google
         coverPicture: updatedUser.coverPicture,
         experience: updatedUser.experience,
+        education: updatedUser.education,
         bio: updatedUser.bio,
         dob: updatedUser.dob,
         interests: updatedUser.interests,
@@ -341,6 +360,120 @@ exports.addExperience = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+exports.editExperience = async (req, res) => {
+  try {
+    const { userId, expId } = req.params;
+    const { experience } = req.body;
+
+    console.log("edited exp");
+
+    // Validate that the experience ID exists in the user's experience list
+    const user = await Member.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the experience by ID and make sure the experience belongs to this user
+    const expIndex = user.experience.findIndex(
+      (exp) => exp._id.toString() === expId
+    );
+    if (expIndex === -1) {
+      return res.status(404).json({ message: "Experience not found" });
+    }
+
+    // Update the experience at the found index
+    user.experience[expIndex] = {
+      ...user.experience[expIndex].toObject(),
+      ...experience, // Update the fields with the new data
+    };
+
+    // Save the updated user
+    await user.save();
+
+    return res.status(200).json({
+      message: "Experience updated successfully",
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture, // Profile picture from Google
+        coverPicture: user.coverPicture,
+        experience: user.experience,
+        education: user.education,
+        bio: user.bio,
+        dob: user.dob,
+        interests: user.interests,
+        location: user.location,
+        friends: user.friends,
+        friendRequests: user.friendRequests,
+        following: user.following,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating experience:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.editEdu = async (req, res) => {
+  try {
+    const { userId, eduId } = req.params;
+    const { education } = req.body;
+
+    console.log("edited edu");
+
+    // Validate that the experience ID exists in the user's experience list
+    const user = await Member.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the experience by ID and make sure the experience belongs to this user
+    const eduIndex = user.education.findIndex(
+      (edu) => edu._id.toString() === eduId
+    );
+    if (eduIndex === -1) {
+      return res.status(404).json({ message: "Experience not found" });
+    }
+
+    // Update the experience at the found index
+    user.education[eduIndex] = {
+      ...user.education[eduIndex].toObject(),
+      ...education, // Update the fields with the new data
+    };
+
+    // Save the updated user
+    await user.save();
+
+    return res.status(200).json({
+      message: "Experience updated successfully",
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture, // Profile picture from Google
+        coverPicture: user.coverPicture,
+        experience: user.experience,
+        education: user.education,
+        bio: user.bio,
+        dob: user.dob,
+        interests: user.interests,
+        location: user.location,
+        friends: user.friends,
+        friendRequests: user.friendRequests,
+        following: user.following,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating experience:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
 
@@ -420,6 +553,7 @@ exports.follow = async (req, res) => {
         profilePicture: follower.profilePicture,
         coverPicture: follower.coverPicture,
         experience: follower.experience,
+        education: follower.education,
         bio: follower.bio,
         dob: follower.dob,
         interests: follower.interests,
@@ -538,7 +672,9 @@ exports.fetchMessages = async (req, res) => {
         { sender: userId, recipient: recipientId },
         { sender: recipientId, recipient: userId },
       ],
-    }).sort({ timestamp: 1 }); // Sort by timestamp for chronological order
+    })
+      .sort({ timestamp: 1 })
+      .populate("replyTo"); // Sort by timestamp for chronological order
 
     res.status(200).json({
       success: true,
@@ -799,6 +935,7 @@ exports.updateInterests = async (req, res) => {
         profilePicture: user.profilePicture,
         coverPicture: user.coverPicture,
         experience: user.experience,
+        education: user.education,
         bio: user.bio,
         dob: user.dob,
         interests: user.interests,

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,19 @@ import socket from '../socket';
 import {axiosInstance} from '../api/axios';
 import ProfilePicture from '../components/ProfilePicture';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 
 const ChatScreen = ({route, navigation}) => {
   const {name, userId, profilePicture} = route.params;
   const {user} = useSelector(state => state.auth);
+  const [replyToMessage, setReplyToMessage] = useState(null);
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+
+  const flatListRef = useRef();
+
+  console.log(messages);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -29,6 +35,7 @@ const ChatScreen = ({route, navigation}) => {
       );
       if (res.data.success) {
         setMessages(res.data.messages);
+        flatListRef.current.scrollToEnd({animated: true});
       }
     };
     fetchMessages();
@@ -48,13 +55,21 @@ const ChatScreen = ({route, navigation}) => {
     };
   }, []);
 
+  const scrollToMessage = index => {
+    console.log(index);
+    flatListRef.current.scrollToIndex({animated: true, index});
+  };
+
   const handleSend = () => {
     if (newMessage.trim()) {
       const messageData = {
         sender: user._id,
         recipient: userId,
         text: newMessage,
+        replyTo: replyToMessage ? replyToMessage._id : null,
       };
+
+      console.log('messageData:', messageData);
 
       // Send message to the backend via socket
       socket.emit('sendMessage', messageData);
@@ -62,9 +77,13 @@ const ChatScreen = ({route, navigation}) => {
       // Update local messages state to display the sent message
       setMessages(prevMessages => [
         ...prevMessages,
-        {...messageData, _id: Date.now().toString(), sender: user?._id},
+        {...messageData, _id: Date.now().toString(), sender: user._id},
       ]);
       setNewMessage('');
+      setReplyToMessage(null); // Reset reply state
+      setTimeout(() => {
+        flatListRef.current.scrollToEnd({animated: true});
+      }, 100);
     }
   };
 
@@ -108,7 +127,7 @@ const ChatScreen = ({route, navigation}) => {
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <TouchableOpacity
             style={{marginRight: 8}}
-            onPress={() => navigation.navigate('Message')}>
+            onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back-outline" size={30} color="black" />
           </TouchableOpacity>
           <TouchableOpacity
@@ -162,6 +181,7 @@ const ChatScreen = ({route, navigation}) => {
 
       {/* Messages List */}
       <FlatList
+        ref={flatListRef}
         data={messages}
         keyExtractor={item => item._id}
         renderItem={({item}) => (
@@ -171,12 +191,48 @@ const ChatScreen = ({route, navigation}) => {
                 ? styles.yourMessage
                 : styles.otherMessage
             }>
-            <Text style={styles.messageText}>{item.text}</Text>
+            {item.replyTo && (
+              <TouchableOpacity
+                onPress={() => {
+                  // Scroll to the replied message if it exists
+                  if (item.replyTo) {
+                    const repliedMessageIndex = messages.findIndex(
+                      msg => msg._id === item.replyTo._id,
+                    );
+                    if (repliedMessageIndex !== -1) {
+                      scrollToMessage(repliedMessageIndex);
+                    }
+                  }
+                }}
+                style={styles.repliedMessage}>
+                <Text>Replied to:{item.replyTo.text}</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onLongPress={() => setReplyToMessage(item)}>
+              <Text
+                style={
+                  item.sender === user?._id
+                    ? styles.messageText
+                    : {color: 'black'}
+                }>
+                {item.text}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
         contentContainerStyle={styles.messagesList}
       />
-
+      {replyToMessage && (
+        <View style={styles.repliedMessage}>
+          <Text style={{color: 'black'}}>
+            <Text style={{color: '#A274FF'}}>Replying to:</Text>{' '}
+            {replyToMessage.text}
+          </Text>
+          <TouchableOpacity onPress={() => setReplyToMessage(null)}>
+            <SimpleLineIcons name="close" size={20} color="#A274FF" />
+          </TouchableOpacity>
+        </View>
+      )}
       {/* Input Area */}
       <View style={styles.inputContainer}>
         <TextInput
@@ -185,8 +241,8 @@ const ChatScreen = ({route, navigation}) => {
           value={newMessage}
           onChangeText={setNewMessage}
         />
-        <TouchableOpacity onPress={handleSend}>
-          <Text style={styles.sendButton}>Send</Text>
+        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+          <Text style={{color: 'white', fontWeight: 'bold'}}>Send</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -210,13 +266,25 @@ const styles = StyleSheet.create({
   messagesList: {
     padding: 16,
   },
+  repliedMessage: {
+    backgroundColor: '#e0e0e0',
+    padding: 10,
+    marginBottom: 1,
+    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
   yourMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#F8E7F6',
+    backgroundColor: '#6219F4',
     borderRadius: 10,
     padding: 10,
+    paddingHorizontal: 15,
     marginVertical: 4,
     maxWidth: '75%',
+    minWidth: 50,
   },
   otherMessage: {
     alignSelf: 'flex-start',
@@ -225,9 +293,11 @@ const styles = StyleSheet.create({
     padding: 10,
     marginVertical: 4,
     maxWidth: '75%',
+    minWidth: 50,
+    paddingHorizontal: 15,
   },
   messageText: {
-    color: '#141414',
+    color: 'white',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -249,8 +319,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   sendButton: {
-    color: '#0084ff',
-    fontWeight: 'bold',
+    backgroundColor: '#A274FF',
+    padding: 10,
+    borderRadius: 10,
   },
 });
 

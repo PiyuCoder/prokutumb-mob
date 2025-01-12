@@ -16,7 +16,7 @@ const CommunityCard = ({community, onPress, style}) => {
   const {user} = useSelector(state => state.auth);
   const navigation = useNavigation();
   return (
-    <View style={[styles.cardWrapper, style]}>
+    <TouchableOpacity onPress={onPress} style={[styles.cardWrapper, style]}>
       <View style={styles.userCard}>
         <ImageBackground
           source={{uri: community.profilePicture}}
@@ -98,7 +98,7 @@ const CommunityCard = ({community, onPress, style}) => {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

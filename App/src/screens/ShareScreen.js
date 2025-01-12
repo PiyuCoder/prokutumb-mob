@@ -1,14 +1,120 @@
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import React, {useState} from 'react';
+import {
+  Alert,
+  Linking,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
 import {useSelector} from 'react-redux';
 import Octicons from 'react-native-vector-icons/Octicons';
 import ProfilePicture from '../components/ProfilePicture';
+import {
+  Camera,
+  useCameraDevice,
+  useCodeScanner,
+} from 'react-native-vision-camera';
+// import {useScanBarcodes, BarcodeFormat} from 'vision-camera-code-scanner';
 
 const ShareScreen = ({navigation}) => {
   const {user} = useSelector(state => state.auth);
   const [isQR, setIsQR] = useState(true);
+  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const [permissionError, setPermissionError] = useState(false);
+  const [qrCode, setQRCode] = useState(null);
+
+  const device = useCameraDevice('back');
+
+  // Hook for barcode scanning
+  // const [barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE]);
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const status = await Camera.getCameraPermissionStatus();
+      console.log('Initial permission status:', status);
+
+      if (status !== 'authorized') {
+        const newStatus = await Camera.requestCameraPermission();
+        console.log('Updated permission status:', newStatus);
+
+        if (newStatus === 'authorized') {
+          setHasCameraPermission(true);
+        } else {
+          setPermissionError(true);
+          // Alert.alert(
+          //   'Permission Denied',
+          //   'Camera access is required. Please enable it in app settings.',
+          //   [
+          //     {text: 'Cancel', style: 'cancel'},
+          //     {text: 'Open Settings', onPress: () => Linking.openSettings()},
+          //   ],
+          // );
+        }
+      } else {
+        setHasCameraPermission(true);
+      }
+    };
+
+    checkPermissions();
+  }, []);
+  const isValidURL = str => {
+    const pattern = new RegExp(
+      '^(https?:\\/\\/)?' + // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' + // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+        '(\\#[-a-z\\d_]*)?$',
+      'i',
+    );
+    return !!pattern.test(str);
+  };
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr', 'ean-13'],
+    onCodeScanned: codes => {
+      if (isProcessing) return; // Prevent multiple alerts for the same QR
+      setIsProcessing(true);
+
+      const scannedValue = codes[0]?.value;
+      if (scannedValue && scannedValue !== lastScannedCode) {
+        setLastScannedCode(scannedValue);
+
+        // Check if it's a valid URL
+        if (isValidURL(scannedValue)) {
+          Alert.alert('QR Code Detected', `Open Link: ${scannedValue}`, [
+            {text: 'Cancel'},
+            {
+              text: 'Open',
+              onPress: () => Linking.openURL(scannedValue),
+            },
+          ]);
+        } else {
+          Alert.alert('QR Code Detected', `Data: ${scannedValue}`);
+        }
+      }
+
+      // Reset after a short delay
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 2000); // 2-second cooldown to prevent multiple detections
+    },
+  });
+
+  // Handle QR code detection
+  // useEffect(() => {
+  //   if (barcodes.length > 0) {
+  //     const scannedQRCode = barcodes[0].content.data;
+  //     Alert.alert('QR Code Detected', `Data: ${scannedQRCode}`, [{text: 'OK'}]);
+  //   }
+  // }, [barcodes]);
+
+  // const handleQRCodeDetected = e => {
+  //   setQRCode(e.data);
+  //   Alert.alert('QR Code Scanned', `QR Code: ${e.data}`);
+  // };
   return (
     <View style={{flex: 1, backgroundColor: '#E9E5DF'}}>
       <View
@@ -35,7 +141,7 @@ const ShareScreen = ({navigation}) => {
         style={{
           flexDirection: 'row',
           justifyContent: 'space-around',
-          marginBottom: 30,
+          marginBottom: isQR ? 30 : 0,
         }}>
         <TouchableOpacity
           activeOpacity={1}
@@ -102,7 +208,7 @@ const ShareScreen = ({navigation}) => {
               marginBottom: 20,
               color: 'grey',
             }}>
-            Strategy at Youtube
+            {user?.bio}
           </Text>
           <QRCode
             // value={`prokutumb://profile/${user?._id}`}
@@ -113,8 +219,27 @@ const ShareScreen = ({navigation}) => {
           />
         </View>
       ) : (
-        <View>
-          <Text>Scanner</Text>
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          {!hasCameraPermission ? (
+            device ? (
+              <Camera
+                style={StyleSheet.absoluteFill}
+                device={device}
+                isActive={!isQR}
+                codeScanner={codeScanner}
+              />
+            ) : (
+              <Text>Loading Camera...</Text>
+            )
+          ) : permissionError ? (
+            <Text style={styles.centerText}>
+              Permission denied. Please enable camera access in settings.
+            </Text>
+          ) : (
+            <Text style={styles.centerText}>
+              Requesting camera permission...
+            </Text>
+          )}
         </View>
       )}
     </View>

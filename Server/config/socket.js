@@ -18,25 +18,37 @@ const socketHandler = (io, userSocketMap) => {
     });
 
     // Listen for `sendMessage` event
-    socket.on("sendMessage", async ({ sender, recipient, text }) => {
+    socket.on("sendMessage", async ({ sender, recipient, text, replyTo }) => {
       try {
-        console.log(`Message from ${sender} to ${recipient}: ${text}`);
+        console.log(
+          `Message from ${sender} to ${recipient}: ${text} : replyTo:${replyTo}`
+        );
 
-        // Save message to database
-        const message = new Message({ sender, recipient, text });
+        // Create a new message document
+        const message = new Message({
+          sender,
+          recipient,
+          text,
+          replyTo: replyTo || null, // Ensure null is used if no reply
+          timestamp: Date.now(), // Ensure timestamp is set if it's not auto-generated
+        });
+
+        // Save the message to the database
         await message.save();
 
-        // Emit message to recipient if online
+        // Emit message to recipient if they're online
         const recipientSocketId = userSocketMap[recipient];
         if (recipientSocketId) {
+          // Send the message along with the replyTo field (if it exists)
           io.to(recipientSocketId).emit("receiveMessage", {
             sender,
             text,
             timestamp: message.timestamp,
+            replyTo: message.replyTo, // Sending the reference to the original message
           });
           console.log(`Message sent to recipient ${recipient}`);
 
-          // Emit a notification to recipient about the new message
+          // Emit a notification to the recipient about the new message
           io.to(recipientSocketId).emit("newMessage", {
             sender,
             text,

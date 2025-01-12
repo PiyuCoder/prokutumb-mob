@@ -20,7 +20,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
 import LinearGradient from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
-import {editAbout, editProfile} from '../store/slices/authSlice';
+import {
+  editAbout,
+  editEdu,
+  editExperience,
+  editProfile,
+} from '../store/slices/authSlice';
 import ExperienceModal from '../components/ExperienceModal';
 import ProfilePicture from '../components/ProfilePicture';
 import InterestsSelector from '../components/InterestsSelector';
@@ -39,7 +44,10 @@ const ProfileScreen = () => {
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [interestEditing, setInterestEditing] = useState(false);
   const [isExperienceModalVisible, setExperienceModalVisible] = useState(false);
-
+  const [editIndex, setEditIndex] = useState(null);
+  const [editedExperience, setEditedExperience] = useState({});
+  const [editEduIndex, setEditEduIndex] = useState(null);
+  const [editedEducation, setEditedEducation] = useState({});
   const [editedAbout, setEditedAbout] = useState(user.bio);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isEdu, setIsEdu] = useState(false);
@@ -83,6 +91,50 @@ const ProfileScreen = () => {
       keyboardDidShowListener.remove();
     };
   }, []);
+
+  const handleSave = async (index, expId) => {
+    console.log('triggered');
+    // Here, save the edited data into the user's experience array
+    const updatedExperience = [...user.experience];
+    updatedExperience[index] = {
+      ...updatedExperience[index],
+      ...editedExperience,
+    };
+    dispatch(
+      editExperience({
+        userId: user?._id,
+        expId,
+        experience: updatedExperience[index],
+      }),
+    );
+    setEditIndex(null); // Exit edit mode
+    setEditedExperience({});
+  };
+  const handleSaveEdu = async (index, eduId) => {
+    console.log('triggered');
+    // Here, save the edited data into the user's experience array
+    const updatedEducation = [...user.education];
+    updatedEducation[index] = {
+      ...updatedEducation[index],
+      ...editedEducation,
+    };
+    dispatch(
+      editEdu({
+        userId: user?._id,
+        eduId,
+        education: updatedEducation[index],
+      }),
+    );
+    setEditEduIndex(null); // Exit edit mode
+    setEditedEducation({});
+  };
+
+  const handleInputChange = (key, value) => {
+    setEditedExperience({...editedExperience, [key]: value});
+  };
+  const handleInputEduChange = (key, value) => {
+    setEditedEducation({...editedEducation, [key]: value});
+  };
 
   const handleAboutEditPress = () => {
     setAboutModalVisible(true);
@@ -313,11 +365,33 @@ const ProfileScreen = () => {
             <Text style={{fontWeight: 'bold', color: 'black'}}>
               Networking Goal
             </Text>
-            <TouchableOpacity>
-              <SimpleLineIcons name="pencil" size={15} color="#585C60" />
-            </TouchableOpacity>
+            {!aboutModalVisible ? (
+              <TouchableOpacity onPress={() => setAboutModalVisible(true)}>
+                <SimpleLineIcons name="pencil" size={15} color="#585C60" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => {
+                  setAboutModalVisible(false);
+                  handleAboutSave();
+                }}>
+                <SimpleLineIcons name="check" size={15} color="#A274FF" />
+              </TouchableOpacity>
+            )}
           </View>
-          <Text style={{color: 'black', marginBottom: 5}}>{user?.bio}</Text>
+          {!aboutModalVisible ? (
+            <Text style={{color: 'black', marginBottom: 5}}>{user?.bio}</Text>
+          ) : (
+            <TextInput
+              value={editedAbout}
+              onChangeText={setEditedAbout}
+              placeholder="Edit About"
+              placeholderTextColor={'gray'}
+              style={{color: 'black'}}
+              autoFocus={true} // Auto-focus on the TextInput when the modal opens
+            />
+          )}
+
           <TouchableOpacity>
             <Text style={{color: '#A274FF'}}>See all details</Text>
           </TouchableOpacity>
@@ -438,8 +512,15 @@ const ProfileScreen = () => {
             <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
               <AntDesignIcons name="plus" size={21} color="#A274FF" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
-              <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
+            <TouchableOpacity
+              onPress={() =>
+                editIndex ? setEditIndex(null) : setEditIndex(true)
+              }>
+              <SimpleLineIcons
+                name={editIndex !== null ? 'close' : 'pencil'}
+                size={18}
+                color="#A274FF"
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -447,6 +528,21 @@ const ProfileScreen = () => {
         <View style={styles.card}>
           {user.experience?.map((exp, index) => (
             <View key={index} style={styles.experienceItem}>
+              {editIndex != null && (
+                <TouchableOpacity
+                  style={{alignSelf: 'flex-end'}}
+                  onPress={() =>
+                    editIndex === index
+                      ? handleSave(index, exp._id)
+                      : setEditIndex(index)
+                  }>
+                  <SimpleLineIcons
+                    name={editIndex === index ? 'check' : 'pencil'}
+                    size={18}
+                    color="#A274FF"
+                  />
+                </TouchableOpacity>
+              )}
               <View
                 style={{
                   display: 'flex',
@@ -454,13 +550,31 @@ const ProfileScreen = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}>
-                <Text style={styles.experienceCompany}>{exp.company}</Text>
+                {editIndex === index ? (
+                  <TextInput
+                    defaultValue={exp.company || ''}
+                    style={[styles.experienceInput, styles.experienceCompany]}
+                    value={editedExperience.company}
+                    onChangeText={text => handleInputChange('company', text)}
+                  />
+                ) : (
+                  <Text style={styles.experienceCompany}>{exp.company}</Text>
+                )}
                 <Text style={styles.experienceDuration}>
                   {formatDate(exp.startDate)}-
                   {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
                 </Text>
               </View>
-              <Text style={styles.experienceTitle}>{exp.role}</Text>
+              {editIndex === index ? (
+                <TextInput
+                  defaultValue={exp.role || ''}
+                  style={[styles.experienceInput, styles.experienceTitle]}
+                  value={editedExperience.role}
+                  onChangeText={text => handleInputChange('role', text)}
+                />
+              ) : (
+                <Text style={styles.experienceTitle}>{exp.role}</Text>
+              )}
             </View>
           ))}
         </View>
@@ -478,17 +592,35 @@ const ProfileScreen = () => {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
-                setExperienceModalVisible(true);
-                setIsEdu(true);
+                editEduIndex ? setEditEduIndex(null) : setEditEduIndex(true);
               }}>
-              <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
+              <SimpleLineIcons
+                name={editEduIndex !== null ? 'close' : 'pencil'}
+                size={18}
+                color="#A274FF"
+              />
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.card}>
-          {userInfo?.education?.map((edu, index) => (
+          {user?.education?.map((edu, index) => (
             <View key={index} style={styles.experienceItem}>
+              {editEduIndex !== null && (
+                <TouchableOpacity
+                  style={{alignSelf: 'flex-end'}}
+                  onPress={() =>
+                    editEduIndex === index
+                      ? handleSaveEdu(index, edu._id)
+                      : setEditEduIndex(index)
+                  }>
+                  <SimpleLineIcons
+                    name={editEduIndex === index ? 'check' : 'pencil'}
+                    size={18}
+                    color="#A274FF"
+                  />
+                </TouchableOpacity>
+              )}
               <View
                 style={{
                   display: 'flex',
@@ -496,12 +628,31 @@ const ProfileScreen = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}>
-                <Text style={styles.experienceCompany}>{edu.school}</Text>
+                {editEduIndex === index ? (
+                  <TextInput
+                    defaultValue={edu.school || ''}
+                    style={[styles.experienceInput, styles.experienceTitle]}
+                    value={editedEducation.school}
+                    onChangeText={text => handleInputEduChange('school', text)}
+                  />
+                ) : (
+                  <Text style={styles.experienceCompany}>{edu.school}</Text>
+                )}
                 <Text style={styles.experienceDuration}>
                   {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
                 </Text>
               </View>
-              <Text style={styles.experienceTitle}>{edu.degree}</Text>
+
+              {editEduIndex === index ? (
+                <TextInput
+                  defaultValue={edu.degree || ''}
+                  style={[styles.experienceInput, styles.experienceTitle]}
+                  value={editedEducation.degree}
+                  onChangeText={text => handleInputEduChange('degree', text)}
+                />
+              ) : (
+                <Text style={styles.experienceTitle}>{edu.degree}</Text>
+              )}
             </View>
           ))}
         </View>
@@ -555,39 +706,6 @@ const ProfileScreen = () => {
       </View>
 
       {/* Edit About Modal */}
-      <Modal
-        visible={aboutModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setAboutModalVisible(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}>
-          <View className="bg-white p-3">
-            <TouchableOpacity onPress={() => setAboutModalVisible(false)}>
-              <AntDesignIcons name="close" size={30} color="#585C60" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.modalContent}>
-            {/* <Text style={styles.modalTitle}>Edit About</Text> */}
-
-            <TextInput
-              value={editedAbout}
-              onChangeText={setEditedAbout}
-              multiline
-              numberOfLines={4}
-              placeholder="Edit About"
-              placeholderTextColor={'gray'}
-              style={styles.input}
-              autoFocus={true} // Auto-focus on the TextInput when the modal opens
-            />
-
-            <View>
-              <Button color="#A274FF" title="Save" onPress={handleAboutSave} />
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
 
       {/* Experience Modal */}
       <ExperienceModal
@@ -648,6 +766,13 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     zIndex: 1,
+  },
+  experienceInput: {
+    borderBottomWidth: 1,
+    borderColor: '#A274FF',
+    padding: 5,
+    fontSize: 14,
+    color: '#333',
   },
   closeIconContainer: {
     backgroundColor: 'white',

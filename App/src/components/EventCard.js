@@ -13,7 +13,9 @@ const EventCard = ({event, onPress, height, width, picHeight, full}) => {
   const [isActionModalVisible, setActionModalVisible] = useState(false);
   const navigation = useNavigation();
   return (
-    <TouchableOpacity style={[styles.cardWrapper, {height, width}]}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.cardWrapper, {height, width}]}>
       <View style={styles.userCard}>
         <ImageBackground
           source={{uri: event.profilePicture}}

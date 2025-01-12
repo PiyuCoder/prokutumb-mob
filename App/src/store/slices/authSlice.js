@@ -66,6 +66,48 @@ export const editUserExperience = createAsyncThunk(
   },
 );
 
+export const editExperience = createAsyncThunk(
+  'auth/editExperience',
+  async ({userId, experience, expId}, {rejectWithValue}) => {
+    try {
+      // const { token } = getState().auth; // Get token from auth state
+      const response = await axiosInstance.put(
+        `api/user/${userId}/edit-experience/${expId}`,
+        {
+          experience,
+        },
+      );
+      console.log('Experience user', response.data);
+      return response.data; // Return updated user data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to add experience',
+      );
+    }
+  },
+);
+
+export const editEdu = createAsyncThunk(
+  'auth/editEdu',
+  async ({userId, education, eduId}, {rejectWithValue}) => {
+    try {
+      // const { token } = getState().auth; // Get token from auth state
+      const response = await axiosInstance.put(
+        `api/user/${userId}/edit-education/${eduId}`,
+        {
+          education,
+        },
+      );
+      // console.log('Experience user', response.data);
+      return response.data; // Return updated user data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to add experience',
+      );
+    }
+  },
+);
+
 // Thunk for deleting an experience
 export const deleteUserExperience = createAsyncThunk(
   'auth/deleteExperience',
@@ -220,6 +262,32 @@ const authSlice = createSlice({
         state.status = 'loading';
       })
       .addCase(editUserExperience.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+
+        if (action.payload && action.payload.user) {
+          state.user = action.payload.user; // Update user in state
+          console.log('User successfully updated:', action.payload.user);
+
+          // Update async storage
+          updateAsyncStorage(action.payload.user);
+        } else {
+          console.error('No user data in action payload:', action.payload);
+        }
+      })
+      .addCase(editExperience.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+
+        if (action.payload && action.payload.user) {
+          state.user = action.payload.user; // Update user in state
+          console.log('User successfully updated:', action.payload.user);
+
+          // Update async storage
+          updateAsyncStorage(action.payload.user);
+        } else {
+          console.error('No user data in action payload:', action.payload);
+        }
+      })
+      .addCase(editEdu.fulfilled, (state, action) => {
         state.status = 'succeeded';
 
         if (action.payload && action.payload.user) {

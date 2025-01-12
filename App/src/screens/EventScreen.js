@@ -304,7 +304,7 @@ const EventScreen = ({navigation, route}) => {
               paddingHorizontal: 15,
               alignItems: 'center',
               alignSelf: 'center',
-              marginTop: 40,
+              marginVertical: 40,
             }}>
             <Text style={[styles.BtnText, {letterSpacing: 1}]}>
               Book your seat Now
