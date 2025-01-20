@@ -8,6 +8,7 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import {axiosInstance} from '../api/axios';
 import {useSelector} from 'react-redux';
@@ -16,6 +17,7 @@ import FriendsModal from '../components/FriendsModal';
 import ProfilePicture from '../components/ProfilePicture';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Loader from '../components/Loader';
+import LinearGradient from 'react-native-linear-gradient';
 
 const MessageScreen = () => {
   const [searchText, setSearchText] = useState('');
@@ -79,7 +81,14 @@ const MessageScreen = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBar backgroundColor={'#EFEFEF'} />
       {loading && <Loader isLoading={loading} />}
+      <LinearGradient
+        colors={['#A274FF66', '#FF000000']} // Gradient colors
+        start={{x: 0, y: 0.5}} // Adjust starting position
+        end={{x: 0.5, y: 1}} // Adjust ending position
+        style={styles.gradient}
+      />
       <View
         style={{
           flexDirection: 'row',
@@ -91,9 +100,7 @@ const MessageScreen = () => {
         <TouchableOpacity onPress={() => navigation.navigate('Dashboard')}>
           <Ionicons name="chevron-back-outline" size={30} color="black" />
         </TouchableOpacity>
-        <Text style={{fontSize: 24, fontWeight: 'bold', color: 'black'}}>
-          Direct Message
-        </Text>
+
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 15}}>
           {/* <TouchableOpacity>
             <Image source={settingIcon} />
@@ -104,60 +111,22 @@ const MessageScreen = () => {
           <FriendsModal userId={user?._id} />
         </View>
       </View>
+      <Text
+        style={{
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: 'black',
+          marginLeft: 20,
+        }}>
+        Messages
+      </Text>
 
       {/* Search Input */}
       <TextInput
         style={styles.searchInput}
-        placeholder="Search messages"
+        placeholder="Search for contacts"
         value={searchText}
         onChangeText={setSearchText}
-      />
-
-      {/* Frequently contacted */}
-      <Text
-        style={{
-          fontWeight: 'bold',
-          color: 'black',
-          margin: 10,
-          marginLeft: 15,
-        }}>
-        Frequently contacted
-      </Text>
-
-      {/* Horizontally Scrollable Profile Pictures */}
-      <FlatList
-        data={frequentContacts}
-        horizontal
-        contentContainerStyle={{paddingHorizontal: 20}}
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={item => item._id}
-        renderItem={({item}) => (
-          <View key={item._id} style={{flexDirection: 'row', marginRight: 15}}>
-            <ProfilePicture
-              profilePictureUri={item.profilePicture}
-              width={40}
-              height={40}
-              borderRadius={20}
-              // marginRight={10}
-            />
-            {/* <Image
-              source={{uri: item.profilePicture}}
-              style={styles.profilePictureContact}
-              defaultSource={require('../assets/default-pp.png')}
-            /> */}
-            {isUserOnline(item._id) && (
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: 'green',
-                }}
-              />
-            )}
-          </View>
-        )}
-        style={styles.userScroll}
       />
 
       {/* List of Conversations */}
@@ -178,13 +147,13 @@ const MessageScreen = () => {
                   profilePicture: contact.profilePicture,
                 })
               }>
-              <View style={styles.conversationContainer}>
+              <View className="opacity-90" style={styles.conversationContainer}>
                 <ProfilePicture
                   profilePictureUri={contact.profilePicture}
-                  width={40}
-                  height={40}
-                  borderRadius={20}
-                  marginRight={10}
+                  width={60}
+                  height={60}
+                  borderRadius={30}
+                  marginRight={20}
                 />
                 {/* <Image
                   source={{uri: contact.profilePicture}}
@@ -224,7 +193,7 @@ const MessageScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#F5F5F5', overflow: 'scroll'},
+  container: {flex: 1, backgroundColor: '#EFEFEF', overflow: 'scroll'},
   icon: {
     width: 30,
     height: 30,
@@ -241,7 +210,7 @@ const styles = StyleSheet.create({
   searchInput: {
     backgroundColor: 'white',
     height: 45,
-    borderRadius: 22.5,
+    borderRadius: 15,
     paddingHorizontal: 16,
     margin: 16,
     color: 'black',
@@ -250,18 +219,20 @@ const styles = StyleSheet.create({
   conversationsList: {
     flexGrow: 1,
     padding: 16,
-    backgroundColor: 'white',
+    // backgroundColor: 'white',
     borderTopStartRadius: 25,
     borderTopEndRadius: 25,
-    elevation: 5,
+    // elevation: 5,
     minHeight: 300,
   },
   conversationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1,
+    padding: 15,
     borderBottomColor: '#eee',
+    backgroundColor: 'white',
+    marginBottom: 10,
+    borderRadius: 30,
   },
   profilePicture: {
     width: 50,
@@ -285,9 +256,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     // marginRight: 10,
   },
+  gradient: {
+    position: 'absolute',
+    height: 600,
+    width: 600,
+    transform: [{rotate: '45deg'}],
+    borderRadius: 200,
+    top: 220,
+    right: -70,
+    zIndex: -50,
+  },
   messageInfo: {flex: 1},
   conversationName: {fontWeight: 'bold', fontSize: 16, color: 'black'},
-  conversationMessage: {color: '#555'},
+  conversationMessage: {color: '#656565', marginTop: 5},
 });
 
 export default MessageScreen;

@@ -5,7 +5,7 @@ import {fetchFriendRequests} from '../store/slices/authSlice';
 import {useNavigation} from '@react-navigation/native';
 import ProfilePicture from './ProfilePicture';
 
-const ConnectionRequests = ({isFeedView, userId}) => {
+const ConnectionRequests = ({userId}) => {
   const {friendRequests} = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -34,72 +34,77 @@ const ConnectionRequests = ({isFeedView, userId}) => {
     : friendRequests?.slice(0, 3);
 
   return (
-    !isFeedView && (
-      <View>
+    <View>
+      <View
+        style={{
+          marginVertical: 15,
+          paddingHorizontal: 20,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
         <Text
           style={{
-            color: '#141414',
-            fontSize: 15,
-            fontWeight: 'bold',
-            marginVertical: 15,
+            color: '#19295C',
+            fontSize: 17,
+            fontWeight: '700',
+            fontFamily: 'Roboto-Regular',
           }}>
-          Connection Requests
+          Requests
+          <Text style={{color: '#D70606'}}> ({friendRequests?.length})</Text>
         </Text>
-
-        {/* Display list of connection requests */}
-        <FlatList
-          data={displayedRequests}
-          keyExtractor={item => item._id} // assuming each request has a unique _id
-          renderItem={({item}) => (
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('UserProfile', {userId: item._id})
-              }>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: 10,
-                }}>
-                <Image
-                  source={{uri: item.profilePicture}}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    marginRight: 10,
-                  }}
-                />
-                <ProfilePicture
-                  profilePictureUri={item.profilePicture}
-                  width={40}
-                  height={40}
-                  borderRadius={20}
-                  marginRight={10}
-                />
-                <View>
-                  <Text style={{fontWeight: 'bold', color: '#141414'}}>
-                    {item.name}
-                  </Text>
-                  {item.designation && (
-                    <Text style={{color: '#555'}}>{item.designation}</Text>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-
         {/* Show "View All" button if there are more than 3 requests */}
-        {friendRequests?.length > 3 && (
+        {
           <TouchableOpacity onPress={handleToggleShowAll}>
-            <Text style={{color: '#1A73E8', fontWeight: 'bold', marginTop: 10}}>
+            <Text style={{color: '#1877F2', fontWeight: 'bold', marginTop: 10}}>
               {showAll ? 'Show Less' : 'View All'}
             </Text>
           </TouchableOpacity>
-        )}
+        }
       </View>
-    )
+
+      {/* Display list of connection requests */}
+
+      {displayedRequests?.map(item => (
+        <TouchableOpacity
+          key={item._id}
+          onPress={() =>
+            navigation.navigate('UserProfile', {userId: item._id})
+          }>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 10,
+            }}>
+            <Image
+              source={{uri: item.profilePicture}}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                marginRight: 10,
+              }}
+            />
+            <ProfilePicture
+              profilePictureUri={item.profilePicture}
+              width={40}
+              height={40}
+              borderRadius={20}
+              marginRight={10}
+            />
+            <View>
+              <Text style={{fontWeight: 'bold', color: '#141414'}}>
+                {item.name}
+              </Text>
+              {item.designation && (
+                <Text style={{color: '#555'}}>{item.designation}</Text>
+              )}
+            </View>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 };
 

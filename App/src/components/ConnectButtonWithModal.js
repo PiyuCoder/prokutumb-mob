@@ -25,7 +25,7 @@ const ConnectButtonWithModal = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.connectBtn} onPress={openModal}>
-        <Text style={styles.connectBtnText}>Connect</Text>
+        <Text style={styles.connectBtnText}>Add Friend</Text>
       </TouchableOpacity>
 
       <Modal
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     width: '85%',
     paddingVertical: 5,
     borderRadius: 25,
-    marginTop: 10,
+    marginTop: 15,
     alignItems: 'center',
     alignSelf: 'center',
   },

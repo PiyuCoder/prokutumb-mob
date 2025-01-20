@@ -31,28 +31,26 @@ const RenderUserCard = ({item}) => {
         {/* Profile Picture */}
         <ProfilePicture
           profilePictureUri={item.profilePicture}
-          height={100}
-          width={100}
-          borderRadius={50}
+          height={60}
+          width={60}
+          borderRadius={30}
           padding={0}
         />
 
         {/* User Info */}
-        <View style={styles.overlayContent}>
+        <View>
           <Text style={styles.userName}>{item?.name}</Text>
-          <Text style={styles.userLocation}>
-            {item?.designation || 'Unknown'}
-          </Text>
+          <Text style={styles.mutual}>{'Unknown'}</Text>
         </View>
 
         {/* Earth Icon */}
-        <View style={styles.earthIconWrapper}>
+        {/* <View style={styles.earthIconWrapper}>
           <ImageBackground
             style={styles.imageBackground}
             imageStyle={styles.imageBackgroundImage}
             source={require('../assets/majlis-earth.png')}
           />
-        </View>
+        </View> */}
 
         {/* Connect Button */}
         {/* <TouchableOpacity style={styles.connectBtn}>
@@ -82,31 +80,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cardWrapper: {
-    flexBasis: '48%',
-    marginHorizontal: '1%',
+    flexBasis: '45%',
+    marginHorizontal: '2%',
     marginBottom: 15,
-    borderWidth: 3,
-    borderColor: '#A274FF',
-    borderRadius: 10,
+    borderRadius: 30,
     backgroundColor: '#fff',
+    paddingBottom: 20,
   },
   userCard: {
     alignItems: 'center',
     padding: 10,
   },
   userName: {
-    color: 'black',
-    fontSize: 19,
+    color: '#19295C',
+    fontSize: 17,
     fontWeight: '600',
-    marginTop: 10,
+    marginTop: 4,
     textAlign: 'center',
     fontFamily: 'Roboto-Bold',
   },
-  userLocation: {
+  mutual: {
     color: '#585C60',
-    fontSize: 17,
+    fontSize: 12,
     marginTop: 5,
     fontWeight: '300',
+    textAlign: 'center',
   },
   earthIconWrapper: {
     marginTop: 15,

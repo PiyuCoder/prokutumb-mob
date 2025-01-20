@@ -10,6 +10,7 @@ const communitySchema = new Schema(
     isAnonymous: { type: Boolean, default: false },
     profilePicture: { type: String },
     coverPicture: { type: String },
+    timezone: { type: String },
     members: [
       {
         type: Schema.Types.ObjectId,

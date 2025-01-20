@@ -6,118 +6,177 @@ import {
   Text,
   ImageBackground,
   StyleSheet,
+  Image,
 } from 'react-native';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
 
-const EventCard = ({event, onPress, height, width, picHeight, full}) => {
+const EventCard = ({
+  event,
+  onPress,
+  height,
+  width,
+  picHeight,
+  full,
+  isTrending,
+}) => {
   const [isActionModalVisible, setActionModalVisible] = useState(false);
   const navigation = useNavigation();
+  console.log(event);
   return (
     <TouchableOpacity
       onPress={onPress}
       style={[styles.cardWrapper, {height, width}]}>
-      <View style={styles.userCard}>
+      <View style={!isTrending ? styles.userCard : styles.trendingUserCard}>
         <ImageBackground
-          source={{uri: event.profilePicture}}
+          source={{
+            uri:
+              // 'https://cdn.pixabay.com/photo/2016/11/23/15/48/audience-1853662_640.jpg' ||
+              event.profilePicture,
+          }}
           style={[styles.profilePicture, {height: picHeight}]}
           imageStyle={styles.profilePictureImage}
         />
         <View
-          style={{
-            width: '100%',
-            flexDirection: 'row',
-            justifyContent: full ? 'space-between' : 'center',
-            alignItems: 'center',
-            marginVertical: 10,
-            overflow: 'hidden',
-          }}>
-          <Text
-            numberOfLines={1} // Limits the text to one line
-            ellipsizeMode="tail"
-            style={styles.userName}>
-            {event?.name || 'Unknown'}
-          </Text>
-          {full && (
-            <TouchableOpacity
-              onPress={() => setActionModalVisible(!isActionModalVisible)}>
-              <SimpleLineIcons
-                name="options-vertical"
+          // className=" blur-3xl backdrop-blur-3xl bg-[#2d264bc4]"
+          style={isTrending ? styles.trendingOverlay : {padding: 6}}>
+          <View>
+            <Text
+              numberOfLines={1} // Limits the text to one line
+              ellipsizeMode="tail"
+              style={[
+                styles.userName,
+                {color: isTrending ? 'white' : 'black'},
+              ]}>
+              {event?.name || 'Unknown'}
+            </Text>
+            <View
+              style={{
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                marginVertical: 10,
+                overflow: 'hidden',
+              }}>
+              <Ionicons
+                name="location-outline"
                 size={20}
-                color="black"
+                color={!isTrending ? '#2D264B4D' : 'white'}
               />
-            </TouchableOpacity>
+              <Text
+                numberOfLines={1} // Limits the text to one line
+                ellipsizeMode="tail"
+                style={[
+                  {
+                    color: isTrending ? 'white' : 'black',
+                    width: isTrending ? '50%' : '90%',
+                  },
+                ]}>
+                {event?.address || 'Unknown'}
+              </Text>
+              {/* {full && (
+              <TouchableOpacity
+                onPress={() => setActionModalVisible(!isActionModalVisible)}>
+                <SimpleLineIcons
+                  name="options-vertical"
+                  size={20}
+                  color="black"
+                />
+              </TouchableOpacity>
+            )} */}
+            </View>
+            {full && isActionModalVisible && (
+              <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setActionModalVisible(false);
+                    navigation.navigate('Network');
+                  }}>
+                  <Text style={styles.dropdownItemText}>Ask AI</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setActionModalVisible(false);
+                    navigation.navigate('EventHome', {
+                      eventId: event._id,
+                    });
+                  }}>
+                  <Text style={styles.dropdownItemText}>View</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.dropdownItem}>
+                  <Text style={[styles.dropdownItemText, {color: 'red'}]}>
+                    Report
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                width: full ? '100%' : 'auto',
+                marginBottom: full ? 22 : 0,
+                gap: 2,
+              }}>
+              <Feather
+                name="calendar"
+                size={20}
+                color={!isTrending ? '#2D264B4D' : 'white'}
+              />
+              <Text
+                numberOfLines={1} // Limits the text to one line
+                ellipsizeMode="tail"
+                style={{
+                  color: isTrending ? 'white' : 'black',
+                  fontSize: 13,
+                  textAlign: 'left',
+                  width: '90%',
+                }}>
+                {`${event?.date || 'Date'}, ${event?.startTime} - ${
+                  event?.endTime
+                }` || 'Time'}
+              </Text>
+            </View>
+          </View>
+          {full && (
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+              {isTrending ? (
+                <Text
+                  style={{
+                    color: isTrending ? 'white' : 'black',
+                    fontWeight: '500',
+                    fontSize: 18,
+                    textAlign: 'left',
+                  }}>
+                  Free
+                </Text>
+              ) : (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 5,
+                  }}>
+                  <SimpleLineIcons name="tag" color="#EC441E" size={20} />
+                  <Text style={{fontSize: 16, color: '#EC441E'}}>Free</Text>
+                </View>
+              )}
+            </View>
           )}
         </View>
-        {full && isActionModalVisible && (
-          <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                setActionModalVisible(false);
-                navigation.navigate('Network');
-              }}>
-              <Text style={styles.dropdownItemText}>Ask AI</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                setActionModalVisible(false);
-                navigation.navigate('EventHome', {
-                  eventId: event._id,
-                });
-              }}>
-              <Text style={styles.dropdownItemText}>View</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.dropdownItem}>
-              <Text style={[styles.dropdownItemText, {color: 'red'}]}>
-                Report
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        <View
-          style={{
-            justifyContent: 'flex-start',
-            width: full ? '100%' : 'auto',
-            marginBottom: full ? 22 : 0,
-          }}>
-          <Text
-            style={{
-              color: 'black',
-              fontWeight: '500',
-              fontSize: 13,
-              textAlign: 'left',
-            }}>
-            {event?.date || 'Date'}
-          </Text>
-          <Text
-            style={{
-              color: 'black',
-              fontWeight: '500',
-              fontSize: 13,
-              textAlign: 'left',
-            }}>
-            {`${event?.startTime} - ${event?.endTime}` || 'Time'}
-          </Text>
-        </View>
-        {/* <Text style={{color: 'black', fontWeight: '400', fontSize: 12}}>
-          {event?.followers || 1} Members
-        </Text> */}
-        {full && (
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-            }}>
-            <Text style={{color: 'black', fontWeight: '500', fontSize: 13}}>
-              {event?.createdBy?.name || 'Admin'}
-            </Text>
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
@@ -127,12 +186,12 @@ const styles = StyleSheet.create({
   cardWrapper: {
     marginRight: 28,
     marginTop: 8,
-    borderWidth: 1,
     borderRadius: 20,
     marginBottom: 10,
     overflow: 'hidden',
-    // height: 180,
-    // width: 130,
+    backgroundColor: 'white',
+    elevation: 5,
+    marginLeft: 5,
   },
   userCard: {
     // borderRadius: 20,
@@ -140,6 +199,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 10,
+  },
+  trendingUserCard: {
+    // borderRadius: 20,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    // padding: 10,
+  },
+  trendingOverlay: {
+    backgroundColor: '#2d264bc4',
+    position: 'absolute',
+    bottom: 0,
+    borderRadius: 15,
+    margin: 10,
+    padding: 15,
+    width: '95%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    paddingRight: 70,
   },
   profilePicture: {
     width: '100%',

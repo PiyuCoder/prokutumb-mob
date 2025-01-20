@@ -15,7 +15,9 @@ import {useSelector} from 'react-redux';
 import {axiosInstance, axiosInstanceForm} from '../api/axios';
 import {launchImageLibrary} from 'react-native-image-picker';
 import AntDesignIcons from 'react-native-vector-icons/AntDesign';
-import IonIcons from 'react-native-vector-icons/Ionicons';
+import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import FAIcon from 'react-native-vector-icons/FontAwesome5';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {ScrollView} from 'react-native-gesture-handler';
 import {isAction} from '@reduxjs/toolkit';
 import EventCard from '../components/EventCard';
@@ -51,7 +53,7 @@ export default function Communities({navigation, route}) {
   const [events, setEvents] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isEvent, setIsEvent] = useState(
-    route.params?.screen === 'Events' ? true : false,
+    route.params?.screen === 'Communities' ? false : true,
   );
   const [modalType, setModalType] = useState(null);
   const [isActionModalVisible, setActionModalVisible] = useState(false);
@@ -93,7 +95,7 @@ export default function Communities({navigation, route}) {
     <View
       style={[
         styles.sectionWrapper,
-        {marginBottom: title === 'Most Popular' ? 100 : 10},
+        {marginBottom: title.includes('you May') ? 100 : 10},
       ]}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <FlatList
@@ -103,17 +105,22 @@ export default function Communities({navigation, route}) {
         renderItem={({item}) =>
           !isEvent ? (
             <CommunityCard
+              isTrending={title.includes('Trending')}
               community={item}
               onPress={() =>
                 navigation.navigate('CommunityHome', {communityId: item._id})
               }
+              height={title.includes('Trending') ? 250 : 280}
+              width={title.includes('Trending') ? 390 : 220}
+              picHeight={title.includes('Trending') ? '100%' : 130}
             />
           ) : (
             <EventCard
+              isTrending={title.includes('Trending')}
               event={item}
-              height={280}
-              width={220}
-              picHeight={130}
+              height={title.includes('Trending') ? 250 : 280}
+              width={title.includes('Trending') ? 390 : 220}
+              picHeight={title.includes('Trending') ? '100%' : 130}
               full
               onPress={() =>
                 navigation.navigate('EventHome', {eventId: item._id})
@@ -152,49 +159,21 @@ export default function Communities({navigation, route}) {
     <ScrollView style={styles.container}>
       <StatusBar backgroundColor="white" barStyle={'dark-content'} />
       <View style={styles.headerActions}>
-        <View>
-          <TouchableOpacity
-            onPress={() => {
-              setIsEvent(!isEvent);
-              setModalType(null);
-            }}
-            style={styles.header}>
-            <Text style={styles.headerText}>
-              {isEvent ? 'Event' : 'Community'}
-            </Text>
-            <AntDesignIcons name="caretdown" size={15} color="#585C60" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              width: 100,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              borderWidth: 1,
-              borderColor: '#4b164c5a',
-              borderRadius: 25,
-              paddingHorizontal: 5,
-              padding: 3,
-            }}>
-            <IonIcons name="earth" size={15} color="#585C60" />
-            <Text style={{color: 'gray'}}>Global</Text>
-            <AntDesignIcons name="caretdown" size={15} color="#585C60" />
-          </TouchableOpacity>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 7}}>
-            <TouchableOpacity style={styles.Btn}>
-              <Text style={styles.BtnText}>Filters</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.Btn}>
-              <Text style={styles.BtnText}>Category</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'white',
+            borderRadius: 10,
+            paddingHorizontal: 10,
+            padding: 5,
+            marginRight: 30,
+          }}>
           <SearchCommNEvent isEvent={isEvent} iconColor={'black'} />
           <TouchableOpacity
-            style={styles.iconButtons}
+            style={{borderWidth: 2, borderRadius: 20, borderColor: '#F0534F'}}
             onPress={() => setActionModalVisible(!isActionModalVisible)}>
-            <AntDesignIcons name="plus" size={21} color="black" />
+            <AntDesignIcons name="plus" size={21} color="#F0534F" />
           </TouchableOpacity>
         </View>
         {isActionModalVisible && (
@@ -243,6 +222,69 @@ export default function Communities({navigation, route}) {
         )}
       </View>
 
+      <ScrollView
+        contentContainerStyle={{paddingHorizontal: 10, marginBottom: 20}}
+        horizontal>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 7}}>
+          <TouchableOpacity style={[styles.Btn, {backgroundColor: '#EDE9FF'}]}>
+            <Text style={styles.BtnText}>Networking</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.Btn, , {backgroundColor: '#FFF5D7'}]}>
+            <Text style={styles.BtnText}>Business</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.Btn, , {backgroundColor: '#FFECEC'}]}>
+            <Text style={styles.BtnText}>Technology</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.Btn, , {backgroundColor: '#E4FFEA'}]}>
+            <Text style={styles.BtnText}>Marketing</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      <View style={{flexDirection: 'row', marginBottom: 20}}>
+        <TouchableOpacity
+          onPress={() => {
+            setIsEvent(true);
+            setModalType(null);
+          }}
+          style={[
+            styles.header,
+            {borderColor: isEvent ? '#761CBC' : '#F1F4F5'},
+          ]}>
+          <Text
+            style={[styles.headerText, {color: isEvent ? '#761CBC' : 'black'}]}>
+            Events
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            setIsEvent(false);
+            setModalType(null);
+          }}
+          style={[
+            styles.header,
+            {borderColor: !isEvent ? '#761CBC' : '#F1F4F5'},
+          ]}>
+          <Text
+            style={[
+              styles.headerText,
+              {color: !isEvent ? '#761CBC' : 'black'},
+            ]}>
+            Communities
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={{color: '#7C7C7C', fontSize: 12, marginLeft: 10}}>
+        Find {isEvent ? 'events' : 'communities'} in
+      </Text>
+      <View style={styles.locationNameContainer}>
+        <EvilIcons name="location" size={15} color="#333538" />
+        <Text style={styles.locationNameText}>{'Barcelona'}</Text>
+        <MaterialIcons name="keyboard-arrow-down" size={15} color="#333538" />
+      </View>
+
       {isEvent ? (
         modalType === 'myEvents' ? (
           <>
@@ -251,8 +293,9 @@ export default function Communities({navigation, route}) {
           </>
         ) : (
           <>
-            {renderHorizontalList(events, 'Trending For You')}
-            {renderHorizontalList(events, 'Most Popular')}
+            {renderHorizontalList(events, 'Trending Events')}
+            {renderHorizontalList(events, 'Events for you')}
+            {renderHorizontalList(events, 'Events you May Like')}
           </>
         )
       ) : modalType === 'myCommunities' ? (
@@ -262,8 +305,9 @@ export default function Communities({navigation, route}) {
         </>
       ) : (
         <>
-          {renderHorizontalList(communities, 'Trending For You')}
-          {renderHorizontalList(communities, 'Most Popular')}
+          {renderHorizontalList(communities, 'Trending Communities')}
+          {renderHorizontalList(communities, 'Communities for you')}
+          {renderHorizontalList(communities, 'Communities you May Like')}
         </>
       )}
     </ScrollView>
@@ -273,8 +317,8 @@ export default function Communities({navigation, route}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
-    // paddingBottom: 500,
+    backgroundColor: '#F1F4F5',
+    paddingHorizontal: 5,
   },
   headerActions: {
     flexDirection: 'row',
@@ -322,6 +366,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
   },
+  locationNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingTop: 10,
+  },
+  locationNameText: {
+    marginHorizontal: 4,
+    fontSize: 16,
+    color: '#262627',
+  },
   selectedImage: {
     width: 100,
     height: 100,
@@ -332,27 +387,29 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    width: 200,
+    borderBottomWidth: 2,
+    padding: 8,
+    paddingLeft: 0,
+    marginLeft: 8,
   },
   headerText: {
-    fontSize: 23,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#22172A',
   },
   Btn: {
     backgroundColor: '#A274FF',
-    padding: 3,
-    width: 100,
-    borderRadius: 25,
-    paddingHorizontal: 15,
+    padding: 6,
+    borderRadius: 10,
+    paddingHorizontal: 20,
     marginTop: 10,
     alignItems: 'center',
+    flex: 1,
   },
   BtnText: {
-    color: 'white',
+    color: 'black',
     fontWeight: '500',
-    fontSize: 15,
+    fontSize: 13,
     textAlign: 'center',
   },
   listContent: {
@@ -474,10 +531,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#191970',
-    marginBottom: 30,
+    color: 'black',
+    marginBottom: 10,
+    marginTop: 30,
     fontFamily: 'Jost-Bold',
   },
 });

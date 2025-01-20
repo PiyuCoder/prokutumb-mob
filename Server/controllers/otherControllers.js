@@ -199,6 +199,7 @@ exports.searchPeople = async (req, res) => {
 exports.searchCommunity = async (req, res) => {
   try {
     const { q } = req.query; // Use req.query to get query parameters
+    console.log(q);
 
     const communitites = await Communitymob.find({
       $or: [
@@ -217,7 +218,7 @@ exports.searchCommunity = async (req, res) => {
 exports.searchEvent = async (req, res) => {
   try {
     const { q } = req.query; // Use req.query to get query parameters
-
+    console.log(q);
     const events = await Event.find({
       $or: [
         { name: { $regex: q, $options: "i" } }, // Corrected `$option` to `$options`

@@ -103,7 +103,7 @@ export default function SettingScreen({navigation}) {
             alignItems: 'center',
             marginBottom: 10,
           }}>
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-back-outline" size={30} color="black" />
           </TouchableOpacity>
           <View style={{flex: 1}}>

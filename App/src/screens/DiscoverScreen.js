@@ -16,7 +16,7 @@ import {
 import Geolocation from '@react-native-community/geolocation';
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {axiosInstance} from '../api/axios';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import MapView, {Marker, Circle} from 'react-native-maps';
 import LinearGradient from 'react-native-linear-gradient';
 import Geocoder from 'react-native-geocoding';
@@ -24,9 +24,9 @@ import Config from 'react-native-config';
 import Loader from '../components/Loader';
 import SearchPeople from '../components/SearchPeople';
 import RenderUserCard from '../components/RenderUserCard';
-import FAIcon from 'react-native-vector-icons/FontAwesome5';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import ConnectionRequests from '../components/ConnectionRequests';
+import {fetchFriendRequests} from '../store/slices/authSlice';
 
 const people = [
   {
@@ -71,7 +71,7 @@ const DiscoverScreen = ({navigation}) => {
   const [longitude, setLongitude] = useState(null);
   const [locationName, setLocationName] = useState('');
   const [nearbyUsers, setNearbyUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [userLocations, setUserLocations] = useState({});
   const [error, setError] = useState('');
@@ -80,96 +80,74 @@ const DiscoverScreen = ({navigation}) => {
   const [communities, setCommunities] = useState([]);
   const {user} = useSelector(state => state.auth);
   const [sliceIndex, setSliceIndex] = useState(6);
+  const dispatch = useDispatch();
 
-  const interests = [
-    'Finance',
-    'Science',
-    'Management',
-    'Content',
-    'Startup',
-    'Funding',
-    'AI',
-    'Crypto',
-    'Blockchain',
-    'Technology',
-    'Banking',
-    'Pharma',
-    'Marketing',
-    'EdTech',
-    'Research',
-    'Design',
-    'Sustainablity',
-    'Growth',
-    'Leads',
-    'Strategy',
-  ];
+  // useEffect(() => {
+  //   Geocoder.init('AIzaSyDeS8-47CWqq5QKl0NHnba5cU_Ft2_k8ww');
+  //   fetchLocationPermission();
+  // }, []);
 
-  useEffect(() => {
-    Geocoder.init('AIzaSyDeS8-47CWqq5QKl0NHnba5cU_Ft2_k8ww');
-    fetchLocationPermission();
-  }, []);
-
-  const fetchLocationName = async (lat, long) => {
-    try {
-      const response = await Geocoder.from(lat, long);
-      const addressComponents = response.results[0].address_components;
-      const locality = addressComponents.find(component =>
-        component.types.includes('locality'),
-      );
-      const locationName = locality ? locality.long_name : 'Unknown location';
-      setLocationName(locationName);
-    } catch (error) {
-      console.warn(error);
-      setLocationName('Location unavailable');
-    }
-  };
-  // const fetchLocationForUser = async (lat, long, userId) => {
+  // const fetchLocationName = async (lat, long) => {
   //   try {
   //     const response = await Geocoder.from(lat, long);
-  //     const locality = response.results[0].address_components.find(component =>
+  //     const addressComponents = response.results[0].address_components;
+  //     const locality = addressComponents.find(component =>
   //       component.types.includes('locality'),
   //     );
-  //     const location = locality ? locality.long_name : 'Unknown location';
-  //     setUserLocations(prev => ({...prev, [userId]: location}));
+  //     const locationName = locality ? locality.long_name : 'Unknown location';
+  //     setLocationName(locationName);
   //   } catch (error) {
-  //     console.warn(`Error fetching location for user ${userId}:`, error);
+  //     console.warn(error);
+  //     setLocationName('Location unavailable');
   //   }
   // };
-  const fetchLocationPermission = async () => {
-    setLoading(true);
-    const result = await request(
-      Platform.OS === 'ios'
-        ? PERMISSIONS.IOS.LOCATION_WHEN_IN_USE
-        : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
-    );
+  // // const fetchLocationForUser = async (lat, long, userId) => {
+  // //   try {
+  // //     const response = await Geocoder.from(lat, long);
+  // //     const locality = response.results[0].address_components.find(component =>
+  // //       component.types.includes('locality'),
+  // //     );
+  // //     const location = locality ? locality.long_name : 'Unknown location';
+  // //     setUserLocations(prev => ({...prev, [userId]: location}));
+  // //   } catch (error) {
+  // //     console.warn(`Error fetching location for user ${userId}:`, error);
+  // //   }
+  // // };
+  // const fetchLocationPermission = async () => {
+  //   setLoading(true);
+  //   const result = await request(
+  //     Platform.OS === 'ios'
+  //       ? PERMISSIONS.IOS.LOCATION_WHEN_IN_USE
+  //       : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+  //   );
 
-    if (result === RESULTS.GRANTED) {
-      setPermissionGranted(true);
-      fetchLocation();
-    } else {
-      setError('Location permission was not granted');
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  //   if (result === RESULTS.GRANTED) {
+  //     setPermissionGranted(true);
+  //     fetchLocation();
+  //   } else {
+  //     setError('Location permission was not granted');
+  //     setLoading(false);
+  //     setRefreshing(false);
+  //   }
+  // };
 
-  const fetchLocation = () => {
-    Geolocation.getCurrentPosition(
-      position => {
-        // setLatitude(position.coords.latitude);
-        // setLongitude(position.coords.longitude);
-        fetchLocationName(position.coords.latitude, position.coords.longitude);
-        setLoading(false);
-        setRefreshing(false);
-      },
-      error => {
-        setError(error.message);
-        setLoading(false);
-        setRefreshing(false);
-      },
-      {enableHighAccuracy: false, timeout: 485000, maximumAge: 10000},
-    );
-  };
+  // const fetchLocation = () => {
+  //   Geolocation.getCurrentPosition(
+  //     position => {
+  //       // setLatitude(position.coords.latitude);
+  //       // setLongitude(position.coords.longitude);
+  //       fetchLocationName(position.coords.latitude, position.coords.longitude);
+  //       setLoading(false);
+  //       setRefreshing(false);
+  //     },
+  //     error => {
+  //       setError(error.message);
+  //       setLoading(false);
+  //       setRefreshing(false);
+  //     },
+  //     {enableHighAccuracy: false, timeout: 485000, maximumAge: 10000},
+  //   );
+  // };
 
   // const fetchNearbyPeople = async () => {
   //   try {
@@ -192,9 +170,10 @@ const DiscoverScreen = ({navigation}) => {
   // };
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setLoading(true);
-    fetchLocationPermission();
+    // setRefreshing(true);
+    // setLoading(true);
+    dispatch(fetchFriendRequests(user?._id));
+    // fetchLocationPermission();
     // fetchCommunities();
   }, []);
 
@@ -275,22 +254,15 @@ const DiscoverScreen = ({navigation}) => {
       {/* Header */}
       <View style={styles.headerContainer}>
         <View>
-          <View style={styles.locationNameContainer}>
-            <FAIcon name="map-pin" size={15} color="#A274FF" />
-            <Text style={styles.locationNameText}>{locationName}</Text>
-            <MaterialIcons
-              name="keyboard-arrow-down"
-              size={15}
-              color="#A274FF"
-            />
-          </View>
-          <Text style={styles.title}>Discover</Text>
+          <Text style={[styles.title, {color: '#A274FF'}]}>
+            Connection Requests
+          </Text>
         </View>
         <View style={styles.headerActions}>
           <SearchPeople />
-          <TouchableOpacity style={styles.iconButtons}>
+          {/* <TouchableOpacity style={styles.iconButtons}>
             <Ionicons name="options-outline" size={20} color="#A274FF" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 
@@ -298,17 +270,34 @@ const DiscoverScreen = ({navigation}) => {
       <Loader isLoading={loading} />
       {error && <Text style={styles.error}>{error}</Text>}
 
-      {/* Cards Section */}
-      <Text
+      <ConnectionRequests userId={user?._id} />
+
+      <View
         style={{
-          fontSize: 18,
-          fontWeight: 'bold',
-          marginLeft: 10,
-          marginTop: 10,
-          color: 'black',
+          marginVertical: 15,
+          paddingHorizontal: 20,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}>
-        People You May Know
-      </Text>
+        <Text
+          style={{
+            color: '#19295C',
+            fontSize: 17,
+            fontWeight: '700',
+            fontFamily: 'Roboto-Regular',
+          }}>
+          People You May Know
+        </Text>
+        {
+          <TouchableOpacity>
+            <Text style={{color: '#1877F2', fontWeight: 'bold', marginTop: 10}}>
+              View All
+            </Text>
+          </TouchableOpacity>
+        }
+      </View>
+
       <View style={styles.cardsContainer}>
         {people?.map(item => (
           <RenderUserCard key={item._id} item={item} />
@@ -321,10 +310,10 @@ const DiscoverScreen = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white', // Adjust as needed
+    backgroundColor: '#F1F4F5',
   },
   contentContainer: {
-    paddingBottom: 20, // Ensure there's space for scrolling past the last item
+    paddingBottom: 80,
   },
   locationNameContainer: {
     flexDirection: 'row',
@@ -341,8 +330,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingRight: 10,
-    marginBottom: 30,
+    padding: 20,
+    paddingBottom: 25,
+    backgroundColor: 'white',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   headerActions: {
     flexDirection: 'row',
@@ -362,7 +354,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    marginLeft: 10,
     marginTop: 10,
     color: 'black',
     fontFamily: 'Inter_24pt-Bold',
@@ -376,8 +367,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    marginTop: 10,
+    paddingHorizontal: 20,
+    marginTop: 20,
   },
 });
 

@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   View,
   ScrollView,
+  StatusBar,
+  ProgressBarAndroidComponent,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Octicons from 'react-native-vector-icons/Octicons';
@@ -15,6 +17,7 @@ import ProfilePicture from '../components/ProfilePicture';
 import {useDispatch, useSelector} from 'react-redux';
 import {follow, updateAsyncStorage} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LinearGradient from 'react-native-linear-gradient';
 
 const EventScreen = ({navigation, route}) => {
   const {eventId} = route.params;
@@ -92,6 +95,7 @@ const EventScreen = ({navigation, route}) => {
 
   return (
     <ScrollView style={{flex: 1, backgroundColor: 'white'}}>
+      <StatusBar hidden />
       <View
         style={{
           width: '100%',
@@ -106,35 +110,68 @@ const EventScreen = ({navigation, route}) => {
         <TouchableOpacity
           style={styles.headerBtn}
           onPress={() => navigation.goBack()}>
-          <Octicons name="arrow-left" size={25} color="black" />
+          <Octicons name="chevron-left" size={25} color="white" />
         </TouchableOpacity>
-        <View style={{flexDirection: 'row', gap: 10}}>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Ionicons name="share-outline" size={25} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerBtn}>
-            <Ionicons name="heart-outline" size={25} color="black" />
-          </TouchableOpacity>
-        </View>
       </View>
 
-      <View style={styles.eventHeader}>
-        <ImageBackground
-          source={{uri: event?.profilePicture || ''}}
-          style={styles.eventProfilePicture}
-          imageStyle={styles.profilePictureImage}
-        />
+      <ImageBackground
+        source={{
+          uri:
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSW1YcHoQm8wrj6prf2m7UPneL8lQEEN3IfCw&s' ||
+            event?.profilePicture ||
+            '',
+        }}
+        style={styles.eventProfilePicture}
+        imageStyle={styles.profilePictureImage}
+      />
+      <View
+        style={{
+          padding: 25,
+          marginHorizontal: 25,
+          borderRadius: 20,
+          elevation: 5,
+          backgroundColor: 'white',
+          marginTop: -80,
+        }}>
         <Text style={styles.eventName}>{event?.name || ''}</Text>
-        {/* <Text style={styles.eventDescription}>{event?.description || ''}</Text> */}
+
+        <View
+          // className="bg-[#ffffff3e]"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start',
+            marginTop: 5,
+            // width: '100%',
+            paddingRight: 10,
+          }}>
+          <Ionicons name="location-outline" size={20} color="#2D264B40" />
+          <View style={{marginLeft: 10}}>
+            <Text style={{color: 'black'}}>{event?.address || ''}</Text>
+          </View>
+        </View>
         <View
           style={{
-            backgroundColor: '#36454F',
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start',
+            marginTop: 5,
+          }}>
+          <Feather name="calendar" size={20} color="#2D264B40" />
+          <View style={{marginLeft: 10}}>
+            <Text style={{color: 'black'}}>{event?.date || ''}</Text>
+            <Text style={{color: 'black'}}>
+              {`${event?.startTime} - ${event?.endTime}` || ''}
+            </Text>
+          </View>
+        </View>
+        <View
+          style={{
+            // backgroundColor: '#36454F',
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginHorizontal: 20,
-            padding: 20,
-            borderRadius: 10,
+            marginTop: 16,
           }}>
           {event?.members?.slice(0, 2)?.map(member => (
             <ProfilePicture
@@ -145,184 +182,118 @@ const EventScreen = ({navigation, route}) => {
               borderRadius={15}
             />
           ))}
-          <Text style={{color: 'white'}}>
-            {event?.members?.length} people you know are going
-          </Text>
-          <TouchableOpacity>
-            <Text style={{color: 'white'}}>View All</Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            marginHorizontal: 20,
-            padding: 20,
-            marginTop: 10,
-          }}>
-          <Feather name="calendar" size={40} color="black" />
-          <View style={{marginLeft: 20}}>
-            <Text style={{color: 'black', fontWeight: 'bold'}}>
-              {event?.date || ''}
-            </Text>
-            <Text style={{color: 'black', fontWeight: 'bold'}}>
-              {`${event?.startTime} - ${event?.endTime}` || ''}
-            </Text>
-          </View>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            marginHorizontal: 20,
-            padding: 20,
-          }}>
-          <Ionicons name="location-sharp" size={40} color="black" />
-          <View style={{marginLeft: 20}}>
-            <Text style={{color: 'black', fontWeight: 'bold'}}>
-              {event?.location || ''}
-            </Text>
-            <Text style={{color: '', fontWeight: '500'}}>
-              {event?.address || ''}
-            </Text>
-          </View>
-        </View>
-        <View
-          style={{
-            height: 180,
-            width: 260,
-            backgroundColor: '#F5F5F5',
-            alignSelf: 'center',
-            borderRadius: 30,
-          }}></View>
-        <View style={{marginTop: 20, paddingHorizontal: 20}}>
-          <Text
-            style={{
-              color: 'black',
-              fontWeight: 'bold',
-              fontSize: 17,
-              marginHorizontal: 20,
-              paddingHorizontal: 20,
-            }}>
-            About Event
-          </Text>
-          <Text
-            style={{
-              color: 'black',
-              marginHorizontal: 20,
-              padding: 20,
-              fontWeight: '500',
-              lineHeight: 21,
-            }}>
-            {event?.description || ''}
+          <Text style={{color: 'black'}}>
+            {event?.members?.length} Participants
           </Text>
         </View>
-        <View
+      </View>
+      <TouchableOpacity style={{padding: 20, paddingHorizontal: 60}}>
+        <Text
           style={{
-            backgroundColor: '#36454F',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginHorizontal: 40,
-            paddingHorizontal: 20,
-            paddingVertical: 15,
-            borderRadius: 10,
+            fontSize: 21,
+            marginBottom: 8,
+            color: 'black',
+            fontWeight: '500',
           }}>
-          <ProfilePicture
-            profilePictureUri={event?.createdBy?.profilePicture}
-            height={40}
-            width={40}
-            borderRadius={20}
+          Relevancy: {87}%
+        </Text>
+        <View style={styles.progressBar}>
+          <LinearGradient
+            colors={['red', 'yellow', 'green']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+            style={[
+              styles.progressGradient,
+              {width: `${Math.max(0, Math.min(100, 87))}%`},
+            ]}
           />
-          <Text style={{color: 'white', fontSize: 16, fontWeight: '500'}}>
-            {event?.createdBy?.name}
-          </Text>
-          <TouchableOpacity
-            disabled={
-              event?.createdBy?._id === user?._id ||
-              isFollowing ||
-              user?.following?.includes(event?.createdBy?._id)
-            }
-            onPress={followHandler}
-            style={styles.Btn}>
-            <Text style={styles.BtnText}>
-              {isFollowing || user?.following?.includes(event?.createdBy?._id)
-                ? 'Following'
-                : 'Follow'}
-            </Text>
-          </TouchableOpacity>
         </View>
-        {/* Show tags here */}
+        <Text
+          style={{
+            marginTop: 10,
+            textAlign: 'center',
+            color: 'black',
+            fontSize: 16,
+          }}>
+          Click to know more
+        </Text>
+      </TouchableOpacity>
+      <View style={{marginTop: 20, paddingHorizontal: 20}}>
         <Text
           style={{
             color: 'black',
-            fontWeight: 'bold',
             fontSize: 17,
-            marginHorizontal: 20,
-            paddingHorizontal: 20,
-            marginTop: 20,
+            marginBottom: 10,
           }}>
-          Tags
+          Description
         </Text>
-        <View
+        <Text
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
-            marginHorizontal: 15,
-            padding: 20,
-            marginTop: 10,
-            flexWrap: 'wrap',
+            color: '#706D6D',
+            lineHeight: 21,
           }}>
-          {event?.tags?.split(',')?.map((tag, index) => (
-            <Text
-              key={index}
-              style={{
-                color: '#36454F',
-                padding: 5,
-                borderRadius: 15,
-                borderWidth: 1,
-                borderColor: '#36454F',
-                paddingHorizontal: 20,
-              }}>
-              {tag}
-            </Text>
-          ))}
-        </View>
+          {event?.description || ''}
+        </Text>
+      </View>
 
+      <Text
+        style={{
+          marginLeft: 20,
+          color: 'black',
+          fontSize: 17,
+          marginTop: 30,
+          marginBottom: 10,
+        }}>
+        Venue & Location
+      </Text>
+      <View
+        style={{
+          height: 180,
+          width: '90%',
+          backgroundColor: '#F5F5F5',
+          alignSelf: 'center',
+          borderRadius: 15,
+        }}></View>
+
+      <View
+        style={{
+          backgroundColor: 'white',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          elevation: 5,
+          padding: 20,
+          marginBottom: 20,
+        }}>
+        <View>
+          <Text style={{color: 'black'}}>Start from</Text>
+          <Text style={{color: 'black', fontWeight: '500', fontSize: 15}}>
+            IDR 1,100,00
+          </Text>
+        </View>
         {!event?.members?.find(mem => mem._id === user?._id) ? (
           <TouchableOpacity
             disabled={event?.createdBy?._id === user?._id}
             onPress={bookSeat}
             style={{
-              backgroundColor: '#A274FF',
-              padding: 20,
-              width: 220,
-              borderRadius: 10,
-              paddingHorizontal: 15,
+              backgroundColor: '#761CBC',
+              padding: 10,
+              borderRadius: 40,
+              paddingHorizontal: 25,
               alignItems: 'center',
-              alignSelf: 'center',
-              marginVertical: 40,
             }}>
-            <Text style={[styles.BtnText, {letterSpacing: 1}]}>
-              Book your seat Now
-            </Text>
+            <Text style={[styles.BtnText, {letterSpacing: 1}]}>Buy Ticket</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             disabled={event?.createdBy?._id === user?._id}
             onPress={() => navigation.navigate('TicketScreen')}
             style={{
-              backgroundColor: '#A274FF',
-              padding: 20,
-              width: 220,
-              borderRadius: 10,
-              paddingHorizontal: 15,
+              backgroundColor: '#761CBC',
+              padding: 10,
+              borderRadius: 40,
+              paddingHorizontal: 25,
               alignItems: 'center',
-              alignSelf: 'center',
-              marginTop: 40,
             }}>
             <Text style={[styles.BtnText, {letterSpacing: 1}]}>
               View Ticket
@@ -347,7 +318,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontSize: 18,
     fontWeight: '700',
-    margin: 20,
     color: '#141414',
     fontFamily: 'Jost-Bold',
   },
@@ -357,22 +327,33 @@ const styles = StyleSheet.create({
   },
   headerBtn: {
     padding: 5,
-    backgroundColor: 'white',
+    backgroundColor: '#ffffff3e',
     height: 40,
     width: 40,
-    borderRadius: 20,
+    borderRadius: 7,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 5,
   },
   eventProfilePicture: {
     width: '100%',
-    height: 250,
+    height: 300,
     overflow: 'hidden',
     backgroundColor: '#F5F5F5',
   },
   profilePictureImage: {
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
+    // borderBottomLeftRadius: 15,
+    // borderBottomRightRadius: 15,
+  },
+  progressBar: {
+    height: 30,
+    width: '100%',
+    backgroundColor: '#e0e0e0',
+    borderRadius: 30,
+    overflow: 'hidden',
+  },
+  progressGradient: {
+    height: '100%',
   },
   Btn: {
     backgroundColor: '#A274FF',

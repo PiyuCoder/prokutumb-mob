@@ -20,26 +20,24 @@ const ChatScreen = ({route, navigation}) => {
   const {name, userId, profilePicture} = route.params;
   const {user} = useSelector(state => state.auth);
   const [replyToMessage, setReplyToMessage] = useState(null);
-
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
   const flatListRef = useRef();
 
-  console.log(messages);
-
   useEffect(() => {
     const fetchMessages = async () => {
+      console.log('test');
       const res = await axiosInstance.get(
         `/api/user/fetchMessages/${user?._id}/${userId}`,
       );
       if (res.data.success) {
         setMessages(res.data.messages);
-        flatListRef.current.scrollToEnd({animated: true});
       }
     };
     fetchMessages();
-  }, []);
+  }, [messages.length]);
 
   useEffect(() => {
     // Listen for incoming messages
@@ -58,6 +56,21 @@ const ChatScreen = ({route, navigation}) => {
   const scrollToMessage = index => {
     console.log(index);
     flatListRef.current.scrollToIndex({animated: true, index});
+  };
+
+  useEffect(() => {
+    if (!isUserScrolling && flatListRef.current && messages.length > 0) {
+      flatListRef.current.scrollToEnd({animated: true});
+    }
+  }, [messages]);
+
+  const handleScroll = event => {
+    // Check how far the user is from the bottom
+    const {layoutMeasurement, contentOffset, contentSize} = event.nativeEvent;
+    const isAtBottom =
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+
+    setIsUserScrolling(!isAtBottom); // User scrolling is true unless they are at the bottom
   };
 
   const handleSend = () => {
@@ -184,6 +197,8 @@ const ChatScreen = ({route, navigation}) => {
         ref={flatListRef}
         data={messages}
         keyExtractor={item => item._id}
+        onScroll={handleScroll} // Attach the scroll handler
+        scrollEventThrottle={16}
         renderItem={({item}) => (
           <View
             style={
@@ -205,7 +220,9 @@ const ChatScreen = ({route, navigation}) => {
                   }
                 }}
                 style={styles.repliedMessage}>
-                <Text>Replied to:{item.replyTo.text}</Text>
+                <Text style={{color: 'black', fontSize: 12}}>
+                  {item.replyTo.text}
+                </Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity onLongPress={() => setReplyToMessage(item)}>
@@ -269,11 +286,12 @@ const styles = StyleSheet.create({
   repliedMessage: {
     backgroundColor: '#e0e0e0',
     padding: 10,
-    marginBottom: 1,
+    margin: 5,
     borderRadius: 5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    color: 'black',
   },
 
   yourMessage: {

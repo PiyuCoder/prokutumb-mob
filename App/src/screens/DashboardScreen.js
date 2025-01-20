@@ -9,6 +9,7 @@ import {View, TouchableOpacity, StyleSheet} from 'react-native';
 import Icon from 'react-native-vector-icons/Foundation';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import FA6Icon from 'react-native-vector-icons/FontAwesome6';
+import Entypo from 'react-native-vector-icons/Entypo';
 import Communities from './Communities';
 
 // Create the Tab Navigator
@@ -24,7 +25,7 @@ const DashboardScreen = ({navigation}) => {
       case 'Network':
         return IonIcon;
       case 'Message':
-        return IonIcon;
+        return Entypo;
       default:
         return Icon;
     }
@@ -38,9 +39,9 @@ const DashboardScreen = ({navigation}) => {
           route.name === 'Home'
             ? 'home'
             : route.name === 'Message'
-            ? 'chatbubble-outline'
+            ? 'grid'
             : route.name === 'Discover'
-            ? 'compass'
+            ? 'compass-outline'
             : route.name === 'Match'
             ? 'user-group'
             : 'globe-outline';
@@ -51,19 +52,16 @@ const DashboardScreen = ({navigation}) => {
               route.name === 'Network' ? 60 : route.name === 'Match' ? 23 : 30; // Larger size for Network icon
             return (
               <View style={{alignItems: 'center'}}>
-                <View style={focused ? styles.circle : null}>
-                  <IconComponent
-                    name={iconName}
-                    size={iconSize}
-                    color={route.name === 'Network' ? 'black' : color}
-                  />
-                </View>
+                <IconComponent name={iconName} size={iconSize} color={color} />
+                {/* <View style={focused ? styles.circle : null}>
+                  
+                </View> */}
               </View>
             );
           },
           tabBarShowLabel: false,
-          tabBarActiveTintColor: 'white',
-          tabBarInactiveTintColor: 'gray',
+          tabBarActiveTintColor: '#A274FF',
+          tabBarInactiveTintColor: 'black',
           tabBarStyle: styles.tabBarStyle,
         };
       }}>
@@ -127,11 +125,12 @@ const styles = StyleSheet.create({
     elevation: 5,
     backgroundColor: '#ffffff',
     borderRadius: 40,
-    height: 60,
+    height: 80,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowOffset: {width: 0, height: 10},
     shadowRadius: 20,
+    opacity: 0.9,
   },
 });
 

@@ -53,8 +53,7 @@ exports.fetchCommunity = async (req, res) => {
 
 exports.createCommunity = (io, userSocketMap) => async (req, res) => {
   try {
-    const { name, description, isAnonymous, createdBy, invitees } = req.body;
-    console.log(invitees);
+    const { name, description, isAnonymous, createdBy, timezone } = req.body;
 
     // Validate required fields
     if (!name || !description || !createdBy) {
@@ -92,38 +91,39 @@ exports.createCommunity = (io, userSocketMap) => async (req, res) => {
       isAnonymous: isAnonymous || false,
       profilePicture,
       createdBy,
+      timezone,
     });
 
     await newCommunity.save();
 
     // Parse invitees and find existing users
-    if (invitees) {
-      const emails = invitees.split(",").map((email) => email.trim());
-      const users = await Member.find({ email: { $in: emails } });
+    // if (invitees) {
+    //   const emails = invitees.split(",").map((email) => email.trim());
+    //   const users = await Member.find({ email: { $in: emails } });
 
-      for (const user of users) {
-        const notification = new NotificationMob({
-          recipientId: user._id, // The invitee
-          senderId: createdBy, // The creator of the community
-          message: `You have been invited to join the community "${name}".`,
-          type: "invitation",
-          isCommunity: true,
-          communityId: newCommunity._id,
-        });
+    //   for (const user of users) {
+    //     const notification = new NotificationMob({
+    //       recipientId: user._id, // The invitee
+    //       senderId: createdBy, // The creator of the community
+    //       message: `You have been invited to join the community "${name}".`,
+    //       type: "invitation",
+    //       isCommunity: true,
+    //       communityId: newCommunity._id,
+    //     });
 
-        await notification.save();
+    //     await notification.save();
 
-        // Send real-time notification if the user is online
-        const inviteeSocketId = userSocketMap[user._id.toString()];
-        if (inviteeSocketId) {
-          io.to(inviteeSocketId).emit("notification", {
-            message: notification.message,
-            type: notification.type,
-            timestamp: notification.timestamp,
-          });
-        }
-      }
-    }
+    //     // Send real-time notification if the user is online
+    //     const inviteeSocketId = userSocketMap[user._id.toString()];
+    //     if (inviteeSocketId) {
+    //       io.to(inviteeSocketId).emit("notification", {
+    //         message: notification.message,
+    //         type: notification.type,
+    //         timestamp: notification.timestamp,
+    //       });
+    //     }
+    //   }
+    // }
 
     res.status(201).json({
       success: true,
@@ -368,20 +368,35 @@ exports.createEvent = (io, userSocketMap) => async (req, res) => {
   try {
     const {
       name,
-      location,
       description,
       createdBy,
       eventType,
-      ocassion,
-      date,
+      paidTickets,
+      startDate,
+      endDate,
       startTime,
       endTime,
       communityId,
-      tags,
+      freeTickets,
       address,
-      invitees,
+      timezone,
     } = req.body;
 
+    console.log(
+      name,
+      description,
+      createdBy,
+      eventType,
+      paidTickets,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      communityId,
+      freeTickets,
+      address,
+      timezone
+    );
     // Validate required fields
     if (!name || !description || !createdBy) {
       return res
@@ -419,50 +434,51 @@ exports.createEvent = (io, userSocketMap) => async (req, res) => {
     // Create and save the event
     const event = new Event({
       name,
-      location,
+      timezone,
       description,
       profilePicture,
       createdBy,
       eventType,
-      ocassion,
-      date,
+      freeTickets,
+      startDate,
+      endDate,
       startTime,
       endTime,
       community: communityId,
-      tags,
+      paidTickets,
       address,
     });
 
     await event.save();
 
     // Parse invitees and find existing users
-    if (invitees) {
-      const emails = invitees.split(",").map((email) => email.trim());
-      const users = await Member.find({ email: { $in: emails } });
+    // if (invitees) {
+    //   const emails = invitees.split(",").map((email) => email.trim());
+    //   const users = await Member.find({ email: { $in: emails } });
 
-      for (const user of users) {
-        const notification = new NotificationMob({
-          recipientId: user._id, // The invitee
-          senderId: createdBy, // The creator of the community
-          message: `You have been invited to attend the event "${name}".`,
-          type: "invitation",
-          isCommunity: false,
-          eventId: event._id,
-        });
+    //   for (const user of users) {
+    //     const notification = new NotificationMob({
+    //       recipientId: user._id, // The invitee
+    //       senderId: createdBy, // The creator of the community
+    //       message: `You have been invited to attend the event "${name}".`,
+    //       type: "invitation",
+    //       isCommunity: false,
+    //       eventId: event._id,
+    //     });
 
-        await notification.save();
+    //     await notification.save();
 
-        // Send real-time notification if the user is online
-        const inviteeSocketId = userSocketMap[user._id.toString()];
-        if (inviteeSocketId) {
-          io.to(inviteeSocketId).emit("notification", {
-            message: notification.message,
-            type: notification.type,
-            timestamp: notification.timestamp,
-          });
-        }
-      }
-    }
+    //     // Send real-time notification if the user is online
+    //     const inviteeSocketId = userSocketMap[user._id.toString()];
+    //     if (inviteeSocketId) {
+    //       io.to(inviteeSocketId).emit("notification", {
+    //         message: notification.message,
+    //         type: notification.type,
+    //         timestamp: notification.timestamp,
+    //       });
+    //     }
+    //   }
+    // }
 
     res.status(201).json({ message: "Event created successfully", event });
   } catch (error) {

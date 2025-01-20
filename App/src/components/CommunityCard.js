@@ -7,95 +7,143 @@ import {
   Text,
   ImageBackground,
   StyleSheet,
+  Image,
 } from 'react-native';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
 import {useSelector} from 'react-redux';
 
-const CommunityCard = ({community, onPress, style}) => {
+const CommunityCard = ({
+  community,
+  onPress,
+  height,
+  width,
+  picHeight,
+  isTrending,
+}) => {
   const [isActionModalVisible, setActionModalVisible] = useState(false);
   const {user} = useSelector(state => state.auth);
   const navigation = useNavigation();
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.cardWrapper, style]}>
-      <View style={styles.userCard}>
-        <ImageBackground
-          source={{uri: community.profilePicture}}
-          style={styles.profilePicture}
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.cardWrapper, {height, width}]}>
+      <View style={!isTrending ? styles.userCard : styles.trendingUserCard}>
+        <Image
+          source={{
+            uri:
+              community?.profilePicture ||
+              'https://cdn.pixabay.com/photo/2016/11/23/15/48/audience-1853662_640.jpg',
+          }}
+          style={[styles.profilePicture, {height: picHeight}]}
           imageStyle={styles.profilePictureImage}
         />
-        <View
-          style={{
-            width: '100%',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginVertical: 10,
-            overflow: 'hidden',
-          }}>
-          <Text
-            numberOfLines={1} // Limits the text to one line
-            ellipsizeMode="tail"
-            style={styles.userName}>
-            {community.name}
-          </Text>
-          <TouchableOpacity
-            onPress={() => setActionModalVisible(!isActionModalVisible)}>
-            <SimpleLineIcons name="options-vertical" size={20} color="black" />
-          </TouchableOpacity>
-        </View>
-        {isActionModalVisible && (
-          <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                navigation.navigate('Network');
-                setActionModalVisible(true);
+        <View style={isTrending ? styles.trendingOverlay : {padding: 6}}>
+          <View>
+            <Text
+              numberOfLines={1} // Limits the text to one line
+              ellipsizeMode="tail"
+              style={[
+                styles.userName,
+                {color: isTrending ? 'white' : 'black'},
+              ]}>
+              {community.name}
+            </Text>
+            <View
+              style={{
+                width: '100%',
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                marginVertical: 10,
+                overflow: 'hidden',
               }}>
-              <Text style={styles.dropdownItemText}>Ask AI</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                setActionModalVisible(false);
-                navigation.navigate('CommunityHome', {
-                  communityId: community._id,
-                });
-              }}>
-              <Text style={styles.dropdownItemText}>View</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.dropdownItem}>
-              <Text style={[styles.dropdownItemText, {color: 'red'}]}>
-                Report
+              <Ionicons
+                name="location-outline"
+                size={20}
+                color={!isTrending ? '#2D264B4D' : 'white'}
+              />
+              <Text
+                numberOfLines={1} // Limits the text to one line
+                ellipsizeMode="tail"
+                style={[
+                  {
+                    color: isTrending ? 'white' : 'black',
+                    width: isTrending ? '50%' : '90%',
+                  },
+                ]}>
+                {community?.communityType || 'Worldwide'}
               </Text>
-            </TouchableOpacity>
+            </View>
+            {isActionModalVisible && (
+              <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    navigation.navigate('Network');
+                    setActionModalVisible(true);
+                  }}>
+                  <Text style={styles.dropdownItemText}>Ask AI</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setActionModalVisible(false);
+                    navigation.navigate('CommunityHome', {
+                      communityId: community._id,
+                    });
+                  }}>
+                  <Text style={styles.dropdownItemText}>View</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.dropdownItem}>
+                  <Text style={[styles.dropdownItemText, {color: 'red'}]}>
+                    Report
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <Text
+              style={{
+                color: isTrending ? 'white' : 'black',
+                fontWeight: '400',
+                fontSize: 12,
+              }}>
+              {community.members.length + 1} Members
+            </Text>
           </View>
-        )}
-        {community?.createdBy?._id !== user?._id &&
-          !community?.members?.includes(user?._id) && (
-            <TouchableOpacity onPress={onPress} style={styles.Btn}>
-              <Text style={styles.BtnText}>Join</Text>
-            </TouchableOpacity>
-          )}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%',
-            marginTop:
-              community?.createdBy?._id !== user?._id &&
-              !community?.members?.includes(user?._id)
-                ? 60
-                : 30,
-          }}>
-          <Text style={{color: 'black', fontWeight: '500', fontSize: 13}}>
-            {community.createdBy.name}
-          </Text>
-          <Text style={{color: 'black', fontWeight: '400', fontSize: 12}}>
-            {community.members.length + 1} Members
-          </Text>
+          {community?.createdBy?._id !== user?._id &&
+            !community?.members?.includes(user?._id) && (
+              <TouchableOpacity
+                onPress={onPress}
+                style={[
+                  styles.Btn,
+                  {
+                    padding: isTrending ? 9 : 4,
+                    alignSelf: isTrending ? 'auto' : 'center',
+                  },
+                ]}>
+                <Text style={[styles.BtnText, ,]}>Join</Text>
+              </TouchableOpacity>
+            )}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+              marginTop:
+                community?.createdBy?._id !== user?._id &&
+                !community?.members?.includes(user?._id)
+                  ? 60
+                  : 30,
+            }}>
+            {/* <Text style={{color: 'black', fontWeight: '500', fontSize: 13}}>
+              {community.createdBy.name}
+            </Text> */}
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -106,12 +154,14 @@ const styles = StyleSheet.create({
   cardWrapper: {
     marginRight: 28,
     marginTop: 8,
-    borderWidth: 1,
     borderRadius: 20,
     marginBottom: 10,
     height: 280,
     width: 220,
     overflow: 'hidden',
+    backgroundColor: 'white',
+    elevation: 5,
+    marginLeft: 5,
   },
   userCard: {
     // borderRadius: 20,
@@ -119,12 +169,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
   },
+  trendingUserCard: {
+    // borderRadius: 20,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    // padding: 10,
+  },
+  trendingOverlay: {
+    backgroundColor: '#2d264bc4',
+    position: 'absolute',
+    bottom: 0,
+    borderRadius: 15,
+    margin: 10,
+    padding: 15,
+    width: '95%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    paddingRight: 70,
+  },
   profilePicture: {
     width: '100%',
     height: 130,
     backgroundColor: '#F5F5F5',
     borderRadius: 10,
-    backgroundColor: '#a274ff6e',
+    // backgroundColor: '#a274ff6e',
   },
   profilePictureImage: {
     borderRadius: 20,

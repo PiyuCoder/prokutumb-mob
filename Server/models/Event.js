@@ -4,7 +4,6 @@ const { Schema } = mongoose;
 const eventSchema = new Schema(
   {
     name: { type: String, required: true },
-    location: { type: String },
     description: { type: String, required: true },
     profilePicture: { type: String },
     coverPicture: { type: String },
@@ -22,11 +21,7 @@ const eventSchema = new Schema(
       type: String,
       default: "public",
     },
-    ocassion: {
-      type: String,
-      default: "",
-    },
-    tags: {
+    timezone: {
       type: String,
       default: "",
     },
@@ -34,7 +29,11 @@ const eventSchema = new Schema(
       type: String,
       default: "",
     },
-    date: {
+    startDate: {
+      type: String,
+      default: "",
+    },
+    endDate: {
       type: String,
       default: "",
     },
@@ -49,6 +48,12 @@ const eventSchema = new Schema(
     community: {
       type: Schema.Types.ObjectId,
       ref: "Communitymob",
+    },
+    freeTickets: {
+      type: Number,
+    },
+    paidTickets: {
+      type: Number,
     },
   },
   { timestamps: true }

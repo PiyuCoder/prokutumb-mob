@@ -45,89 +45,52 @@ const SearchCommNEvent = ({iconColor, isEvent}) => {
   }, [query]);
 
   return (
-    <>
-      {/* Lens Icon */}
-
-      <TouchableOpacity
-        style={styles.iconButtons}
-        onPress={() => setSearchVisible(true)}>
-        {/* <Image source={lensIcon} style={styles.icon} /> */}
-        <Feather
-          name="search"
-          size={25}
-          color={iconColor ? iconColor : '#A274FF'}
+    <View style={styles.modalOverlay}>
+      <View style={styles.searchContainer}>
+        <Feather name="search" size={20} color="black" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder={`Search ${isEvent ? 'events..' : 'communities..'}`}
+          value={query}
+          onChangeText={setQuery}
+          autoFocus
+          placeholderTextColor={'black'}
         />
-      </TouchableOpacity>
+      </View>
 
-      {/* Filter Icon */}
-      {/* <TouchableOpacity style={styles.iconButtons}>
-        <Image source={filterIcon} />
-      </TouchableOpacity> */}
+      {/* Search Results */}
 
-      {/* Modal for Search Input and Results */}
-      <Modal visible={searchVisible} transparent={true} animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search..."
-              value={query}
-              onChangeText={setQuery}
-              autoFocus
-              placeholderTextColor={'gray'}
-            />
+      {searchResults
+        ?.filter(res => res._id !== user?._id)
+        ?.map(item => (
+          <TouchableOpacity
+            onPress={() => {
+              setSearchVisible(false);
+              const typeId = isEvent
+                ? {eventId: item._id}
+                : {communityId: item?._id};
+              navigation.navigate(
+                isEvent ? 'EventHome' : 'CommunityHome',
+                typeId,
+              );
+            }}>
+            <View style={styles.resultItem}>
+              <ProfilePicture
+                profilePictureUri={item.profilePicture}
+                width={40}
+                height={40}
+                borderRadius={20}
+                marginRight={10}
+              />
 
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => {
-                setSearchVisible(false);
-                setQuery('');
-              }}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Search Results */}
-          <FlatList
-            data={searchResults?.filter(res => res._id !== user?._id)}
-            keyExtractor={item => item._id}
-            renderItem={({item}) => (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchVisible(false);
-                  const typeId = isEvent
-                    ? {eventId: item._id}
-                    : {communityId: item?._id};
-                  navigation.navigate(
-                    isEvent ? 'EventHome' : 'CommunityHome',
-                    typeId,
-                  );
-                }}>
-                <View style={styles.resultItem}>
-                  <ProfilePicture
-                    profilePictureUri={item.profilePicture}
-                    width={40}
-                    height={40}
-                    borderRadius={20}
-                    marginRight={10}
-                  />
-                  {/* <Image
-                    source={{uri: item.profilePicture}}
-                    style={styles.profilePicture}
-                  /> */}
-                  <View>
-                    <Text style={styles.userName}>{item.name}</Text>
-                    <Text style={styles.userLocation}>
-                      {item.location?.state}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </Modal>
-    </>
+              <View>
+                <Text style={styles.userName}>{item.name}</Text>
+                <Text style={styles.userLocation}>{item.location?.state}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+    </View>
   );
 };
 
@@ -148,17 +111,13 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    padding: 4,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
     borderRadius: 10,
-    padding: 10,
+    gap: 5,
   },
   searchInput: {
     flex: 1,

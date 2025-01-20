@@ -31,8 +31,6 @@ import {
   incrementShare,
   likePost,
 } from '../store/slices/postSlice';
-import QRCode from 'react-native-qrcode-svg';
-import LinearGradient from 'react-native-linear-gradient';
 import Loader from '../components/Loader';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {connectSocket, disconnectSocket} from '../socket';
@@ -40,7 +38,8 @@ import socket from '../socket';
 import ConnectionRequests from '../components/ConnectionRequests';
 import ProfilePicture from '../components/ProfilePicture';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Feather from 'react-native-vector-icons/Feather';
+import Fontisto from 'react-native-vector-icons/Fontisto';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 import SimpleIcon from 'react-native-vector-icons/SimpleLineIcons';
 import {axiosInstance} from '../api/axios';
 import SideNavigationScreen from '../components/SideNavigationScreen';
@@ -128,8 +127,8 @@ const HomeScreen = ({navigation}) => {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     // setIsLoading(true);
-    dispatch(fetchFriendRequests(user?._id));
-    fetchStories();
+
+    // fetchStories();
     loadMorePosts();
   }, []);
 
@@ -340,11 +339,10 @@ const HomeScreen = ({navigation}) => {
   console.log(selectedMedia);
   const renderPost = ({item}) => (
     <View
-      className="border border-[#A274FF]"
       style={{
         marginBottom: 15,
-        padding: 12,
-        paddingHorizontal: 15,
+        marginHorizontal: 7,
+        padding: 15,
         backgroundColor: '#FFFFFF',
         borderRadius: 20,
       }}>
@@ -371,24 +369,22 @@ const HomeScreen = ({navigation}) => {
             }
             style={{
               fontWeight: 'bold',
-              color: '#141414',
+              color: '#19295C',
               fontFamily: 'Inter_24pt-Bold',
+              fontSize: 15,
             }}>
             {item.user.name}
           </Text>
         </View>
         {user?._id === item.user._id && (
-          <View style={{position: 'relative', zIndex: 100, marginRight: 8}}>
+          <View style={{position: 'relative', zIndex: 100}}>
             <TouchableOpacity
+              style={styles.iconButtons}
               onPress={() => {
                 toggleActionSection(item._id);
                 setActionModalVisible(!actionModalVisible);
               }}>
-              {/* <Image
-                style={{height: 20, width: 20}}
-                source={require('../assets/icons/action.png')}
-              /> */}
-              <SimpleIcon name="options" size={20} color="#585C60" />
+              <SimpleIcon name="options" size={20} color="#99A1BE" />
             </TouchableOpacity>
             {actionModalVisible && openActionPostId === item._id && (
               <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
@@ -424,7 +420,7 @@ const HomeScreen = ({navigation}) => {
       <Text
         style={{
           marginTop: 10,
-          color: '#676767',
+          color: '#2D3F7B',
           fontSize: 16,
           fontFamily: 'Inter_18pt-Regular',
         }}>
@@ -459,6 +455,12 @@ const HomeScreen = ({navigation}) => {
           resizeMode="cover"
         />
       )}
+      {/* Like, comment and share counts */}
+      <View style={{flexDirection: 'row', marginTop: 20, gap: 5}}>
+        <Text style={styles.actionText}>{item.likes.length} Likes .</Text>
+        <Text style={styles.actionText}>{item.comments.length} Comments .</Text>
+        <Text style={styles.actionText}>{item.shares} Shares</Text>
+      </View>
 
       {/* Post Actions: Likes, Comments, Views, and Share */}
       <View style={styles.postActions}>
@@ -466,35 +468,30 @@ const HomeScreen = ({navigation}) => {
           onPress={() =>
             dispatch(likePost({userId: user?._id, postId: item._id}))
           }
-          style={styles.actionButton}>
-          {/* <Image
-            source={item?.likes?.includes(user?._id) ? likedIcon : likeIcon}
-            style={styles.actionIcon}
-          /> */}
-          {item?.likes?.includes(user?._id) ? (
-            <Icon name="heart" size={24} color="red" />
-          ) : (
-            <Icon name="heart-outline" size={24} color="#7B7B7B" />
-          )}
-          <Text style={styles.actionText}>{item.likes.length} </Text>
+          style={[
+            styles.iconButtons,
+            {
+              backgroundColor: item?.likes?.includes(user?._id)
+                ? '#A274FF'
+                : '#C3E4FF47',
+            },
+          ]}>
+          <AntDesign
+            name="like1"
+            size={20}
+            color={item?.likes?.includes(user?._id) ? 'white' : '#A274FF'}
+          />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => toggleCommentSection(item._id)}
-          style={styles.actionButton}>
-          {/* <Image source={commentIcon} style={styles.actionIcon} /> */}
-          <Icon name="chatbubble-outline" size={24} color="#7B7B7B" />
-          <Text style={styles.actionText}>{item.comments.length}</Text>
+          style={[styles.iconButtons, {backgroundColor: '#C3E4FF47'}]}>
+          <Icon name="chatbubble-ellipses" size={20} color="#A274FF" />
         </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.actionButton}>
-          <Image source={viewIcon} style={styles.actionIcon} />
-          <Text style={styles.actionText}>{item.views} </Text>
-        </TouchableOpacity> */}
+
         <TouchableOpacity
           onPress={() => sharePost(item)}
-          style={styles.actionButton}>
-          {/* <Image source={shareIcon} style={styles.actionIcon} /> */}
-          <Icon name="arrow-redo-outline" size={24} color="#7B7B7B" />
-          <Text style={styles.actionText}>{item.shares}</Text>
+          style={[styles.iconButtons, {backgroundColor: '#C3E4FF47'}]}>
+          <Fontisto name="share-a" size={20} color="#A274FF" />
         </TouchableOpacity>
       </View>
       {/* Comment Section */}
@@ -575,10 +572,9 @@ const HomeScreen = ({navigation}) => {
     <View
       style={{
         flex: 1,
-        paddingHorizontal: 7,
-        paddingTop: 10,
+
         // paddingBottom: 80,
-        backgroundColor: 'white',
+        backgroundColor: '#F1F4F5',
       }}>
       <StatusBar backgroundColor="white" barStyle="dark-content" />
       {/* <Loader isLoading={isLoading} /> */}
@@ -590,7 +586,7 @@ const HomeScreen = ({navigation}) => {
         data={isFeedView ? posts : userPosts}
         keyExtractor={item => item._id}
         renderItem={renderPost}
-        contentContainerStyle={{paddingBottom: 65}}
+        contentContainerStyle={{paddingBottom: 80}}
         ListEmptyComponent={<Text>No Posts yet</Text>}
         // onEndReached={loadMorePosts}
         onEndReachedThreshold={0.2}
@@ -598,8 +594,15 @@ const HomeScreen = ({navigation}) => {
           isFetching ? <ActivityIndicator size="large" /> : null
         }
         ListHeaderComponent={
-          <View>
-            {/* Stories Section */}
+          <View
+            style={{
+              backgroundColor: 'white',
+              paddingHorizontal: 7,
+              borderBottomLeftRadius: 30,
+              borderBottomRightRadius: 30,
+              marginBottom: 10,
+            }}>
+            {/* Top Section */}
             <View
               style={{
                 display: 'flex',
@@ -610,13 +613,6 @@ const HomeScreen = ({navigation}) => {
                 gap: 10,
                 marginBottom: 10,
               }}>
-              {/* <Image
-                style={{height: 35, width: 75}}
-                source={require('../assets/proku-home-logo.png')}
-              /> */}
-              {/* <Text style={[styles.proku, {color: '#4B164C', fontSize: 24}]}>
-                ProKu
-              </Text> */}
               <TouchableOpacity onPress={openSidebar}>
                 <ProfilePicture
                   profilePictureUri={user?.profilePicture}
@@ -627,178 +623,178 @@ const HomeScreen = ({navigation}) => {
                 />
               </TouchableOpacity>
 
-              <SearchPeople home />
-              {/* <View
+              <View
                 style={{
-                  backgroundColor: '#ECF2F6',
-                  flex: 1,
-                  borderRadius: 40,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  paddingHorizontal: 10,
+                  justifyContent: 'center',
+                  gap: 8,
                 }}>
-                <Icon name="search" size={20} color="#585C60" />
-                <TextInput style={{flex: 1, paddingStart: 8}} />
-              </View> */}
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(true); // Open modal
-                }}>
-                <Feather name="edit" size={30} color="#A274FF" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Notifications')}
-                style={styles.iconButtons}>
-                <View style={{borderWidth: 1}}>
-                  <Icon
-                    name="notifications-outline"
-                    size={24}
-                    color="#4B164C"
+                <SearchPeople />
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Notifications')}
+                  style={styles.iconButtons}>
+                  <Image
+                    style={{height: 23, width: 23, aspectRatio: 1}}
+                    source={require('../assets/icons/bell-solid.png')}
+                    resizeMode="contain"
                   />
-                </View>
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    width: 9,
-                    height: 9,
-                    borderRadius: 4,
-                    padding: 1,
-                    backgroundColor: 'white',
-                  }}>
-                  <View
-                    style={{
-                      backgroundColor: '#A274FF',
-                      width: 7,
-                      height: 7,
-                      borderRadius: 3.5,
-                    }}
-                  />
-                </View>
-              </TouchableOpacity>
-            </View>
-            {/* <View
-              style={{height: 100, paddingVertical: 10, flexDirection: 'row'}}>
-              <TouchableOpacity
-                onPress={() => {
-                  console.log('Opening modal for user story'); // Debugging log
-                  setModalVisible(true); // Open modal
-                }}>
-                <View
-                  style={{
-                    alignItems: 'center',
-                    marginHorizontal: 10,
-                    position: 'relative',
-                  }}>
-                  <ProfilePicture
-                    profilePictureUri={user?.profilePicture}
-                    width={50}
-                    height={50}
-                    borderRadius={25}
-                    marginRight={10}
-                    isUser={true}
-                    story
-                  />
-
-                  <Text style={{fontSize: 12, marginTop: 5}}>My Post</Text>
-                  <View
+                </TouchableOpacity>
+                {/* <View
                     style={{
                       position: 'absolute',
-                      bottom: 18,
-                      right: 7,
-                      backgroundColor: 'white',
-                      height: 20,
-                      width: 20,
-                      borderRadius: 10,
+                      top: 12,
+                      right: 12,
+                      width: 9,
+                      height: 9,
+                      borderRadius: 4,
                       padding: 1,
+                      backgroundColor: 'white',
                     }}>
-                    <Image
-                      style={{height: '100%', width: '100%'}}
-                      source={require('../assets/icons/add.png')}
+                    <View
+                      style={{
+                        backgroundColor: '#A274FF',
+                        width: 7,
+                        height: 7,
+                        borderRadius: 3.5,
+                      }}
                     />
-                  </View>
-                </View>
-              </TouchableOpacity>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={stories}
-                keyExtractor={item => item.id}
-                renderItem={renderStory}
-              />
-            </View> */}
+                  </View> */}
+              </View>
+            </View>
 
-            {/* <View>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#A274FF',
-                  padding: 10,
-                  borderRadius: 10,
-                  alignItems: 'center',
-                }}
-                onPress={handleLogout}>
-                <Text style={{color: '#fff', fontWeight: 'bold'}}>Logout</Text>
-              </TouchableOpacity>
-            </View> */}
+            {/* Create Post Section */}
 
-            {/* Toggle between Feed and Profile */}
-            {/* <View
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setModalVisible(true)}
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginVertical: 10,
-                backgroundColor: '#F8E7F6',
-                borderRadius: 30,
-                padding: 5,
+                paddingVertical: 20,
+                alignItems: 'center',
+                borderTopWidth: 1,
+                borderColor: '#F1F4F5',
+                marginHorizontal: 10,
               }}>
-              <TouchableOpacity
-                onPress={() => setIsFeedView(true)}
+              <TextInput
+                onPress={() => setModalVisible(true)}
+                placeholder={`What's on your mind, ${
+                  user?.name?.split(' ')[0]
+                }?`}
+                multiline
+                editable={false}
+                placeholderTextColor={'gray'}
                 style={{
-                  backgroundColor: isFeedView ? '#FFFFFF' : '#F8E7F6',
+                  // height: 0,
                   paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 25,
-                  flex: 1,
-                }}>
-                <Text
-                  style={[
-                    styles.proku,
-                    {
-                      fontSize: 12,
-                      color: isFeedView ? '#4B164C' : '#000',
-                      textAlign: 'center',
-                    },
-                  ]}>
-                  Connection Feed
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setIsFeedView(false)}
+                  borderRadius: 10,
+                  marginBottom: 15,
+                  width: '100%',
+                  textAlignVertical: 'top',
+                  color: 'black',
+                  fontSize: 18,
+                }}
+              />
+              <View
                 style={{
-                  backgroundColor: !isFeedView ? '#FFFFFF' : '#F8E7F6',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 25,
-                  flex: 1,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  gap: 10,
                 }}>
-                <Text
-                  style={[
-                    styles.proku,
-                    {
-                      fontSize: 12,
-                      color: !isFeedView ? '#4B164C' : '#000',
-                      textAlign: 'center',
-                    },
-                  ]}>
-                  My Profile
-                </Text>
-              </TouchableOpacity>
-            </View> */}
+                <TouchableOpacity
+                  onPress={() => setModalVisible(true)}
+                  style={{
+                    backgroundColor: '#F1F4F5',
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    borderRadius: 15,
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4,
+                  }}>
+                  <Image
+                    style={{height: 15, width: 15}}
+                    source={require('../assets/icons/camera.png')}
+                    resizeMode="contain"
+                  />
+                  <Text style={{color: '#535767', fontSize: 13}}>
+                    Photo/video
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setModalVisible(true)}
+                  style={{
+                    backgroundColor: '#F1F4F5',
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    borderRadius: 15,
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4,
+                  }}>
+                  {/* <Image
+                    style={{height: 15, width: 15}}
+                    source={require('../assets/icons/camcorder.png')}
+                    resizeMode="contain"
+                  /> */}
+                  <Icon name="attach" size={20} color="#F31954" />
+                  <Text style={{color: '#535767', fontSize: 13}}>
+                    Attachment
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setModalVisible(true)}
+                  style={{
+                    backgroundColor: '#F1F4F5',
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    borderRadius: 15,
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 4,
+                  }}>
+                  <Image
+                    style={{height: 15, width: 15}}
+                    source={require('../assets/icons/eye.png')}
+                    resizeMode="contain"
+                  />
+                  <Text style={{color: '#535767', fontSize: 13}}>Tags</Text>
+                </TouchableOpacity>
+              </View>
+              {selectedMedia && (
+                <View style={{marginTop: 15}}>
+                  {(selectedMedia?.uri || selectedMedia?.mediaUrl) &&
+                  (selectedMedia?.type?.startsWith('image') ||
+                    selectedMedia?.mediaType === 'image') ? (
+                    <Image
+                      source={{
+                        uri: selectedMedia?.uri || selectedMedia?.mediaUrl, // Ensure uri is a string
+                      }}
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: 10,
+                        marginTop: 10,
+                      }}
+                    />
+                  ) : (
+                    <Text style={{marginTop: 10}}>
+                      Video selected:{' '}
+                      {selectedMedia?.uri || selectedMedia?.mediaUrl}
+                    </Text>
+                  )}
+                </View>
+              )}
+            </TouchableOpacity>
 
             {!isFeedView && (
-              <View>
+              <View style={{paddingHorizontal: 10}}>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('Profile')}
                   style={{
@@ -814,7 +810,7 @@ const HomeScreen = ({navigation}) => {
                 </TouchableOpacity>
               </View>
             )}
-            <ConnectionRequests isFeedView={isFeedView} userId={user?._id} />
+            {/* <ConnectionRequests isFeedView={isFeedView} userId={user?._id} /> */}
             {!isFeedView && (
               <View>
                 <Text
@@ -836,6 +832,7 @@ const HomeScreen = ({navigation}) => {
         <SideNavigationScreen setIsSidebarVisible={setIsSidebarVisible} />
       )}
       {/* Modal for adding post */}
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -843,137 +840,201 @@ const HomeScreen = ({navigation}) => {
         onRequestClose={() => setModalVisible(false)}>
         <View
           style={{
-            flex: 1,
-            justifyContent: 'center',
+            // paddingVertical: 20,
             alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            borderColor: '#F1F4F5',
+            marginHorizontal: 10,
+            backgroundColor: 'white',
+            flex: 1,
           }}>
           <View
             style={{
-              width: '85%',
-              backgroundColor: 'white',
-              padding: 20,
-              borderRadius: 15,
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 4},
-              shadowOpacity: 0.3,
-              shadowRadius: 5,
-              elevation: 5,
-              alignItems: 'center',
+              marginTop: 20,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '100%',
             }}>
-            <Text
-              style={{
-                fontSize: 22,
-                fontWeight: 'bold',
-                marginBottom: 15,
-                color: 'black',
+            <TouchableOpacity
+              onPress={() => {
+                if (isEditMode) setIsEditMode(false);
+                setModalVisible(false);
+                setNewPostContent('');
+                setSelectedMedia(null);
+                setOpenActionPostId(null);
               }}>
-              {isEditMode ? 'Edit Post' : 'Create New Post'}
-            </Text>
-            <TextInput
-              placeholder="What's on your mind?"
-              multiline
-              value={newPostContent}
-              onChangeText={text => setNewPostContent(text)}
-              style={{
-                height: 100,
-                borderColor: '#ccc',
-                borderWidth: 1,
-                padding: 10,
-                borderRadius: 10,
-                marginBottom: 15,
-                width: '100%',
-                textAlignVertical: 'top',
-                color: 'black',
-              }}
-            />
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-around',
-                width: '100%',
-              }}>
-              <TouchableOpacity
-                onPress={() => pickMedia('image')}
-                style={{
-                  backgroundColor: '#A274FF',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 20,
-                }}>
-                <Text style={{color: '#fff'}}>Add Image</Text>
-              </TouchableOpacity>
-              {/* <TouchableOpacity
-                onPress={() => pickMedia('video')}
-                style={{
-                  backgroundColor: '#A274FF',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 20,
-                }}>
-                <Text style={{color: '#fff'}}>Add Video</Text>
-              </TouchableOpacity> */}
-            </View>
-            {selectedMedia && (
-              <View style={{marginTop: 15}}>
-                {(selectedMedia?.uri || selectedMedia?.mediaUrl) &&
-                (selectedMedia?.type?.startsWith('image') ||
-                  selectedMedia?.mediaType === 'image') ? (
-                  <Image
-                    source={{
-                      uri: selectedMedia?.uri || selectedMedia?.mediaUrl, // Ensure uri is a string
-                    }}
-                    style={{
-                      width: 100,
-                      height: 100,
-                      borderRadius: 10,
-                      marginTop: 10,
-                    }}
-                  />
-                ) : (
-                  <Text style={{marginTop: 10}}>
-                    Video selected:{' '}
-                    {selectedMedia?.uri || selectedMedia?.mediaUrl}
-                  </Text>
-                )}
-              </View>
-            )}
-
-            <View
-              style={{
-                marginTop: 20,
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                width: '100%',
-              }}>
-              <TouchableOpacity
-                onPress={handleAddPost}
-                style={{
-                  backgroundColor: '#A274FF',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 20,
-                }}>
-                <Text style={{color: '#fff'}}>Post</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  if (isEditMode) setIsEditMode(false);
-                  setModalVisible(false);
-                  setNewPostContent('');
-                  setSelectedMedia(null);
-                  setOpenActionPostId(null);
-                }}
-                style={{
-                  backgroundColor: '#ccc',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderRadius: 20,
-                }}>
-                <Text style={{color: '#fff'}}>Close</Text>
-              </TouchableOpacity>
-            </View>
+              <AntDesign name="close" size={30} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleAddPost}>
+              <Text style={{color: '#19295C', fontSize: 18, fontWeight: '500'}}>
+                Create Post
+              </Text>
+            </TouchableOpacity>
           </View>
+          <View
+            style={{
+              width: '100%',
+              flexDirection: 'row',
+              justifyContent: 'flex-start',
+              gap: 10,
+              paddingTop: 10,
+              marginTop: 10,
+              borderTopWidth: 1,
+              borderColor: '#F1F4F5',
+            }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#D0E8FF',
+                padding: 10,
+                paddingHorizontal: 14,
+                borderRadius: 30,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 2,
+              }}>
+              <Icon name="earth-sharp" size={7} color="#1F1F1F" />
+              <Text style={{color: '#1F1F1F', fontSize: 12}}>Anyone</Text>
+              <Icon name="caret-down-outline" size={10} color="#1F1F1F" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#D0E8FF',
+                padding: 10,
+                paddingHorizontal: 14,
+                borderRadius: 30,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 2,
+              }}>
+              <Text style={{color: '#1F1F1F', fontSize: 12}}>Schedule</Text>
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            placeholder={``}
+            multiline
+            value={newPostContent}
+            placeholderTextColor={'gray'}
+            onChangeText={text => setNewPostContent(text)}
+            style={{
+              height: 200,
+              paddingVertical: 10,
+              borderRadius: 10,
+              marginBottom: 15,
+              width: '100%',
+              textAlignVertical: 'top',
+              color: 'black',
+              fontSize: 18,
+            }}
+          />
+          {/* {newPostContent && (
+                <TouchableOpacity
+                  onPress={handleAddPost}
+                  style={{
+                    backgroundColor: '#A274FF',
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    borderRadius: 20,
+                    position: 'absolute',
+                    right: 10,
+                    top: 20,
+                  }}>
+                  <Text style={{color: '#fff'}}>P</Text>
+                </TouchableOpacity>
+              )} */}
+          <View
+            style={{
+              position: 'absolute',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '100%',
+              gap: 10,
+              bottom: 20,
+            }}>
+            <TouchableOpacity
+              onPress={() => pickMedia('image')}
+              style={{
+                backgroundColor: '#F1F4F5',
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+                borderRadius: 15,
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+              }}>
+              <Image
+                style={{height: 15, width: 15}}
+                source={require('../assets/icons/camera.png')}
+                resizeMode="contain"
+              />
+              <Text style={{color: '#535767', fontSize: 13}}>Photo/video</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              // onPress={() => pickMedia('image')}
+              style={{
+                backgroundColor: '#F1F4F5',
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+                borderRadius: 15,
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+              }}>
+              {/* <Image
+                style={{height: 15, width: 15}}
+                source={require('../assets/icons/camcorder.png')}
+                resizeMode="contain"
+              /> */}
+              <Icon name="attach" size={20} color="#F31954" />
+              <Text style={{color: '#535767', fontSize: 13}}>Attachment</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              // onPress={() => pickMedia('image')}
+              style={{
+                backgroundColor: '#F1F4F5',
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+                borderRadius: 15,
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+              }}>
+              <Image
+                style={{height: 15, width: 15}}
+                source={require('../assets/icons/eye.png')}
+                resizeMode="contain"
+              />
+              <Text style={{color: '#535767', fontSize: 13}}>Tags</Text>
+            </TouchableOpacity>
+          </View>
+          {selectedMedia && (
+            <View style={{marginTop: 15}}>
+              {(selectedMedia?.uri || selectedMedia?.mediaUrl) &&
+              (selectedMedia?.type?.startsWith('image') ||
+                selectedMedia?.mediaType === 'image') ? (
+                <Image
+                  source={{
+                    uri: selectedMedia?.uri || selectedMedia?.mediaUrl, // Ensure uri is a string
+                  }}
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 10,
+                    marginTop: 10,
+                  }}
+                />
+              ) : (
+                <Text style={{marginTop: 10}}>
+                  Video selected:{' '}
+                  {selectedMedia?.uri || selectedMedia?.mediaUrl}
+                </Text>
+              )}
+            </View>
+          )}
         </View>
       </Modal>
     </View>
@@ -1003,8 +1064,9 @@ const styles = StyleSheet.create({
   },
   postActions: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     marginTop: 25,
+    gap: 25,
   },
   actionButton: {
     flexDirection: 'row',
@@ -1021,14 +1083,11 @@ const styles = StyleSheet.create({
     color: '#7B7B7B',
   },
   iconButtons: {
-    position: 'relative',
-    padding: 5,
+    padding: 2,
     height: 50,
     width: 50,
     borderRadius: 25,
-    borderColor: '#EEEEEE',
-    borderWidth: 2,
-    display: 'flex',
+    backgroundColor: '#F1F4F5',
     alignItems: 'center',
     justifyContent: 'center',
   },

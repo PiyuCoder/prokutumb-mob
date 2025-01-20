@@ -22,14 +22,11 @@ const ProfilePicture = ({
     <View
       style={{
         backgroundColor: 'white',
-        padding: padding || 2,
-        width: isUser ? width + 4 : width + 5,
-        height: isUser ? height + 4 : height + 5,
-        borderRadius: isUser ? width + 4 / 2 : width + 5 / 2,
+        width: width,
+        height: height,
+        borderRadius: width / 2,
         marginRight,
         elevation: 2,
-        borderColor: isUser ? '#A274FF' : '#F5F5F5',
-        borderWidth: 2,
         alignItems: 'center',
         justifyContent: 'center',
       }}>

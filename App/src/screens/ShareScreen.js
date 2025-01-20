@@ -1,6 +1,7 @@
 import {
   Alert,
   Linking,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -24,7 +25,9 @@ const ShareScreen = ({navigation}) => {
   const [isQR, setIsQR] = useState(true);
   const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
-  const [qrCode, setQRCode] = useState(null);
+  const [lastScannedCode, setLastScannedCode] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const device = useCameraDevice('back');
 
@@ -72,49 +75,35 @@ const ShareScreen = ({navigation}) => {
     );
     return !!pattern.test(str);
   };
+  const handleCodeScanned = codes => {
+    if (isProcessing) return; // Prevent multiple triggers
+    setIsProcessing(true);
+
+    const scannedValue = codes[0]?.value;
+    if (scannedValue && scannedValue !== lastScannedCode) {
+      setLastScannedCode(scannedValue);
+      setModalVisible(true);
+    }
+
+    // Reset the processing state after a short delay
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 2000);
+  };
+
   const codeScanner = useCodeScanner({
     codeTypes: ['qr', 'ean-13'],
-    onCodeScanned: codes => {
-      if (isProcessing) return; // Prevent multiple alerts for the same QR
-      setIsProcessing(true);
-
-      const scannedValue = codes[0]?.value;
-      if (scannedValue && scannedValue !== lastScannedCode) {
-        setLastScannedCode(scannedValue);
-
-        // Check if it's a valid URL
-        if (isValidURL(scannedValue)) {
-          Alert.alert('QR Code Detected', `Open Link: ${scannedValue}`, [
-            {text: 'Cancel'},
-            {
-              text: 'Open',
-              onPress: () => Linking.openURL(scannedValue),
-            },
-          ]);
-        } else {
-          Alert.alert('QR Code Detected', `Data: ${scannedValue}`);
-        }
-      }
-
-      // Reset after a short delay
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 2000); // 2-second cooldown to prevent multiple detections
-    },
+    onCodeScanned: handleCodeScanned,
   });
 
-  // Handle QR code detection
-  // useEffect(() => {
-  //   if (barcodes.length > 0) {
-  //     const scannedQRCode = barcodes[0].content.data;
-  //     Alert.alert('QR Code Detected', `Data: ${scannedQRCode}`, [{text: 'OK'}]);
-  //   }
-  // }, [barcodes]);
-
-  // const handleQRCodeDetected = e => {
-  //   setQRCode(e.data);
-  //   Alert.alert('QR Code Scanned', `QR Code: ${e.data}`);
-  // };
+  const openLink = () => {
+    if (isValidURL(lastScannedCode)) {
+      Linking.openURL(lastScannedCode);
+    } else {
+      console.log('Not a valid URL');
+    }
+    setModalVisible(false);
+  };
   return (
     <View style={{flex: 1, backgroundColor: '#E9E5DF'}}>
       <View
@@ -240,6 +229,28 @@ const ShareScreen = ({navigation}) => {
               Requesting camera permission...
             </Text>
           )}
+          <Modal
+            visible={modalVisible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setModalVisible(false)}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>QR Code Detected</Text>
+                <Text style={styles.modalText}>{lastScannedCode}</Text>
+                {isValidURL(lastScannedCode) && (
+                  <TouchableOpacity onPress={openLink}>
+                    <Text style={styles.link}>Open Link</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setModalVisible(false)}>
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </View>
       )}
     </View>
@@ -248,4 +259,47 @@ const ShareScreen = ({navigation}) => {
 
 export default ShareScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  infoText: {
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  link: {
+    color: 'blue',
+    textDecorationLine: 'underline',
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  closeButton: {
+    backgroundColor: '#f05a5b',
+    padding: 10,
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});

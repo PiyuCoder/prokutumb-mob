@@ -12,7 +12,7 @@ import {
 import {axiosInstance} from '../api/axios';
 import {useNavigation} from '@react-navigation/native';
 import ProfilePicture from './ProfilePicture';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import Feather from 'react-native-vector-icons/Feather';
 
 const FriendsModal = ({userId}) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -54,7 +54,7 @@ const FriendsModal = ({userId}) => {
     <View>
       {/* Icon to Open Modal */}
       <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <AntDesign name="message1" size={30} color="#333" />
+        <Feather name="menu" size={30} color="black" />
       </TouchableOpacity>
 
       {/* Modal */}

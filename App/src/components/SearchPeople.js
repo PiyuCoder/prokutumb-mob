@@ -71,10 +71,14 @@ const SearchPeople = ({iconColor, home}) => {
           style={styles.iconButtons}
           onPress={() => setSearchVisible(true)}>
           {/* <Image source={lensIcon} style={styles.icon} /> */}
-          <Feather
+          {/* <Feather
             name="search"
             size={25}
             color={iconColor ? iconColor : '#A274FF'}
+          /> */}
+          <Image
+            style={{height: 20, width: 20}}
+            source={require('../assets/icons/lens-solid.png')}
           />
         </TouchableOpacity>
       )}
@@ -173,8 +177,8 @@ const styles = StyleSheet.create({
     height: 50,
     width: 50,
     borderRadius: 25,
-    borderColor: '#4b164c5a',
-    borderWidth: 1.2,
+    backgroundColor: '#F1F4F5',
+    // borderWidth: 1.2,
     alignItems: 'center',
     justifyContent: 'center',
   },
