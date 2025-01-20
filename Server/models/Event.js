@@ -55,6 +55,7 @@ const eventSchema = new Schema(
     paidTickets: {
       type: Number,
     },
+    category: { type: String, default: "" },
   },
   { timestamps: true }
 );

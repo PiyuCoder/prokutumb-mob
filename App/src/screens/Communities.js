@@ -57,6 +57,9 @@ export default function Communities({navigation, route}) {
   );
   const [modalType, setModalType] = useState(null);
   const [isActionModalVisible, setActionModalVisible] = useState(false);
+  const [category, setCategory] = useState('');
+  // const [filteredCommunities, setFilteredCommunities] = useState([])
+  // const [filteredEvents, setFilteredEvents] = useState([])
 
   const {user} = useSelector(state => state.auth);
 
@@ -138,6 +141,15 @@ export default function Communities({navigation, route}) {
       />
     </View>
   );
+
+  // Filtered data
+  const filteredCommunities = category
+    ? communities.filter(comm => comm?.category === category)
+    : communities;
+
+  const filteredEvents = category
+    ? events.filter(ev => ev?.category === category)
+    : events;
 
   const myCommunities = communities?.filter(
     community => community.createdBy?._id === user?._id,
@@ -226,21 +238,33 @@ export default function Communities({navigation, route}) {
         contentContainerStyle={{paddingHorizontal: 10, marginBottom: 20}}
         horizontal>
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 7}}>
-          <TouchableOpacity style={[styles.Btn, {backgroundColor: '#EDE9FF'}]}>
-            <Text style={styles.BtnText}>Networking</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.Btn, , {backgroundColor: '#FFF5D7'}]}>
-            <Text style={styles.BtnText}>Business</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.Btn, , {backgroundColor: '#FFECEC'}]}>
-            <Text style={styles.BtnText}>Technology</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.Btn, , {backgroundColor: '#E4FFEA'}]}>
-            <Text style={styles.BtnText}>Marketing</Text>
-          </TouchableOpacity>
+          {[
+            {name: 'Networking', color: '#EDE9FF'},
+            {name: 'Business', color: '#FFF5D7'},
+            {name: 'Technology', color: '#FFECEC'},
+            {name: 'Marketing', color: '#E4FFEA'},
+          ].map(cat => (
+            <TouchableOpacity
+              key={cat.name}
+              style={[
+                styles.filterButton,
+                {
+                  backgroundColor:
+                    category === cat.name ? '#A274FF' : cat.color,
+                },
+              ]}
+              onPress={() =>
+                setCategory(prev => (prev === cat.name ? '' : cat.name))
+              }>
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  category === cat.name && styles.activeFilterButtonText,
+                ]}>
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
       <View style={{flexDirection: 'row', marginBottom: 20}}>
@@ -293,9 +317,9 @@ export default function Communities({navigation, route}) {
           </>
         ) : (
           <>
-            {renderHorizontalList(events, 'Trending Events')}
-            {renderHorizontalList(events, 'Events for you')}
-            {renderHorizontalList(events, 'Events you May Like')}
+            {renderHorizontalList(filteredEvents, 'Trending Events')}
+            {renderHorizontalList(filteredEvents, 'Events for you')}
+            {renderHorizontalList(filteredEvents, 'Events you May Like')}
           </>
         )
       ) : modalType === 'myCommunities' ? (
@@ -305,9 +329,12 @@ export default function Communities({navigation, route}) {
         </>
       ) : (
         <>
-          {renderHorizontalList(communities, 'Trending Communities')}
-          {renderHorizontalList(communities, 'Communities for you')}
-          {renderHorizontalList(communities, 'Communities you May Like')}
+          {renderHorizontalList(filteredCommunities, 'Trending Communities')}
+          {renderHorizontalList(filteredCommunities, 'Communities for you')}
+          {renderHorizontalList(
+            filteredCommunities,
+            'Communities you May Like',
+          )}
         </>
       )}
     </ScrollView>
@@ -365,6 +392,21 @@ const styles = StyleSheet.create({
   imagePickerText: {
     color: 'white',
     fontSize: 16,
+  },
+  filterButton: {
+    padding: 5,
+    paddingHorizontal: 16,
+    backgroundColor: '#EDEDED',
+    borderRadius: 10,
+    marginHorizontal: 5,
+  },
+
+  filterButtonText: {
+    color: '#000',
+    fontSize: 14,
+  },
+  activeFilterButtonText: {
+    color: 'white',
   },
   locationNameContainer: {
     flexDirection: 'row',

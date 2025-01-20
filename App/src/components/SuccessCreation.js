@@ -57,7 +57,7 @@ const SuccessCreation = ({navigation, route}) => {
             : 'Your Community is Live!!!'
           : 'You are Registered'}
       </Text>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={sharePost}
         style={{
           backgroundColor: '#A274FF',
@@ -76,11 +76,15 @@ const SuccessCreation = ({navigation, route}) => {
           }}>
           Share
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <TouchableOpacity
         onPress={() =>
-          navigation.replace('Communities', {
-            screen: isEvent ? 'Events' : 'Communities',
+          navigation.reset({
+            index: 1,
+            routes: [
+              {name: 'Communities'},
+              {name: isEvent ? 'Events' : 'Communities'},
+            ],
           })
         }
         style={{

@@ -20,6 +20,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useSelector} from 'react-redux';
 import ProfilePicture from '../components/ProfilePicture';
+import {Picker} from '@react-native-picker/picker';
 
 const CreateCommunity = ({navigation}) => {
   const {user} = useSelector(state => state.auth);
@@ -33,6 +34,7 @@ const CreateCommunity = ({navigation}) => {
   const [activeTab, setActiveTab] = useState('CommunityType');
   const [isFreeMembership, setFreeMembership] = useState(true);
   const [isPreview, setIsPreview] = useState(false);
+  const [category, setCategory] = useState('');
 
   const [step, setStep] = useState(1);
 
@@ -122,6 +124,7 @@ const CreateCommunity = ({navigation}) => {
         formData.append('timezone', timezone);
         formData.append('location', communityLocation);
         formData.append('description', description);
+        formData.append('category', category);
         formData.append('profilePicture', {
           uri: profilePic,
           type: 'image/jpeg',
@@ -239,7 +242,7 @@ const CreateCommunity = ({navigation}) => {
                   borderRadius: 30,
                   borderColor: '#B0B8C3',
                 }}>
-                <Text>{`${step}/3`}</Text>
+                <Text style={{color: 'gray'}}>{`${step}/3`}</Text>
               </View>
             </View>
           )}
@@ -339,13 +342,44 @@ const CreateCommunity = ({navigation}) => {
                 multiline
                 placeholderTextColor={'gray'}
               />
-              <TextInput
+              {/* <TextInput
                 placeholder="Community Type"
                 value={communityType}
                 onChangeText={setCommunityType}
                 style={styles.input}
                 placeholderTextColor={'gray'}
-              />
+              /> */}
+              <View style={[styles.input, {marginVertical: 10}]}>
+                <Picker
+                  placeholder="Category"
+                  dropdownIconColor="black"
+                  selectedValue={category}
+                  onValueChange={itemValue => setCategory(itemValue)}>
+                  <Picker.Item
+                    label="Category (Optional)"
+                    value=""
+                    enabled={false}
+                    color="gray"
+                  />
+                  {['Networking', 'Business', 'Technology', 'Marketing'].map(
+                    (cat, index) => (
+                      <Picker.Item
+                        color="black"
+                        style={{
+                          padding: 30,
+                          color: 'black',
+                          backgroundColor: 'white',
+                          borderRadius: 30,
+                        }}
+                        key={index}
+                        label={cat}
+                        value={cat}
+                      />
+                    ),
+                  )}
+                </Picker>
+              </View>
+
               <View style={styles.media}>
                 {profilePic ? (
                   <Image

@@ -139,9 +139,9 @@ const EventCard = ({
                   textAlign: 'left',
                   width: '90%',
                 }}>
-                {`${event?.date || 'Date'}, ${event?.startTime} - ${
-                  event?.endTime
-                }` || 'Time'}
+                {`${event?.startDate}${
+                  event?.endDate === '' ? ',' : event?.endDate
+                } ${event?.startTime} - ${event?.endTime}` || 'Time'}
               </Text>
             </View>
           </View>

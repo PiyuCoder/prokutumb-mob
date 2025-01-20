@@ -41,6 +41,7 @@ const CreateEvent = ({navigation, route}) => {
   const [communityId, setCommunityId] = useState(
     route.params?.communityId ? myCommunities[0]?._id : '',
   );
+  const [category, setCategory] = useState('');
   const [address, setAddress] = useState('');
   const [tags, setTags] = useState('');
   const [activeTab, setActiveTab] = useState('EventType');
@@ -191,6 +192,7 @@ const CreateEvent = ({navigation, route}) => {
         formData.append('freeTickets', freeTickets);
         formData.append('paidTickets', paidTickets);
         formData.append('timezone', timezone);
+        formData.append('category', category);
 
         formData.append('profilePicture', {
           uri: profilePic,
@@ -299,7 +301,7 @@ const CreateEvent = ({navigation, route}) => {
                   borderRadius: 30,
                   borderColor: '#B0B8C3',
                 }}>
-                <Text>{`${step}/3`}</Text>
+                <Text style={{color: 'gray'}}>{`${step}/3`}</Text>
               </View>
             </View>
           )}
@@ -396,13 +398,32 @@ const CreateEvent = ({navigation, route}) => {
                 multiline
                 placeholderTextColor={'gray'}
               />
-              <TextInput
-                placeholder="Category (optional)"
-                value={eventType}
-                onChangeText={setEventType}
-                style={styles.input}
-                placeholderTextColor={'gray'}
-              />
+              <View style={[styles.input, {marginVertical: 10}]}>
+                <Picker
+                  placeholder="Category"
+                  dropdownIconColor={'black'}
+                  selectedValue={category}
+                  onValueChange={(itemValue, itemIndex) =>
+                    setCategory(itemValue)
+                  }>
+                  {['Networking', 'Business', 'Technology', 'Marketing']?.map(
+                    (cat, index) => (
+                      <Picker.Item
+                        color="black"
+                        style={{
+                          padding: 30,
+                          color: 'black',
+                          backgroundColor: 'white',
+                          borderRadius: 30,
+                        }}
+                        key={index}
+                        label={cat}
+                        value={cat}
+                      />
+                    ),
+                  )}
+                </Picker>
+              </View>
               <View style={styles.media}>
                 {profilePic ? (
                   <Image
@@ -429,16 +450,24 @@ const CreateEvent = ({navigation, route}) => {
           /> */}
 
               <View style={[styles.input, {marginVertical: 20}]}>
-                <Text>Select your community</Text>
+                <Text style={{color: 'black'}}>Select your community</Text>
                 <Picker
                   placeholder="Select your community"
+                  dropdownIconColor={'black'}
                   selectedValue={communityId}
+                  // itemStyle={{backgroundColor: 'red', color: 'yellow'}}
                   onValueChange={(itemValue, itemIndex) =>
                     setCommunityId(itemValue)
                   }>
                   {myCommunities?.map(comm => (
                     <Picker.Item
-                      style={{padding: 30, color: 'black'}}
+                      color="black"
+                      style={{
+                        padding: 30,
+                        color: 'black',
+                        backgroundColor: 'white',
+                        borderRadius: 30,
+                      }}
                       key={comm._id}
                       label={comm?.name}
                       value={comm?._id}

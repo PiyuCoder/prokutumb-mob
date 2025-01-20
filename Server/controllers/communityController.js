@@ -53,7 +53,8 @@ exports.fetchCommunity = async (req, res) => {
 
 exports.createCommunity = (io, userSocketMap) => async (req, res) => {
   try {
-    const { name, description, isAnonymous, createdBy, timezone } = req.body;
+    const { name, description, isAnonymous, createdBy, timezone, category } =
+      req.body;
 
     // Validate required fields
     if (!name || !description || !createdBy) {
@@ -92,6 +93,7 @@ exports.createCommunity = (io, userSocketMap) => async (req, res) => {
       profilePicture,
       createdBy,
       timezone,
+      category,
     });
 
     await newCommunity.save();
@@ -395,7 +397,8 @@ exports.createEvent = (io, userSocketMap) => async (req, res) => {
       communityId,
       freeTickets,
       address,
-      timezone
+      timezone,
+      category
     );
     // Validate required fields
     if (!name || !description || !createdBy) {
@@ -447,6 +450,7 @@ exports.createEvent = (io, userSocketMap) => async (req, res) => {
       community: communityId,
       paidTickets,
       address,
+      category,
     });
 
     await event.save();

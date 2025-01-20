@@ -116,10 +116,7 @@ const EventScreen = ({navigation, route}) => {
 
       <ImageBackground
         source={{
-          uri:
-            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSW1YcHoQm8wrj6prf2m7UPneL8lQEEN3IfCw&s' ||
-            event?.profilePicture ||
-            '',
+          uri: event?.profilePicture,
         }}
         style={styles.eventProfilePicture}
         imageStyle={styles.profilePictureImage}
@@ -159,7 +156,9 @@ const EventScreen = ({navigation, route}) => {
           }}>
           <Feather name="calendar" size={20} color="#2D264B40" />
           <View style={{marginLeft: 10}}>
-            <Text style={{color: 'black'}}>{event?.date || ''}</Text>
+            <Text style={{color: 'black'}}>{`${event?.startDate}${
+              event?.endDate === '' ? '' : event?.endDate
+            }`}</Text>
             <Text style={{color: 'black'}}>
               {`${event?.startTime} - ${event?.endTime}` || ''}
             </Text>
@@ -268,7 +267,7 @@ const EventScreen = ({navigation, route}) => {
         <View>
           <Text style={{color: 'black'}}>Start from</Text>
           <Text style={{color: 'black', fontWeight: '500', fontSize: 15}}>
-            IDR 1,100,00
+            Free $0.00
           </Text>
         </View>
         {!event?.members?.find(mem => mem._id === user?._id) ? (
