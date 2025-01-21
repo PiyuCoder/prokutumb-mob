@@ -382,24 +382,9 @@ exports.createEvent = (io, userSocketMap) => async (req, res) => {
       freeTickets,
       address,
       timezone,
+      category,
     } = req.body;
 
-    console.log(
-      name,
-      description,
-      createdBy,
-      eventType,
-      paidTickets,
-      startDate,
-      endDate,
-      startTime,
-      endTime,
-      communityId,
-      freeTickets,
-      address,
-      timezone,
-      category
-    );
     // Validate required fields
     if (!name || !description || !createdBy) {
       return res
