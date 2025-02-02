@@ -54,6 +54,10 @@ const postSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  tags: {
+    type: [String],
+    default: [],
+  },
 });
 
 const Feed = mongoose.model("Feed", postSchema);

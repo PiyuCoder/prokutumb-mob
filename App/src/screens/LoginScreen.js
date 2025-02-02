@@ -30,12 +30,13 @@ const LoginScreen = ({navigation}) => {
       const token = await AsyncStorage.getItem('authToken');
       const user = await AsyncStorage.getItem('user');
 
-      // console.log(user);
-
       if (token && user) {
+        const parsedUser = JSON.parse(user);
+        console.log('isProfileComplete: ', parsedUser.isProfileComplete);
         // Dispatch loginSuccess with existing token and user
         dispatch(loginSuccess({token, user: JSON.parse(user)}));
-        navigation.replace('Dashboard');
+        if (parsedUser?.isProfileComplete) navigation.replace('Dashboard');
+        else navigation.replace('CreateProfile');
       }
       setIsLoading(false);
     };

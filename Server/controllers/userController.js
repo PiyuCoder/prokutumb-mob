@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const Feed = require("../models/Feed");
 const NotificationMob = require("../models/Notification");
 const Communitymob = require("../models/Community");
+const Event = require("../models/Event");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -18,26 +19,28 @@ exports.googleLogin = (req, res) => {
     { expiresIn: "1h" }
   );
 
+  console.log("google login");
   // Send back token and user info
   res.status(200).json({
+    success: true,
     message: "Login successful!",
     token: token,
-    user: {
-      _id: user._id,
-      email: user.email,
-      name: user.name,
-      profilePicture: user.profilePicture,
-      coverPicture: user.coverPicture,
-      experience: user.experience,
-      education: user.education,
-      bio: user.bio,
-      dob: user.dob,
-      interests: user.interests,
-      location: user.location,
-      friends: user.friends,
-      friendRequests: user.friendRequests,
-      following: user.following,
-    },
+    user,
+  });
+};
+
+exports.fetchUserData = async (req, res) => {
+  const { userId } = req.params;
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ message: "Invalid or missing userId" });
+  }
+  const user = await Member.findById(userId);
+  if (!user) {
+    return res.status(400).json({ message: "User not found." });
+  }
+  // Send back token and user info
+  res.status(200).json({
+    user,
   });
 };
 
@@ -57,11 +60,13 @@ exports.fetchUserInfo = async (req, res) => {
     // Count communities where the user is the creator
     const createdCommunitiesCount = await Communitymob.countDocuments({
       createdBy: userId,
+      isDraft: false,
     });
 
     // Count communities where the user is a member
     const memberCommunitiesCount = await Communitymob.countDocuments({
       members: { $in: [userId] },
+      isDraft: false,
     });
 
     // Combine counts for total communities associated with the user
@@ -89,7 +94,9 @@ exports.fetchUser = async (req, res) => {
   try {
     const { userId, currentUserId } = req.params;
 
-    console.log(userId);
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid or missing userId" });
+    }
 
     // Fetch user details
     const user = await Member.findById(userId);
@@ -97,6 +104,18 @@ exports.fetchUser = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "User not found." });
     }
+
+    // Count communities where the user is the creator
+    const createdCommunitiesCount = await Communitymob.countDocuments({
+      createdBy: userId,
+      isDraft: false,
+    });
+
+    // Count communities where the user is a member
+    const memberCommunitiesCount = await Communitymob.countDocuments({
+      members: { $in: [userId] },
+      isDraft: false,
+    });
 
     // Check if the current user is already connected
     const isAlreadyConnected = user.friends.some(
@@ -113,33 +132,61 @@ exports.fetchUser = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean(); // Convert MongoDB documents to plain JavaScript objects
 
-    const whyConnect = ["Mutual Interests", "Location", "Education"];
-
+    // Combine counts for total communities associated with the user
+    const totalCommunities = createdCommunitiesCount + memberCommunitiesCount;
     // Return user details and posts
     res.status(200).json({
       success: true,
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture,
-        coverPicture: user.coverPicture,
-        experience: user.experience,
-        education: user.education,
-        bio: user.bio,
-        dob: user.dob,
-        interests: user.interests,
-        location: user.location,
-        friendRequests: user.friendRequests,
-        friends: user.friends,
-        whyConnect,
-        isAlreadyConnected,
+      user,
+      posts,
+      isAlreadyConnected,
+      communities: {
+        createdCount: createdCommunitiesCount,
+        memberCount: memberCommunitiesCount,
+        total: totalCommunities,
       },
-      posts, // Include user's posts
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error while fetching user" });
+  }
+};
+
+exports.getUserCommunitiesAndEvents = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    console.log("gettimng user communities and events", userId);
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Fetch communities where the user is the creator
+    const communities = await Communitymob.find({
+      createdBy: userId,
+      isDraft: false,
+    }).populate("createdBy", "name profilePicture");
+
+    // Extract community IDs
+    const communityIds = communities.map((community) => community._id);
+    let events = [];
+    if (communities.length) {
+      // Fetch events associated with those communities
+      events = await Event.find({
+        community: { $in: communityIds },
+        isDraft: false,
+      });
+    }
+
+    res.status(200).json({
+      message: "Communities and events fetched successfully",
+      communities,
+      events,
+    });
+  } catch (error) {
+    console.error("Error fetching communities and events:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -161,28 +208,65 @@ exports.editAbout = async (req, res) => {
 
     res.status(200).json({
       message: "About section updated successfully",
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture,
-        coverPicture: user.coverPicture,
-        experience: user.experience,
-        education: user.education,
-        bio: user.bio,
-        dob: user.dob,
-        interests: user.interests,
-        location: user.location,
-        friends: user.friends,
-        friendRequests: user.friendRequests,
-        following: user.following,
-      },
+      user,
     });
   } catch (error) {
     console.error(error);
     res
       .status(500)
       .json({ message: "An error occurred while updating the About section" });
+  }
+};
+
+exports.createProfile = async (req, res) => {
+  try {
+    const {
+      userId,
+      name,
+      interests,
+      about,
+      skills,
+      experience,
+      education,
+      socialLinks,
+      location,
+    } = req.body;
+
+    let profilePicture;
+    if (req.file) {
+      profilePicture = `https://${req.get("host")}/uploads/dp/${
+        req.file.filename
+      }`;
+    }
+
+    const user = await Member.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.name = name;
+    user.profilePicture = profilePicture;
+    user.interests = JSON.parse(interests);
+    user.bio = about;
+    user.location = location;
+    user.skills = JSON.parse(skills);
+    user.experience = JSON.parse(experience);
+    user.education = JSON.parse(education);
+    user.socialLinks = JSON.parse(socialLinks);
+    user.isProfileComplete = true;
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile created successfully",
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while creating the profile" });
   }
 };
 
@@ -253,22 +337,7 @@ exports.editProfile = async (req, res) => {
 
     res.status(200).json({
       message: "Profile updated successfully",
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture,
-        coverPicture: user.coverPicture,
-        experience: user.experience,
-        education: user.education,
-        bio: user.bio,
-        dob: user.dob,
-        interests: user.interests,
-        location: user.location,
-        friends: user.friends,
-        friendRequests: user.friendRequests,
-        following: user.following,
-      },
+      user,
     });
   } catch (error) {
     console.error(error);
@@ -298,22 +367,7 @@ exports.addEducation = async (req, res) => {
 
     res.status(200).json({
       message: "Education added successfully",
-      user: {
-        _id: updatedUser._id,
-        email: updatedUser.email,
-        name: updatedUser.name,
-        profilePicture: updatedUser.profilePicture, // Profile picture from Google
-        coverPicture: updatedUser.coverPicture,
-        experience: updatedUser.experience,
-        education: user.education,
-        bio: updatedUser.bio,
-        dob: updatedUser.dob,
-        interests: updatedUser.interests,
-        location: updatedUser.location,
-        friends: updatedUser.friends,
-        friendRequests: updatedUser.friendRequests,
-        following: updatedUser.following,
-      },
+      user: updatedUser,
     });
   } catch (error) {
     console.error(error);
@@ -340,22 +394,7 @@ exports.addExperience = async (req, res) => {
 
     res.status(200).json({
       message: "Experience added successfully",
-      user: {
-        _id: updatedUser._id,
-        email: updatedUser.email,
-        name: updatedUser.name,
-        profilePicture: updatedUser.profilePicture, // Profile picture from Google
-        coverPicture: updatedUser.coverPicture,
-        experience: updatedUser.experience,
-        education: updatedUser.education,
-        bio: updatedUser.bio,
-        dob: updatedUser.dob,
-        interests: updatedUser.interests,
-        location: updatedUser.location,
-        friends: updatedUser.friends,
-        friendRequests: updatedUser.friendRequests,
-        following: updatedUser.following,
-      },
+      user: updatedUser,
     });
   } catch (error) {
     console.error(error);
@@ -395,22 +434,7 @@ exports.editExperience = async (req, res) => {
 
     return res.status(200).json({
       message: "Experience updated successfully",
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture, // Profile picture from Google
-        coverPicture: user.coverPicture,
-        experience: user.experience,
-        education: user.education,
-        bio: user.bio,
-        dob: user.dob,
-        interests: user.interests,
-        location: user.location,
-        friends: user.friends,
-        friendRequests: user.friendRequests,
-        following: user.following,
-      },
+      user,
     });
   } catch (error) {
     console.error("Error updating experience:", error);
@@ -452,22 +476,7 @@ exports.editEdu = async (req, res) => {
 
     return res.status(200).json({
       message: "Experience updated successfully",
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture, // Profile picture from Google
-        coverPicture: user.coverPicture,
-        experience: user.experience,
-        education: user.education,
-        bio: user.bio,
-        dob: user.dob,
-        interests: user.interests,
-        location: user.location,
-        friends: user.friends,
-        friendRequests: user.friendRequests,
-        following: user.following,
-      },
+      user,
     });
   } catch (error) {
     console.error("Error updating experience:", error);
@@ -546,22 +555,7 @@ exports.follow = async (req, res) => {
     // Respond with updated user info
     res.status(200).json({
       message: "Following",
-      user: {
-        _id: follower._id,
-        email: follower.email,
-        name: follower.name,
-        profilePicture: follower.profilePicture,
-        coverPicture: follower.coverPicture,
-        experience: follower.experience,
-        education: follower.education,
-        bio: follower.bio,
-        dob: follower.dob,
-        interests: follower.interests,
-        location: follower.location,
-        friends: follower.friends,
-        friendRequests: follower.friendRequests,
-        following: follower.following,
-      },
+      user: follower,
     });
   } catch (error) {
     console.error("Follow API error:", error.message);
@@ -573,29 +567,57 @@ exports.acceptRequest = async (req, res) => {
   const { fromUserId, toUserId } = req.body;
 
   try {
-    // Add each user to the other's friends list
-    await Member.findByIdAndUpdate(toUserId, {
-      $push: {
-        friends: {
-          _id: fromUserId,
-          addedAt: new Date(),
-        },
-      },
-      $pull: { friendRequests: { fromUser: fromUserId } },
-    });
+    // Fetch both users concurrently
+    const [toUser, fromUser] = await Promise.all([
+      Member.findById(toUserId),
+      Member.findById(fromUserId),
+    ]);
 
-    await Member.findByIdAndUpdate(fromUserId, {
-      $push: {
-        friends: {
-          _id: toUserId,
-          addedAt: new Date(),
-        },
-      },
-    });
+    if (!toUser || !fromUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
 
-    res
-      .status(200)
-      .json({ success: true, message: "Friend request accepted." });
+    // Check if they are already friends
+    const isAlreadyFriend = toUser.friends.some(
+      (friend) => friend._id.toString() === fromUserId
+    );
+
+    if (isAlreadyFriend) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Users are already friends." });
+    }
+
+    // Accept the friend request
+    await Promise.all([
+      Member.findByIdAndUpdate(toUserId, {
+        $push: {
+          friends: {
+            _id: fromUserId,
+            addedAt: new Date(),
+          },
+        },
+        $pull: { friendRequests: { fromUser: fromUserId } },
+      }),
+      Member.findByIdAndUpdate(fromUserId, {
+        $push: {
+          friends: {
+            _id: toUserId,
+            addedAt: new Date(),
+          },
+        },
+      }),
+    ]);
+
+    // Send the updated user data as part of the response
+    const updatedUser = await Member.findById(toUserId);
+    res.status(200).json({
+      success: true,
+      message: "Friend request accepted.",
+      user: updatedUser,
+    });
   } catch (error) {
     console.error("Error accepting friend request:", error);
     res
@@ -608,13 +630,18 @@ exports.declineRequest = async (req, res) => {
   const { fromUserId, toUserId } = req.body;
 
   try {
+    // Pull the declined request from the toUser's friendRequests
     await Member.findByIdAndUpdate(toUserId, {
       $pull: { friendRequests: { fromUser: fromUserId } },
     });
 
-    res
-      .status(200)
-      .json({ success: true, message: "Friend request declined." });
+    const updatedUser = await Member.findById(toUserId);
+
+    res.status(200).json({
+      success: true,
+      message: "Friend request declined.",
+      user: updatedUser,
+    });
   } catch (error) {
     console.error("Error declining friend request:", error);
     res
@@ -622,38 +649,55 @@ exports.declineRequest = async (req, res) => {
       .json({ success: false, message: "Failed to decline friend request." });
   }
 };
+
 exports.fetchFriendRequests = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // console.log(userId);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId format" });
+    }
 
-    // Find the user and populate their friend requests
-    const populatedUser = await Member.findById(userId).populate(
-      "friendRequests.fromUser",
-      "name profilePicture designation"
-    );
-
-    const user = await Member.findById(userId);
+    // Fetch user along with friend requests
+    const populatedUser = await Member.findById(userId)
+      .populate(
+        "friendRequests.fromUser",
+        "name profilePicture designation friends"
+      )
+      .populate("friends", "_id");
 
     if (!populatedUser) {
       return res.status(404).json({ message: "User not found." });
     }
 
-    console.log("Fetching requests");
-    // console.log(user);
-    // Extract the relevant friend requests details
-    const requests = populatedUser.friendRequests.map((request) => ({
-      _id: request.fromUser._id,
-      name: request.fromUser.name,
-      profilePicture: request.fromUser.profilePicture,
-      designation: request.fromUser.designation,
-      requestedAt: request.requestedAt,
-    }));
+    const userFriendIds = new Set(
+      populatedUser.friends.map((friend) => friend._id.toString())
+    );
 
-    // console.log(requests);
+    // Process each friend request and compute mutual friends
+    const requests = populatedUser.friendRequests.map((request) => {
+      const fromUser = request.fromUser;
 
-    res.status(200).json({ success: true, requests, user });
+      // Find mutual friends (intersection of both friend lists)
+      const fromUserFriendIds = new Set(
+        fromUser.friends.map((friend) => friend.toString())
+      );
+      const mutualFriends = [...userFriendIds].filter((id) =>
+        fromUserFriendIds.has(id)
+      );
+
+      return {
+        _id: fromUser._id,
+        name: fromUser.name,
+        profilePicture: fromUser.profilePicture,
+        designation: fromUser.designation,
+        requestedAt: request.requestedAt,
+        mutualFriendsCount: mutualFriends.length,
+        mutualFriends: mutualFriends.slice(0, 3), // Limit to 3 mutual friends for preview
+      };
+    });
+
+    res.status(200).json({ success: true, requests });
   } catch (error) {
     console.error("Error fetching friend requests:", error);
     res
@@ -838,17 +882,18 @@ exports.fetchTopNetworkers = async (req, res) => {
 exports.fetchPeopleYouMayKnow = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.params.userId);
-    const user = await Member.findById(userId).populate("friends", "_id");
+    const user = await Member.findById(userId);
 
-    // Get IDs of user's friends
-    const friendIds = user.friends.map((friend) => friend._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    // Find people with mutual friends and shared interests
+    // Find people with shared interests
     const peopleYouMayKnow = await Member.aggregate([
       {
         $match: {
-          _id: { $nin: [...friendIds, userId] },
-          interests: { $in: user.interests },
+          _id: { $ne: userId }, // Exclude the current user
+          interests: { $in: user.interests }, // Match based on shared interests
         },
       },
       {
@@ -858,14 +903,11 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
           commonInterests: {
             $size: { $setIntersection: ["$interests", user.interests] },
           },
-          mutualFriends: {
-            $size: { $setIntersection: ["$friends", friendIds] },
-          },
         },
       },
-      { $match: { mutualFriends: { $gt: 0 }, commonInterests: { $gt: 0 } } },
-      { $sort: { mutualFriends: -1, commonInterests: -1 } },
-      { $limit: 10 },
+      { $match: { commonInterests: { $gt: 0 } } }, // Ensure at least one shared interest
+      { $sort: { commonInterests: -1 } }, // Sort by most shared interests
+      { $limit: 10 }, // Limit results to 10 users
     ]);
 
     res.json(peopleYouMayKnow);
@@ -928,22 +970,7 @@ exports.updateInterests = async (req, res) => {
 
     return res.status(200).json({
       message: "Interests updated successfully.",
-      user: {
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture,
-        coverPicture: user.coverPicture,
-        experience: user.experience,
-        education: user.education,
-        bio: user.bio,
-        dob: user.dob,
-        interests: user.interests,
-        location: user.location,
-        friends: user.friends,
-        friendRequests: user.friendRequests,
-        following: user.following,
-      },
+      user,
     });
   } catch (error) {
     console.error("Error updating interests:", error);

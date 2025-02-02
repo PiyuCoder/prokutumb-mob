@@ -157,9 +157,7 @@ const SearchPeople = ({iconColor, home}) => {
                   /> */}
                   <View>
                     <Text style={styles.userName}>{item.name}</Text>
-                    <Text style={styles.userLocation}>
-                      {item.location?.state}
-                    </Text>
+                    <Text style={styles.userLocation}>{item.location}</Text>
                   </View>
                 </View>
               </TouchableOpacity>

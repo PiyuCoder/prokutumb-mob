@@ -53,7 +53,7 @@ const SearchCommNEvent = ({iconColor, isEvent}) => {
           placeholder={`Search ${isEvent ? 'events..' : 'communities..'}`}
           value={query}
           onChangeText={setQuery}
-          autoFocus
+          // autoFocus
           placeholderTextColor={'black'}
         />
       </View>
@@ -85,7 +85,7 @@ const SearchCommNEvent = ({iconColor, isEvent}) => {
 
               <View>
                 <Text style={styles.userName}>{item.name}</Text>
-                <Text style={styles.userLocation}>{item.location?.state}</Text>
+                <Text style={styles.userLocation}>{item.location}</Text>
               </View>
             </View>
           </TouchableOpacity>

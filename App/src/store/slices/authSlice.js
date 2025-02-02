@@ -134,6 +134,8 @@ export const fetchFriendRequests = createAsyncThunk(
         `/api/user/connectionRequests/${userId}`,
       );
 
+      console.log(response.data);
+
       // console.log('user while fetching reqs', response.data.user);
       return response.data; // Return friend requests
     } catch (error) {
@@ -149,6 +151,21 @@ export const fetchNotifications = createAsyncThunk(
   async (userId, {rejectWithValue}) => {
     try {
       const response = await axiosInstance.get(`/api/notifications/${userId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to fetch friend requests',
+      );
+    }
+  },
+);
+export const fetchUserData = createAsyncThunk(
+  'auth/fetchUserData',
+  async (userId, {rejectWithValue}) => {
+    try {
+      const response = await axiosInstance.get(
+        `/api/user/fetchUserData/${userId}`,
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -192,6 +209,44 @@ export const follow = createAsyncThunk(
     }
   },
 );
+export const declineRequest = createAsyncThunk(
+  'auth/declineRequest',
+  async ({fromUserId, toUserId}, {rejectWithValue}) => {
+    try {
+      const response = await axiosInstance.post(
+        '/api/user/declineFriendRequest',
+        {
+          fromUserId,
+          toUserId,
+        },
+      );
+      return {user: response.data.user, senderId: fromUserId}; // Return the updated user data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to save interests',
+      );
+    }
+  },
+);
+export const acceptRequest = createAsyncThunk(
+  'auth/acceptRequest',
+  async ({fromUserId, toUserId}, {rejectWithValue}) => {
+    try {
+      const response = await axiosInstance.post(
+        '/api/user/acceptFriendRequest',
+        {
+          fromUserId,
+          toUserId,
+        },
+      );
+      return {user: response.data.user, senderId: fromUserId}; // Return the updated user data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || 'Failed to save interests',
+      );
+    }
+  },
+);
 
 export const updateAsyncStorage = async user => {
   console.log('Updating user in AsyncStorage:', user);
@@ -216,6 +271,7 @@ const authSlice = createSlice({
       state.token = action.payload.token; // Store token
       state.user = action.payload.user; // Store user information
       state.isAuthenticated = true;
+      updateAsyncStorage(action.payload.user);
     },
     logout: state => {
       state.token = null;
@@ -256,6 +312,10 @@ const authSlice = createSlice({
       .addCase(editProfile.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+      })
+      .addCase(fetchUserData.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        updateAsyncStorage(action.payload.user);
       })
       // Handle the Add experience thunk
       .addCase(editUserExperience.pending, state => {
@@ -335,11 +395,33 @@ const authSlice = createSlice({
       .addCase(fetchFriendRequests.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.friendRequests = action.payload.requests;
-        updateAsyncStorage(action.payload.user);
+        // updateAsyncStorage(action.payload.user);
       })
       .addCase(fetchFriendRequests.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+      })
+      .addCase(acceptRequest.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        const {senderId, user} = action.payload;
+
+        // Ensure comparison is done using string values
+        state.friendRequests = state.friendRequests.filter(
+          request => request._id.toString() !== senderId.toString(),
+        );
+        state.user = user;
+        updateAsyncStorage(user);
+      })
+      .addCase(declineRequest.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        const {senderId, user} = action.payload;
+
+        // Ensure comparison is done using string values
+        state.friendRequests = state.friendRequests.filter(
+          request => request._id.toString() !== senderId.toString(),
+        );
+        state.user = user;
+        updateAsyncStorage(user);
       })
       .addCase(saveUserInterests.pending, state => {
         state.status = 'loading';

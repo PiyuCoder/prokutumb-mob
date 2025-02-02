@@ -32,10 +32,8 @@ export default function EditProfile({navigation}) {
   );
 
   const [editedPassword, setEditedPassword] = useState('');
-  const [editedState, setEditedState] = useState(user.location?.state || '');
-  const [editedCountry, setEditedCountry] = useState(
-    user.location?.country || '',
-  );
+  const [editedState, setEditedState] = useState(user.location || '');
+  const [editedCountry, setEditedCountry] = useState(user.location || '');
   const [profilePicture, setProfilePicture] = useState(null);
   const [coverPicture, setCoverPicture] = useState(null);
   const [uploading, setUploading] = useState(false);

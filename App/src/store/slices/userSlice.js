@@ -18,6 +18,23 @@ export const checkRegistration = createAsyncThunk(
     }
   },
 );
+export const registration = createAsyncThunk(
+  'user/registration',
+  async ({token, code}, {rejectWithValue}) => {
+    try {
+      const response = await axiosInstance.post('/api/user/google-signin', {
+        token, // sending the Google ID token
+        code,
+      });
+
+      // Return the payload on success
+      return response.data;
+    } catch (error) {
+      // Handle errors and return rejection
+      return rejectWithValue(error.response.data);
+    }
+  },
+);
 
 // User slice
 const userSlice = createSlice({
@@ -38,10 +55,12 @@ const userSlice = createSlice({
       state.needsRegistration = false;
     },
     removeFriendRequest: (state, action) => {
-      const {fromUserId, toUserId} = action.payload;
+      const {senderId} = action.payload;
+      console.log('Declining request from:', senderId);
+
+      // Ensure comparison is done using string values
       state.friendRequests = state.friendRequests.filter(
-        request =>
-          request.fromUser !== fromUserId || request.toUser !== toUserId,
+        request => request._id.toString() !== senderId.toString(),
       );
     },
   },
@@ -59,6 +78,11 @@ const userSlice = createSlice({
         state.isAuthenticated = true;
         state.isHr = action.payload.isHr;
         state.needsRegistration = action.payload.needsRegistration;
+      })
+      .addCase(registration.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.isAuthenticated = true;
       })
       // Rejected state
       .addCase(checkRegistration.rejected, (state, action) => {

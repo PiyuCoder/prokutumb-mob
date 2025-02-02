@@ -42,6 +42,13 @@ import CreateEvent from './src/screens/CreateEvent';
 import SuccessCreation from './src/components/SuccessCreation';
 import Ticket from './src/screens/Ticket';
 import Post from './src/screens/Post';
+import CreateProfile from './src/screens/createProfile/CreateProfile';
+import CreateProfileStepOne from './src/screens/createProfile/CreateProfileStepOne';
+import CreateProfileStepTwo from './src/screens/createProfile/CreateProfileStepTwo';
+import CreateProfileStepThree from './src/screens/createProfile/CreateProfileStepThree';
+import CreateProfileStepFour from './src/screens/createProfile/CreateProfileStepFour';
+import Tickets from './src/screens/Tickets';
+import MyCommOrEvents from './src/screens/MyCommOrEvents';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -301,6 +308,41 @@ export default function App() {
             <Stack.Screen
               name="SuccessCreation"
               component={SuccessCreation}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateProfile"
+              component={CreateProfile}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateProfileStepOne"
+              component={CreateProfileStepOne}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateProfileStepTwo"
+              component={CreateProfileStepTwo}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateProfileStepThree"
+              component={CreateProfileStepThree}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="CreateProfileStepFour"
+              component={CreateProfileStepFour}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Tickets"
+              component={Tickets}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="MyCommOrEvents"
+              component={MyCommOrEvents}
               options={{headerShown: false}}
             />
           </Stack.Navigator>

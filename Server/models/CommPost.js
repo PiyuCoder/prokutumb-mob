@@ -59,6 +59,10 @@ const postSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  tags: {
+    type: [String],
+    default: [],
+  },
 });
 
 const CommPost = mongoose.model("CommPost", postSchema);

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -130,7 +131,7 @@ const CreateCommunity = ({navigation}) => {
           type: 'image/jpeg',
           name: 'profile.jpg',
         });
-        formData.append('createdBy', user?._id); // Replace with actual user ID
+        formData.append('createdBy', user?._id);
 
         const res = await axiosInstanceForm.post('/api/communities', formData);
 
@@ -143,6 +144,48 @@ const CreateCommunity = ({navigation}) => {
             isEvent: false,
             isRegistered: false,
           });
+        }
+      } catch (error) {
+        console.error('Error creating community:', error.message);
+      }
+    } else {
+      alert('Please fill all fields');
+    }
+  };
+  const handleCreateDraftCommunity = async () => {
+    if (
+      communityName &&
+      profilePic &&
+      description &&
+      communityType &&
+      communityLocation &&
+      timezone
+    ) {
+      try {
+        const formData = new FormData();
+        formData.append('name', communityName);
+        formData.append('type', communityType);
+        formData.append('timezone', timezone);
+        formData.append('location', communityLocation);
+        formData.append('description', description);
+        formData.append('category', category);
+        formData.append('profilePicture', {
+          uri: profilePic,
+          type: 'image/jpeg',
+          name: 'profile.jpg',
+        });
+        formData.append('createdBy', user?._id);
+
+        const res = await axiosInstanceForm.post('/api/communities', formData);
+
+        if (res.status === 201) {
+          setCommunityName('');
+          setProfilePic(null);
+          setDescription('');
+
+          ToastAndroid.show('Saved as draft!', ToastAndroid.SHORT);
+
+          navigation.goBack();
         }
       } catch (error) {
         console.error('Error creating community:', error.message);
@@ -722,6 +765,7 @@ const CreateCommunity = ({navigation}) => {
             </TouchableOpacity>
           </View>
           <TouchableOpacity
+            onPress={handleCreateDraftCommunity}
             style={[styles.submitButton, {backgroundColor: 'black'}]}>
             <Text style={styles.submitButtonText}>Save as Draft</Text>
           </TouchableOpacity>

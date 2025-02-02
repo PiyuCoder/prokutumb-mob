@@ -44,7 +44,7 @@ const MessageScreen = () => {
     // return () => {
     //   socket.disconnect();
     // };
-  }, [user._id]);
+  }, [user?._id]);
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -135,7 +135,7 @@ const MessageScreen = () => {
         keyExtractor={item => item.message._id}
         renderItem={({item}) => {
           const contact =
-            item.message.sender === user._id
+            item.message.sender === user?._id
               ? item.recipientDetails
               : item.senderDetails;
           return (

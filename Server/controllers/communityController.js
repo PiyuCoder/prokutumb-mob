@@ -7,10 +7,11 @@ const CommPost = require("../models/CommPost");
 const NotificationMob = require("../models/Notification");
 const Member = require("../models/Member");
 const Event = require("../models/Event");
+const Ticket = require("../models/Ticket");
 
 exports.fetchCommunities = async (req, res) => {
   try {
-    const communities = await Communitymob.find()
+    const communities = await Communitymob.find({ isDraft: false })
       .populate("createdBy", "name")
       .sort({ createdAt: -1 }); // Populates creator details if needed
     res.status(200).json({ success: true, data: communities });
@@ -26,13 +27,14 @@ exports.fetchCommunities = async (req, res) => {
 exports.fetchCommunity = async (req, res) => {
   try {
     const { communityId } = req.params;
-
+    console.log("fetching community:", communityId);
     const community = await Communitymob.findById(communityId)
       .populate("createdBy", "name profilePicture")
       .populate("members", "name profilePicture");
 
     const filter = communityId ? { community: communityId } : {};
     const posts = await CommPost.find(filter)
+      .populate("comments.user", "name profilePicture")
       .populate("user", "name profilePicture")
       .populate("community", "name")
       .sort({ createdAt: -1 }); // Sort by newest first
@@ -53,8 +55,16 @@ exports.fetchCommunity = async (req, res) => {
 
 exports.createCommunity = (io, userSocketMap) => async (req, res) => {
   try {
-    const { name, description, isAnonymous, createdBy, timezone, category } =
-      req.body;
+    const {
+      name,
+      description,
+      isAnonymous,
+      createdBy,
+      timezone,
+      category,
+      location,
+      communityType,
+    } = req.body;
 
     // Validate required fields
     if (!name || !description || !createdBy) {
@@ -94,6 +104,8 @@ exports.createCommunity = (io, userSocketMap) => async (req, res) => {
       createdBy,
       timezone,
       category,
+      location,
+      communityType,
     });
 
     await newCommunity.save();
@@ -143,6 +155,80 @@ exports.createCommunity = (io, userSocketMap) => async (req, res) => {
   }
 };
 
+exports.createDraftCommunity = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      isAnonymous,
+      createdBy,
+      timezone,
+      category,
+      location,
+      communityType,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !description || !createdBy) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, description, and creator are required.",
+      });
+    }
+
+    let profilePicture;
+
+    // Handle profile picture upload
+    if (req.file) {
+      profilePicture = `https://${req.get("host")}/uploads/${
+        req.file.filename
+      }`;
+
+      const community = await Communitymob.findOne({ createdBy });
+      if (community && community.profilePicture?.includes("/uploads/")) {
+        const oldFilePath = path.join(
+          __dirname,
+          "../uploads/",
+          path.basename(community.profilePicture)
+        );
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+        }
+      }
+    }
+
+    // Create new community
+    const newCommunity = new Communitymob({
+      name,
+      description,
+      isAnonymous: isAnonymous || false,
+      profilePicture,
+      createdBy,
+      timezone,
+      category,
+      location,
+      communityType,
+      isDraft: true,
+    });
+
+    await newCommunity.save();
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Community created successfully and notifications sent to invitees.",
+      data: newCommunity,
+    });
+  } catch (error) {
+    console.error("Error creating community:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create community",
+      error: error.message,
+    });
+  }
+};
+
 exports.joinCommunity = (io, userSocketMap) => async (req, res) => {
   try {
     console.log("working");
@@ -152,7 +238,7 @@ exports.joinCommunity = (io, userSocketMap) => async (req, res) => {
     // Fetch the community details and populate the createdBy field
     const community = await Communitymob.findById(communityId).populate(
       "createdBy",
-      "name profilePicture _id"
+      "name profilePicture"
     );
 
     if (!community) {
@@ -320,9 +406,27 @@ exports.bookSeat = async (req, res) => {
       event.members.push(userId);
     }
 
+    const ticket = new Ticket({ buyer: userId, event: eventId });
+    await ticket.save();
+
     await event.save();
 
     res.status(200).json({ message: "Booked seats!" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+exports.fetchTickets = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const tickets = await Ticket.find({ buyer: userId })
+      .populate("event")
+      .populate("buyer", "name")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, data: tickets });
   } catch (error) {
     res.status(500).json({ message: "Server error." });
   }
@@ -475,10 +579,91 @@ exports.createEvent = (io, userSocketMap) => async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+exports.createDraftEvent = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      createdBy,
+      eventType,
+      paidTickets,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      communityId,
+      freeTickets,
+      address,
+      timezone,
+      category,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !description || !createdBy) {
+      return res
+        .status(400)
+        .json({ error: "Name, description, and createdBy are required" });
+    }
+
+    // Process file uploads
+    let profilePicture;
+
+    // Handle profile picture upload
+    if (req.file) {
+      // Save new profile picture
+      profilePicture = `https://${req.get("host")}/uploads/${
+        req.file.filename
+      }`;
+
+      // Check and delete the old profile picture if it exists
+      // const existingEvent = await Event.findOne({ createdBy });
+      // if (
+      //   existingEvent &&
+      //   existingEvent.profilePicture?.includes("/uploads/")
+      // ) {
+      //   const oldFilePath = path.join(
+      //     __dirname,
+      //     "../uploads/",
+      //     path.basename(existingEvent.profilePicture)
+      //   );
+      //   if (fs.existsSync(oldFilePath)) {
+      //     fs.unlinkSync(oldFilePath);
+      //   }
+      // }
+    }
+
+    // Create and save the event
+    const event = new Event({
+      name,
+      timezone,
+      description,
+      profilePicture,
+      createdBy,
+      eventType,
+      freeTickets,
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      community: communityId,
+      paidTickets,
+      address,
+      category,
+      isDraft: true,
+    });
+
+    await event.save();
+
+    res.status(201).json({ message: "Event created successfully", event });
+  } catch (error) {
+    console.error("Error creating event:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
 
 exports.createPost = async (req, res) => {
   try {
-    const { content, communityId, userId } = req.body;
+    const { content, communityId, userId, tags } = req.body;
     // console.log(req.file);
 
     if (!communityId || !userId) {
@@ -511,6 +696,7 @@ exports.createPost = async (req, res) => {
       content,
       mediaUrl,
       mediaType,
+      tags,
     });
 
     const savedPost = await newPost.save();
@@ -572,6 +758,7 @@ exports.editPost = async (req, res) => {
     existingPost.content = req.body.content || existingPost.content;
     existingPost.mediaUrl = mediaUrl || existingPost.mediaUrl;
     existingPost.mediaType = mediaType || existingPost.mediaType;
+    existingPost.tags = req.body.tags || existingPost.tags;
 
     // Save the updated post
     const updatedPost = await existingPost.save();

@@ -83,7 +83,10 @@ const SuccessCreation = ({navigation, route}) => {
             index: 1,
             routes: [
               {name: 'Communities'},
-              {name: isEvent ? 'Events' : 'Communities'},
+              {
+                name: isEvent ? 'CreateEvent' : 'CreateCommunity',
+                params: {screen: 'Events'},
+              },
             ],
           })
         }

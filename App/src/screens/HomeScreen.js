@@ -19,7 +19,11 @@ import {
   Dimensions,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {fetchFriendRequests, logout} from '../store/slices/authSlice';
+import {
+  fetchFriendRequests,
+  fetchUserData,
+  logout,
+} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {launchImageLibrary} from 'react-native-image-picker'; // Use react-native-image-picker
 import {
@@ -44,13 +48,16 @@ import SimpleIcon from 'react-native-vector-icons/SimpleLineIcons';
 import {axiosInstance} from '../api/axios';
 import SideNavigationScreen from '../components/SideNavigationScreen';
 import SearchPeople from '../components/SearchPeople';
+import Video from 'react-native-video';
+import SelectModal from '../components/SelectModal';
 
 const {width, height} = Dimensions.get('window');
+const tagList = ['Networking', 'Business', 'Technology', 'Marketing'];
 
 const HomeScreen = ({navigation}) => {
   const [isFeedView, setIsFeedView] = useState(true); // Toggle between Feed and Profile
   const {user} = useSelector(state => state.auth);
-  const posts = useSelector(state => state.posts.posts);
+  const {posts, loading} = useSelector(state => state.posts);
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,6 +77,8 @@ const HomeScreen = ({navigation}) => {
   const [stories, setStories] = useState([]);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-width * 0.7)).current;
+  const [isTagsModalVisible, setIsTagsModalVisible] = useState(false);
+  const [tags, setTags] = useState([]);
 
   const flatListRef = useRef(null);
 
@@ -84,8 +93,8 @@ const HomeScreen = ({navigation}) => {
     }
   };
   useEffect(() => {
-    fetchStories();
-  }, [user]);
+    dispatch(fetchUserData(user?._id));
+  }, [user?._id]);
 
   // console.log(user);
   // const stories = [
@@ -102,14 +111,22 @@ const HomeScreen = ({navigation}) => {
 
   const loadMorePosts = async () => {
     console.log('onEndReached triggered, page:', page);
-    setIsLoading(true);
-    if (!isFetching && (page <= totalPages || totalPages === 0)) {
-      setIsFetching(true);
-      await dispatch(fetchPosts({page, userId: user?._id}));
-      setPage(prevPage => prevPage + 1);
-      setIsFetching(false);
-      setIsLoading(false);
-      setRefreshing(false);
+    try {
+      setIsLoading(true);
+      console.log('called');
+      if (!isFetching) {
+        setIsFetching(true);
+        await dispatch(fetchPosts({page, userId: user?._id})).then(action => {
+          if (fetchPosts.fulfilled.match(action)) {
+            setPage(prevPage => prevPage + 1);
+            setIsFetching(false);
+            setIsLoading(false);
+            setRefreshing(false);
+          }
+        });
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -120,13 +137,13 @@ const HomeScreen = ({navigation}) => {
       setIsFetching(true);
       const filteredPosts = posts.filter(post => post.user?._id === user?._id);
       setUserPosts(filteredPosts);
+
       setIsFetching(false);
     }
   }, [posts, user]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // setIsLoading(true);
 
     // fetchStories();
     loadMorePosts();
@@ -151,79 +168,6 @@ const HomeScreen = ({navigation}) => {
       );
       setCurrentComment(''); // Clear input
     }
-  };
-
-  // console.log(stories);
-  const renderStory = ({item}) => (
-    <TouchableOpacity
-      onPress={() => {
-        viewStory(item);
-      }}>
-      <View
-        style={{
-          alignItems: 'center',
-          marginHorizontal: 10,
-          position: 'relative',
-        }}>
-        <ProfilePicture
-          profilePictureUri={item.image}
-          width={50}
-          height={50}
-          borderRadius={25}
-          marginRight={10}
-          borderColor={'#A274FF'}
-          isUser={false}
-          story
-        />
-        {/* <Image
-          source={{uri: item.image}}
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: 30,
-            borderWidth: item.isUser ? 2 : 0,
-            borderColor: item.isUser ? '' : '#A274FF',
-          }}
-        /> */}
-        <Text style={{fontSize: 12, marginTop: 5}}>{item.name}</Text>
-        {/* <View
-          style={{
-            position: 'absolute',
-            bottom: 18,
-            right: 7,
-            backgroundColor: 'white',
-            height: 20,
-            width: 20,
-            borderRadius: 10,
-            padding: 1,
-          }}>
-          <Image
-            style={{height: '100%', width: '100%'}}
-            source={require('../assets/icons/add.png')}
-          />
-        </View> */}
-      </View>
-    </TouchableOpacity>
-  );
-
-  const viewStory = story => {
-    console.log('Viewing story of', story.name);
-    // setSelectedStory(story);
-    console.log(story);
-    // Scroll to the post that matches the story's postId
-    const index = posts.findIndex(post => post._id === story.id);
-    if (index !== -1) {
-      flatListRef.current.scrollToIndex({index, animated: true});
-    }
-  };
-
-  const handleLogout = async () => {
-    await GoogleSignin.signOut();
-    dispatch(logout());
-    AsyncStorage.removeItem('authToken');
-    AsyncStorage.removeItem('user');
-    disconnectSocket();
-    navigation.navigate('Login');
   };
 
   const handleUserPress = userId => {
@@ -271,8 +215,6 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
-  console.log('EditMode: ', isEditMode);
-  console.log('EditMode: ', isEditMode);
   const handleAddPost = async () => {
     if (newPostContent.trim()) {
       const formData = new FormData();
@@ -280,6 +222,7 @@ const HomeScreen = ({navigation}) => {
       // Add post content (text) to form data
       formData.append('user', user?._id); // User ID
       formData.append('content', newPostContent); // Post content
+      formData.append('tags', tags); // Post content
 
       // Add media if selected
       if (selectedMedia && selectedMedia?.type) {
@@ -497,7 +440,7 @@ const HomeScreen = ({navigation}) => {
       {/* Comment Section */}
       {openCommentPostId === item._id && (
         <View style={styles.commentSection}>
-          <Text
+          {/* <Text
             style={{
               fontWeight: 'bold',
               color: 'black',
@@ -505,7 +448,7 @@ const HomeScreen = ({navigation}) => {
               marginVertical: 20,
             }}>
             Comments
-          </Text>
+          </Text> */}
           {item.comments?.length > 0 ? (
             item.comments.map(comment => (
               <View key={comment._id} style={styles.commentContainer}>
@@ -568,6 +511,8 @@ const HomeScreen = ({navigation}) => {
     }).start();
   };
 
+  if (loading) return <Loader isLoading={loading} />;
+
   return (
     <View
       style={{
@@ -577,7 +522,7 @@ const HomeScreen = ({navigation}) => {
         backgroundColor: '#F1F4F5',
       }}>
       <StatusBar backgroundColor="white" barStyle="dark-content" />
-      {/* <Loader isLoading={isLoading} /> */}
+
       <FlatList
         ref={flatListRef}
         refreshControl={
@@ -587,7 +532,11 @@ const HomeScreen = ({navigation}) => {
         keyExtractor={item => item._id}
         renderItem={renderPost}
         contentContainerStyle={{paddingBottom: 80}}
-        ListEmptyComponent={<Text>No Posts yet</Text>}
+        ListEmptyComponent={
+          <Text style={{color: 'gray', marginTop: 30, textAlign: 'center'}}>
+            No Posts yet
+          </Text>
+        }
         // onEndReached={loadMorePosts}
         onEndReachedThreshold={0.2}
         ListFooterComponent={
@@ -719,9 +668,7 @@ const HomeScreen = ({navigation}) => {
                     source={require('../assets/icons/camera.png')}
                     resizeMode="contain"
                   />
-                  <Text style={{color: '#535767', fontSize: 13}}>
-                    Photo/video
-                  </Text>
+                  <Text style={{color: '#535767', fontSize: 13}}>Photo</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setModalVisible(true)}
@@ -741,10 +688,13 @@ const HomeScreen = ({navigation}) => {
                     source={require('../assets/icons/camcorder.png')}
                     resizeMode="contain"
                   /> */}
-                  <Icon name="attach" size={20} color="#F31954" />
-                  <Text style={{color: '#535767', fontSize: 13}}>
-                    Attachment
-                  </Text>
+                  {/* <Icon name="attach" size={20} color="#F31954" /> */}
+                  <Image
+                    style={{height: 15, width: 15}}
+                    source={require('../assets/icons/camcorder.png')}
+                    resizeMode="contain"
+                  />
+                  <Text style={{color: '#535767', fontSize: 13}}>Video</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setModalVisible(true)}
@@ -784,13 +734,30 @@ const HomeScreen = ({navigation}) => {
                       }}
                     />
                   ) : (
-                    <Text style={{marginTop: 10}}>
-                      Video selected:{' '}
-                      {selectedMedia?.uri || selectedMedia?.mediaUrl}
-                    </Text>
+                    <Video
+                      source={{
+                        uri: selectedMedia?.uri || selectedMedia?.mediaUrl,
+                      }}
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: 10,
+                        marginTop: 10,
+                      }}
+                      controls={true} // Enables play, pause, seek controls
+                      resizeMode="contain"
+                      paused
+                    />
                   )}
                 </View>
               )}
+              <SelectModal
+                visible={isTagsModalVisible}
+                items={tagList}
+                selectedItems={tags}
+                onClose={() => setIsTagsModalVisible(false)}
+                onSelect={item => setTags(item)}
+              />
             </TouchableOpacity>
 
             {!isFeedView && (
@@ -840,10 +807,9 @@ const HomeScreen = ({navigation}) => {
         onRequestClose={() => setModalVisible(false)}>
         <View
           style={{
-            // paddingVertical: 20,
+            paddingHorizontal: 10,
             alignItems: 'center',
             borderColor: '#F1F4F5',
-            marginHorizontal: 10,
             backgroundColor: 'white',
             flex: 1,
           }}>
@@ -881,7 +847,7 @@ const HomeScreen = ({navigation}) => {
               borderTopWidth: 1,
               borderColor: '#F1F4F5',
             }}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={{
                 backgroundColor: '#D0E8FF',
                 padding: 10,
@@ -906,10 +872,11 @@ const HomeScreen = ({navigation}) => {
                 gap: 2,
               }}>
               <Text style={{color: '#1F1F1F', fontSize: 12}}>Schedule</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
           <TextInput
             placeholder={``}
+            maxLength={500}
             multiline
             value={newPostContent}
             placeholderTextColor={'gray'}
@@ -925,21 +892,6 @@ const HomeScreen = ({navigation}) => {
               fontSize: 18,
             }}
           />
-          {/* {newPostContent && (
-                <TouchableOpacity
-                  onPress={handleAddPost}
-                  style={{
-                    backgroundColor: '#A274FF',
-                    paddingVertical: 10,
-                    paddingHorizontal: 20,
-                    borderRadius: 20,
-                    position: 'absolute',
-                    right: 10,
-                    top: 20,
-                  }}>
-                  <Text style={{color: '#fff'}}>P</Text>
-                </TouchableOpacity>
-              )} */}
           <View
             style={{
               position: 'absolute',
@@ -967,10 +919,10 @@ const HomeScreen = ({navigation}) => {
                 source={require('../assets/icons/camera.png')}
                 resizeMode="contain"
               />
-              <Text style={{color: '#535767', fontSize: 13}}>Photo/video</Text>
+              <Text style={{color: '#535767', fontSize: 13}}>Photo</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              // onPress={() => pickMedia('image')}
+              onPress={() => pickMedia('video')}
               style={{
                 backgroundColor: '#F1F4F5',
                 paddingVertical: 10,
@@ -982,16 +934,15 @@ const HomeScreen = ({navigation}) => {
                 justifyContent: 'center',
                 gap: 4,
               }}>
-              {/* <Image
+              <Image
                 style={{height: 15, width: 15}}
                 source={require('../assets/icons/camcorder.png')}
                 resizeMode="contain"
-              /> */}
-              <Icon name="attach" size={20} color="#F31954" />
-              <Text style={{color: '#535767', fontSize: 13}}>Attachment</Text>
+              />
+              <Text style={{color: '#535767', fontSize: 13}}>Video</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              // onPress={() => pickMedia('image')}
+              onPress={() => setIsTagsModalVisible(true)}
               style={{
                 backgroundColor: '#F1F4F5',
                 paddingVertical: 10,
@@ -1028,13 +979,26 @@ const HomeScreen = ({navigation}) => {
                   }}
                 />
               ) : (
-                <Text style={{marginTop: 10}}>
-                  Video selected:{' '}
-                  {selectedMedia?.uri || selectedMedia?.mediaUrl}
-                </Text>
+                <Video
+                  source={{
+                    uri: selectedMedia?.uri || selectedMedia?.mediaUrl,
+                  }}
+                  style={{
+                    width: 200,
+                    height: 200,
+                    borderRadius: 10,
+                    marginTop: 10,
+                  }}
+                  controls={true} // Enables play, pause, seek controls
+                  resizeMode="contain"
+                  paused // Auto-play video
+                />
               )}
             </View>
           )}
+          <Text style={{color: 'gray'}}>
+            {tags?.length ? `#${tags?.join(' #')}` : ''}
+          </Text>
         </View>
       </Modal>
     </View>

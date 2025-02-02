@@ -73,7 +73,7 @@ const CommunityCard = ({
                     width: isTrending ? '50%' : '90%',
                   },
                 ]}>
-                {community?.communityType || 'Worldwide'}
+                {community?.location || 'Worldwide'}
               </Text>
             </View>
             {isActionModalVisible && (
@@ -125,7 +125,11 @@ const CommunityCard = ({
                     alignSelf: isTrending ? 'auto' : 'center',
                   },
                 ]}>
-                <Text style={[styles.BtnText, ,]}>Join</Text>
+                <Text style={[styles.BtnText]}>
+                  {community?.joinRequests?.some(req => req._id == user?._id)
+                    ? 'Requested'
+                    : 'Join'}
+                </Text>
               </TouchableOpacity>
             )}
           <View
@@ -211,7 +215,7 @@ const styles = StyleSheet.create({
   Btn: {
     backgroundColor: '#A274FF',
     padding: 5,
-    width: 100,
+    width: 110,
     borderRadius: 25,
     paddingHorizontal: 15,
     marginTop: 10,

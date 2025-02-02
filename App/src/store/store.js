@@ -5,6 +5,7 @@ import {combineReducers} from 'redux';
 import postsReducer from './slices/postSlice';
 import authReducer from './slices/authSlice';
 import commReducer from './slices/commPostSlice';
+import profileReducer from './slices/profileSlice';
 
 // Persist Config
 const persistConfig = {
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   posts: postsReducer,
   commposts: commReducer,
+  profile: profileReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

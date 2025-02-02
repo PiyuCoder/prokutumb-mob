@@ -33,12 +33,7 @@ const memberSchema = new mongoose.Schema({
     },
   },
   location: {
-    state: {
-      type: String,
-    },
-    country: {
-      type: String,
-    },
+    type: String,
   },
   googleId: {
     type: String,
@@ -141,6 +136,21 @@ const memberSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
+  },
+  isProfileComplete: {
+    type: Boolean,
+    default: false,
+  },
+  socialLinks: [
+    {
+      platform: String,
+      url: String,
+      logo: String,
+      color: String,
+    },
+  ],
+  referralCode: {
+    type: String,
   },
 });
 

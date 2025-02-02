@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const userController = require("../controllers/userController");
-const checkRegistration = require("../middlewares/checkRegistration");
+const checkRegistrationController = require("../middlewares/checkRegistration");
 const multer = require("multer");
 const path = require("path");
 
@@ -20,12 +20,57 @@ const uploadPictures = multer({ storage: storage }).fields([
   { name: "coverPicture", maxCount: 1 },
 ]);
 
+const dpStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/dp/"); // Folder to store uploaded files
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
+  },
+});
+
+const upload = multer({
+  storage: dpStorage,
+  fileFilter: (req, file, cb) => {
+    console.log("Multer test: ", file);
+    const allowedTypes = /jpeg|jpg|png|gif/;
+    const extname = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only images are allowed!"));
+    }
+  },
+});
+
 module.exports = (io, userSocketMap) => {
-  router.post("/google-signin", checkRegistration, userController.googleLogin);
+  router.post(
+    "/check-registration",
+    checkRegistrationController.checkRegistration
+  );
+  router.post(
+    "/google-signin",
+    checkRegistrationController.checkRegistrationWithCode,
+    userController.googleLogin
+  );
+  router.post(
+    "/create-profile",
+    upload.single("profilePicture"),
+    userController.createProfile
+  );
+  router.get("/fetchUserData/:userId", userController.fetchUserData);
   router.get("/fetchUser/:userId/:currentUserId", userController.fetchUser);
   router.get("/fetchUserInfo/:userId", userController.fetchUserInfo);
   router.put("/about/:userId", userController.editAbout);
   router.put("/profile/:userId", uploadPictures, userController.editProfile);
+  router.get(
+    "/:userId/communities-events",
+    userController.getUserCommunitiesAndEvents
+  );
 
   router.get("/connectionRequests/:userId", userController.fetchFriendRequests);
   router.post(

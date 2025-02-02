@@ -8,6 +8,7 @@ import {
   StatusBar,
   Modal,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import CommunityCard from '../components/CommunityCard';
@@ -18,10 +19,10 @@ import AntDesignIcons from 'react-native-vector-icons/AntDesign';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import FAIcon from 'react-native-vector-icons/FontAwesome5';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {ScrollView} from 'react-native-gesture-handler';
 import {isAction} from '@reduxjs/toolkit';
 import EventCard from '../components/EventCard';
 import SearchCommNEvent from '../components/SearchCommNEvent';
+import Loader from '../components/Loader';
 
 // const events = [
 //   {
@@ -58,6 +59,7 @@ export default function Communities({navigation, route}) {
   const [modalType, setModalType] = useState(null);
   const [isActionModalVisible, setActionModalVisible] = useState(false);
   const [category, setCategory] = useState('');
+  const [loading, setLoading] = useState(false);
   // const [filteredCommunities, setFilteredCommunities] = useState([])
   // const [filteredEvents, setFilteredEvents] = useState([])
 
@@ -65,6 +67,7 @@ export default function Communities({navigation, route}) {
 
   useEffect(() => {
     const fetchCommunities = async () => {
+      setLoading(true);
       try {
         if (user?._id) {
           const res = await axiosInstance.get('/api/communities');
@@ -87,6 +90,8 @@ export default function Communities({navigation, route}) {
         }
       } catch (error) {
         console.error('Error fetching events:', error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -170,6 +175,7 @@ export default function Communities({navigation, route}) {
   return (
     <ScrollView style={styles.container}>
       <StatusBar backgroundColor="white" barStyle={'dark-content'} />
+      {loading && <Loader isLoading={loading} />}
       <View style={styles.headerActions}>
         <View
           style={{
@@ -300,14 +306,14 @@ export default function Communities({navigation, route}) {
           </Text>
         </TouchableOpacity>
       </View>
-      <Text style={{color: '#7C7C7C', fontSize: 12, marginLeft: 10}}>
+      {/* <Text style={{color: '#7C7C7C', fontSize: 12, marginLeft: 10}}>
         Find {isEvent ? 'events' : 'communities'} in
       </Text>
       <View style={styles.locationNameContainer}>
         <EvilIcons name="location" size={15} color="#333538" />
         <Text style={styles.locationNameText}>{'Barcelona'}</Text>
         <MaterialIcons name="keyboard-arrow-down" size={15} color="#333538" />
-      </View>
+      </View> */}
 
       {isEvent ? (
         modalType === 'myEvents' ? (

@@ -102,7 +102,7 @@ const SideNavigationScreen = ({setIsSidebarVisible}) => {
               <Text style={styles.menuText}>Share Profile</Text>
             </TouchableOpacity>
           </View>
-          <View style={{flex: 1, justifyContent: 'flex-end'}}>
+          {/* <View style={{flex: 1, justifyContent: 'flex-end'}}>
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
@@ -122,7 +122,7 @@ const SideNavigationScreen = ({setIsSidebarVisible}) => {
                 Settings
               </Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
         </Animated.View>
       </Modal>
     </>
@@ -148,6 +148,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
 
     elevation: 5,
+    borderBottomRightRadius: 20,
   },
   headerContainer: {
     alignItems: 'flex-start',

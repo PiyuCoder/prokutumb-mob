@@ -47,6 +47,7 @@ exports.createPost = async (req, res) => {
     const newPost = new Feed({
       user: req.body.user, // Assuming user ID is provided in the request body
       content: req.body.content || "",
+      tags: req.body.tags || [],
       mediaUrl, // Save media URL (image or video) in the post
       mediaType, // Media type (image or video)
     });
@@ -104,6 +105,7 @@ exports.editPost = async (req, res) => {
     existingPost.content = req.body.content || existingPost.content;
     existingPost.mediaUrl = mediaUrl || existingPost.mediaUrl;
     existingPost.mediaType = mediaType || existingPost.mediaType;
+    existingPost.tags = req.body.tags || existingPost.tags;
 
     // Save the updated post
     const updatedPost = await existingPost.save();

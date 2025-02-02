@@ -28,45 +28,46 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import ConnectionRequests from '../components/ConnectionRequests';
 import {fetchFriendRequests} from '../store/slices/authSlice';
 
-const people = [
-  {
-    _id: '1',
-    name: 'John Doe',
-    profilePicture: 'https://via.placeholder.com/150',
-    distance: 120,
-    designation: 'UI Developer',
-  },
-  {
-    _id: '2',
-    name: 'Tony Stark',
-    profilePicture: 'https://via.placeholder.com/150',
-    distance: 120,
-    designation: 'MERN Developer',
-  },
-  {
-    _id: '3',
-    name: 'Spiderman',
-    profilePicture: 'https://via.placeholder.com/150',
-    distance: 120,
-    designation: 'React Developer',
-  },
-  {
-    _id: '4',
-    name: 'Captain America',
-    profilePicture: 'https://via.placeholder.com/150',
-    distance: 120,
-    designation: 'Product Manager',
-  },
-  {
-    _id: '5',
-    name: 'Thor',
-    profilePicture: 'https://via.placeholder.com/150',
-    distance: 120,
-    designation: 'Business Analyst',
-  },
-];
+// const people = [
+//   {
+//     _id: '1',
+//     name: 'John Doe',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     designation: 'UI Developer',
+//   },
+//   {
+//     _id: '2',
+//     name: 'Tony Stark',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     designation: 'MERN Developer',
+//   },
+//   {
+//     _id: '3',
+//     name: 'Spiderman',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     designation: 'React Developer',
+//   },
+//   {
+//     _id: '4',
+//     name: 'Captain America',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     designation: 'Product Manager',
+//   },
+//   {
+//     _id: '5',
+//     name: 'Thor',
+//     profilePicture: 'https://via.placeholder.com/150',
+//     distance: 120,
+//     designation: 'Business Analyst',
+//   },
+// ];
 
 const DiscoverScreen = ({navigation}) => {
+  const {friendRequests} = useSelector(state => state.auth);
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
   const [locationName, setLocationName] = useState('');
@@ -81,6 +82,7 @@ const DiscoverScreen = ({navigation}) => {
   const {user} = useSelector(state => state.auth);
   const [sliceIndex, setSliceIndex] = useState(6);
   const dispatch = useDispatch();
+  const [people, setPeople] = useState([]);
 
   console.log('API Keys', process.env['REACT_APP_GEOCODER_API_KEY']);
 
@@ -244,6 +246,15 @@ const DiscoverScreen = ({navigation}) => {
   //   </TouchableOpacity>
   // );
 
+  useEffect(() => {
+    const fetchPeople = async () => {
+      const res = await axiosInstance.get(
+        `/api/user/people-you-may-know/${user?._id}`,
+      );
+      setPeople(res?.data || []);
+    };
+    fetchPeople();
+  }, [user?._id]);
   return (
     <ScrollView
       style={styles.container}
@@ -272,7 +283,7 @@ const DiscoverScreen = ({navigation}) => {
       <Loader isLoading={loading} />
       {error && <Text style={styles.error}>{error}</Text>}
 
-      <ConnectionRequests userId={user?._id} />
+      <ConnectionRequests userId={user?._id} friendRequests={friendRequests} />
 
       <View
         style={{

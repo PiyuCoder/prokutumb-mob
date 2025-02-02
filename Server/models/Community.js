@@ -36,7 +36,11 @@ const communitySchema = new Schema(
     },
     communityType: {
       type: String,
-      default: "public",
+      default: "",
+    },
+    isDraft: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

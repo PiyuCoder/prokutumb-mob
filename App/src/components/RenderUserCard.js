@@ -40,7 +40,7 @@ const RenderUserCard = ({item}) => {
         {/* User Info */}
         <View>
           <Text style={styles.userName}>{item?.name}</Text>
-          <Text style={styles.mutual}>{'Unknown'}</Text>
+          <Text style={styles.mutual}>{item?.location}</Text>
         </View>
 
         {/* Earth Icon */}
@@ -56,7 +56,16 @@ const RenderUserCard = ({item}) => {
         {/* <TouchableOpacity style={styles.connectBtn}>
           <Text style={styles.connectBtnText}>Connect</Text>
         </TouchableOpacity> */}
-        <ConnectButtonWithModal />
+        {/* <ConnectButtonWithModal /> */}
+        <TouchableOpacity
+          style={styles.connectBtn}
+          onPress={() =>
+            navigation.navigate('UserProfile', {
+              userId: item._id,
+            })
+          }>
+          <Text style={styles.connectBtnText}>Add Friend</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -116,6 +125,21 @@ const styles = StyleSheet.create({
   imageBackground: {
     height: '100%',
     width: '100%',
+  },
+  connectBtn: {
+    backgroundColor: '#A274FF',
+    width: '85%',
+    paddingVertical: 5,
+    borderRadius: 25,
+    marginTop: 15,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  connectBtnText: {
+    color: 'white',
+    fontWeight: '500',
+    fontSize: 15,
+    textAlign: 'center',
   },
   imageBackgroundImage: {
     resizeMode: 'contain', // Ensures the entire image is visible without cropping

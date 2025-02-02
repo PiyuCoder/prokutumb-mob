@@ -19,7 +19,7 @@ const eventSchema = new Schema(
     },
     eventType: {
       type: String,
-      default: "public",
+      default: "",
     },
     timezone: {
       type: String,
@@ -56,6 +56,10 @@ const eventSchema = new Schema(
       type: Number,
     },
     category: { type: String, default: "" },
+    isDraft: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

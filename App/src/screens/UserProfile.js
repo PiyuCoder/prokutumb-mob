@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,9 @@ import {
   FlatList,
   Share,
   TextInput,
+  Animated,
 } from 'react-native';
-import * as Progress from 'react-native-progress';
-import axios from 'axios';
-import LinearGradient from 'react-native-linear-gradient';
+import LinearGradientR from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
 import {axiosInstance} from '../api/axios';
 import {useDispatch, useSelector} from 'react-redux';
@@ -28,12 +27,19 @@ import {
 } from '../store/slices/postSlice';
 import {removeFriendRequest} from '../store/slices/userSlice';
 import Icons from 'react-native-vector-icons/Ionicons';
-import AntDesignIcons from 'react-native-vector-icons/AntDesign';
-import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import Entypo from 'react-native-vector-icons/Entypo';
+import Octicons from 'react-native-vector-icons/Octicons';
+import Fontisto from 'react-native-vector-icons/Fontisto';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 import SimpleIcon from 'react-native-vector-icons/SimpleLineIcons';
+import SineWaveArrow from '../components/SineWaveArrow';
+import Svg, {Circle, Defs, LinearGradient, Stop} from 'react-native-svg';
+import {acceptRequest, declineRequest} from '../store/slices/authSlice';
+import Video from 'react-native-video';
+import {populateProfile} from '../store/slices/profileSlice';
 
 const UserProfile = ({route}) => {
   const {userId} = route.params;
@@ -43,14 +49,22 @@ const UserProfile = ({route}) => {
   const [webData, setWebData] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
+  const [openActionPostId, setOpenActionPostId] = useState(null);
   const [currentComment, setCurrentComment] = useState('');
   const [connectionStatus, setConnectionStatus] = useState('Connect');
   const navigation = useNavigation(); // Hook for navigation
   const dispatch = useDispatch();
-
+  console.log('Current User', currentUser);
   const [searchVisible, setSearchVisible] = useState(false);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+
+  const [showBackButton, setShowBackButton] = useState(true);
+  const [activeTab, setActiveTab] = useState('Info');
+  const arrowPosition = useRef(new Animated.Value(0)).current;
+  const [actionModalVisible, setActionModalVisible] = useState(false);
+  const [actionPostModalVisible, setActionPostModalVisible] = useState(false);
+  const [communityCount, setCommunityCount] = useState(0);
 
   // Hide the status bar when the screen is rendered
   useEffect(() => {
@@ -71,11 +85,14 @@ const UserProfile = ({route}) => {
         );
 
         if (res.data.success) {
+          console.log('Fetched user: ', res.data.user);
           setUser(res.data.user);
+
           setUserPosts(res.data.posts);
+          setCommunityCount(res?.data?.communities?.total);
 
           // Check if they are already connected
-          if (res.data.user.isAlreadyConnected) {
+          if (res.data.isAlreadyConnected) {
             setConnectionStatus('Message');
           } else {
             const requestSent = res.data.user?.friendRequests?.some(
@@ -129,6 +146,10 @@ const UserProfile = ({route}) => {
     setOpenCommentPostId(prevPostId => (prevPostId === postId ? null : postId));
   };
 
+  const toggleActionSection = postId => {
+    setOpenActionPostId(prevPostId => (prevPostId === postId ? null : postId));
+  };
+
   const handleAddComment = post => {
     if (currentComment.trim() !== '') {
       const postIndex = userPosts.findIndex(p => p._id === post._id);
@@ -168,33 +189,42 @@ const UserProfile = ({route}) => {
     }
   };
 
-  // Fetch user info from external APIs (LinkedIn, etc.)
-  const fetchUserWebInfo = async () => {
-    try {
-      // Fetch GitHub user info using email
-      const githubResponse = await axios.get(
-        `https://api.github.com/search/users?q=${user?.email}`,
-      ); // This will work if you have the username
+  const buttonLayouts = useRef({}); // To store layout data for each button
 
-      console.log(githubResponse);
+  const radius = 80; // Radius of the circle
+  const strokeWidth = 20; // Stroke width
+  const circumference = Math.PI * radius; // Circumference of the semi-circle
+  const progress = 50;
 
-      // For LinkedIn, you cannot fetch by email without OAuth, but you can assume a function exists
-      // const linkedInProfile = await fetchLinkedInProfile(email); // Placeholder function
+  const moveArrow = xPosition => {
+    Animated.spring(arrowPosition, {
+      toValue: xPosition,
+      useNativeDriver: false,
+    }).start();
+  };
 
-      const webData = {
-        github: githubResponse.data,
-        // linkedIn: linkedInProfile
-      };
-
-      setWebData(webData);
-    } catch (error) {
-      console.error('Error fetching web data:', error);
+  const handleTabPress = tab => {
+    const layout = buttonLayouts.current[tab];
+    if (layout) {
+      moveArrow(layout.x + layout.width / 2 - 50); // Move arrow to the center of the button
+      setActiveTab(tab);
     }
   };
 
-  useEffect(() => {
-    // fetchUserWebInfo();
-  }, []);
+  const saveLayout = (tab, event) => {
+    const layout = event.nativeEvent.layout;
+    buttonLayouts.current[tab] = layout;
+    // Set arrow position for the initial active tab
+    if (tab === activeTab) {
+      moveArrow(layout.x + layout.width / 2 - 50);
+    }
+  };
+
+  const handleScroll = event => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    // Hide the back button when scrolling up (offset > 0)
+    setShowBackButton(offsetY <= 200);
+  };
 
   const handleConnect = async () => {
     // setLoading(true)
@@ -213,23 +243,8 @@ const UserProfile = ({route}) => {
 
   const handleAccept = async () => {
     try {
-      const response = await axiosInstance.post(
-        '/api/user/acceptFriendRequest',
-        {
-          fromUserId: userId, // The user who sent the request
-          toUserId: currentUser._id, // The current user (receiver)
-        },
-      );
-
-      if (response.data.success) {
-        setConnectionStatus('Message'); // Update status to "Message"
-        // Optionally update the friend lists or UI as needed here
-        dispatch(
-          removeFriendRequest({fromUserId: userId, toUserId: currentUser._id}),
-        );
-      } else {
-        console.log('Failed to accept the request.');
-      }
+      dispatch(acceptRequest({fromUserId: userId, toUserId: currentUser._id}));
+      setConnectionStatus('Message');
     } catch (error) {
       console.log('Error accepting friend request:', error);
     }
@@ -259,44 +274,33 @@ const UserProfile = ({route}) => {
     }
   };
 
-  const handleSharePost = post => {
-    Share.share({
-      message: `Check out this post: ${post.content}`,
-    })
-      .then(result => {
-        if (result.action === Share.sharedAction) {
-          // Dispatch Redux action to update share count globally
-          dispatch(incrementShare({postId: post._id}));
-
-          const postIndex = userPosts.findIndex(p => p._id === post._id);
-          if (postIndex !== -1) {
-            const updatedPosts = [...userPosts];
-            updatedPosts[postIndex].shares += 1; // Increment share count locally
-            setUserPosts(updatedPosts); // Update local state
-          }
-        }
-      })
-      .catch(error => {
-        console.error('Error sharing post:', error);
+  const sharePost = async post => {
+    try {
+      const postUrl = `https://prokutumb-mob.onrender.com/posts/${post._id}`;
+      const result = await Share.share({
+        message: `Check out this post: ${postUrl}`,
       });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('Post shared with activity:', result.activityType);
+        } else {
+          console.log('Post shared!');
+          // Increment the share count
+          await dispatch(incrementShare(post._id));
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
   };
 
   const handleDecline = async () => {
     try {
-      const response = await axiosInstance.post(
-        '/api/user/declineFriendRequest',
-        {
-          fromUserId: userId, // The user who sent the request
-          toUserId: currentUser._id, // The current user (receiver)
-        },
-      );
-
-      if (response.data.success) {
-        setConnectionStatus('Connect'); // Update status to "Connect"
-        // Optionally remove the friend request from UI or state here
-      } else {
-        console.log('Failed to decline the request.');
-      }
+      dispatch(declineRequest({fromUserId: userId, toUserId: currentUser._id}));
+      setConnectionStatus('Connect');
     } catch (error) {
       console.log('Error declining friend request:', error);
     }
@@ -313,41 +317,80 @@ const UserProfile = ({route}) => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const renderPost = ({item}) => (
+  console.log('Posts: ', userPosts);
+
+  const renderPost = item => (
     <View
+      key={item._id}
       className="border border-gray-200"
       style={{
-        marginBottom: 15,
+        margin: 10,
         padding: 10,
         backgroundColor: '#FFFFFF',
-        borderRadius: 8,
+        borderRadius: 25,
       }}>
       {/* User info (Profile Picture and Name) */}
-      <View style={{flexDirection: 'row', alignItems: 'center'}}>
-        {/* <Image
-          // className="border border-red-500"
-          source={{uri: item.user.profilePicture}}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            marginRight: 10,
-          }}
-        /> */}
-        <ProfilePicture
-          profilePictureUri={item.user.profilePicture}
-          width={40}
-          height={40}
-          borderRadius={20}
-          marginRight={10}
-        />
-        <Text style={{fontWeight: 'bold', color: '#141414'}}>
-          {item.user.name}
-        </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+        <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
+          <ProfilePicture
+            profilePictureUri={item.user.profilePicture}
+            width={40}
+            height={40}
+            borderRadius={20}
+            marginRight={10}
+          />
+          <Text
+            onPress={() =>
+              currentUser?._id === item.user._id
+                ? navigation.navigate('Profile')
+                : handleUserPress(item.user._id)
+            }
+            style={{fontWeight: 'bold', color: '#19295C'}}>
+            {item.user.name}
+          </Text>
+        </View>
+        {currentUser?._id === item.user._id && (
+          <View style={{position: 'relative', zIndex: 100}}>
+            <TouchableOpacity
+              style={styles.iconButtons}
+              onPress={() => {
+                toggleActionSection(item._id);
+                setActionPostModalVisible(!actionPostModalVisible);
+              }}>
+              <SimpleIcon name="options" size={20} color="#99A1BE" />
+            </TouchableOpacity>
+            {actionModalVisible && openActionPostId === item._id && (
+              <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setActionPostModalVisible(false);
+                    handleEditPost(item);
+                  }}>
+                  <Text style={styles.dropdownItemText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setActionModalVisible(false);
+                    handleDeletePost(item._id);
+                    // setOpenActionPostId(null);
+                  }}>
+                  <Text style={styles.dropdownItemText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Post Content */}
-      <Text style={{marginTop: 10, color: '#141414'}}>{item.content}</Text>
+      <Text style={{marginTop: 10, color: '#2D3F7B'}}>{item.content}</Text>
 
       {/* Display media if it exists */}
       {item.mediaUrl && item.mediaType === 'image' && (
@@ -377,47 +420,72 @@ const UserProfile = ({route}) => {
         />
       )}
 
+      {/* Like, comment and share counts */}
+      <View style={{flexDirection: 'row', marginTop: 20, gap: 5}}>
+        <Text style={styles.actionText}>{item.likes.length} Likes .</Text>
+        <Text style={styles.actionText}>{item.comments.length} Comments .</Text>
+        <Text style={styles.actionText}>{item.shares} Shares</Text>
+      </View>
+
       {/* Post Actions: Likes, Comments, Views, and Share */}
       <View style={styles.postActions}>
         <TouchableOpacity
-          onPress={() => handleLike(item)}
-          style={styles.actionButton}>
-          {item?.likes?.includes(user?._id) ? (
-            <Icon name="heart" size={24} color="red" />
-          ) : (
-            <Icon name="heart-outline" size={24} color="#7B7B7B" />
-          )}
-          <Text style={styles.actionText}>{item.likes.length} </Text>
+          onPress={() =>
+            dispatch(likePost({userId: currentUser?._id, postId: item._id}))
+          }
+          style={[
+            styles.iconButtons,
+            {
+              backgroundColor: item?.likes?.includes(currentUser?._id)
+                ? '#A274FF'
+                : '#C3E4FF47',
+            },
+          ]}>
+          <AntDesign
+            name="like1"
+            size={20}
+            color={
+              item?.likes?.includes(currentUser?._id) ? 'white' : '#A274FF'
+            }
+          />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => toggleCommentSection(item._id)}
-          style={styles.actionButton}>
-          <Icon name="chatbubble-outline" size={24} color="#7B7B7B" />
-          <Text style={styles.actionText}>{item.comments.length}</Text>
+          style={[styles.iconButtons, {backgroundColor: '#C3E4FF47'}]}>
+          <Icon name="chatbubble-ellipses" size={20} color="#A274FF" />
         </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.actionButton}>
-          <Image source={viewIcon} style={styles.actionIcon} />
-          <Text style={styles.actionText}>{item.views} </Text>
-        </TouchableOpacity> */}
+
         <TouchableOpacity
-          onPress={() => handleSharePost(item)}
-          style={styles.actionButton}>
-          <Icon name="arrow-redo-outline" size={24} color="#7B7B7B" />
-          <Text style={styles.actionText}>{item.shares}</Text>
+          onPress={() => sharePost(item)}
+          style={[styles.iconButtons, {backgroundColor: '#C3E4FF47'}]}>
+          <Fontisto name="share-a" size={20} color="#A274FF" />
         </TouchableOpacity>
       </View>
       {/* Comment Section */}
       {openCommentPostId === item._id && (
         <View style={styles.commentSection}>
-          <Text style={{fontWeight: 'bold', color: 'black', margin: 6}}>
-            Comments
-          </Text>
+          <View
+            style={{
+              margin: 6,
+              marginVertical: 20,
+              borderTopWidth: 1,
+              borderColor: '#F1F4F5',
+            }}
+          />
+
           {item.comments?.length > 0 ? (
             item.comments.map(comment => (
               <View key={comment._id} style={styles.commentContainer}>
-                <Image
+                {/* <Image
                   source={{uri: comment.user?.profilePicture}}
                   style={styles.profilePicture}
+                /> */}
+                <ProfilePicture
+                  profilePictureUri={comment.user?.profilePicture}
+                  width={30}
+                  height={30}
+                  borderRadius={15}
+                  marginRight={10}
                 />
                 <View>
                   <Text style={styles.commentUserName}>
@@ -442,7 +510,7 @@ const UserProfile = ({route}) => {
             <TouchableOpacity
               style={styles.addCommentButton}
               onPress={() => handleAddComment(item)}>
-              <Text style={styles.addCommentText}>Post</Text>
+              <Icon name="send" size={20} color="white" />
             </TouchableOpacity>
           </View>
         </View>
@@ -451,677 +519,939 @@ const UserProfile = ({route}) => {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {loading && <Loader isLoading={loading} />}
-      {/* Profile Section */}
-      <View style={styles.profileCard}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: 'white',
+      }}>
+      <StatusBar hidden />
+      <Loader isLoading={loading} />
+      {showBackButton && (
         <View
           style={{
             width: '100%',
+            display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: 15,
-            borderBottomWidth: 1,
-            borderColor: '#E0DFDC',
+            padding: 10,
+            position: 'absolute',
+            zIndex: 1,
           }}>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => navigation.goBack()}>
+            <Octicons name="chevron-left" size={25} color="white" />
+          </TouchableOpacity>
+        </View>
+      )}
+      <ImageBackground
+        source={{uri: user?.profilePicture || ''}}
+        style={styles.userProfilePicture}
+        imageStyle={styles.profilePictureImage}></ImageBackground>
+
+      <ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        style={{paddingBottom: 200}}>
+        <View style={styles.overlayContent}>
+          <LinearGradientR
+            // className="bg-[#c4c4c421]"
+            colors={['#c4c4c400', '#c4c4c400', 'black']}
+            start={{x: 0, y: 0}}
+            end={{x: 0, y: 1}}
+            style={styles.overlay}
+          />
+          <Text style={styles.communityName}>
+            {user?.name?.toUpperCase() || ''}
+          </Text>
+          <Text style={{color: 'white', paddingStart: 10}}>@{user?.name}</Text>
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'space-around',
-              // gap: 10,
+              justifyContent: 'space-between',
+              marginTop: 16,
+              paddingHorizontal: 10,
             }}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <AntDesignIcons name="arrowleft" size={30} color="#585C60" />
-            </TouchableOpacity>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              onFocus={() => setSearchVisible(true)}
-              // autoFocus
+            <View
               style={{
-                color: 'black',
-                fontSize: 20,
-                borderBottomWidth: 1,
-                width: '80%',
-              }}
-            />
-          </View>
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 16,
+                gap: 10,
+              }}>
+              <View>
+                {connectionStatus === 'Accept/Decline' && (
+                  <View
+                    style={{
+                      // flexDirection: 'row',
+                      // marginTop: 10,
+                      gap: 15,
+                      // paddingHorizontal: 30,
+                    }}>
+                    <TouchableOpacity
+                      onPress={handleAccept}
+                      style={{
+                        backgroundColor: '#A274FF',
+                        padding: 8,
+                        paddingHorizontal: 16,
+                        borderRadius: 30,
+                        // flex: 1,
+                      }}>
+                      <Text className="text-white font-bold text-center">
+                        Accept
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleDecline}
+                      style={{
+                        backgroundColor: 'white',
+                        padding: 8,
+                        paddingHorizontal: 16,
+                        borderRadius: 30,
+                        borderWidth: 1.4,
+                        borderColor: '#585C60',
+                        // flex: 1,
+                      }}>
+                      <Text
+                        style={{
+                          color: '#585C60',
+                          textAlign: 'center',
+                          fontWeight: '500',
+                        }}>
+                        Reject
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
 
-          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-            <Icons name="settings-sharp" size={30} color="black" />
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '100%',
-            padding: 5,
-            paddingTop: 14,
-            justifyContent: 'space-between',
-          }}>
+                {connectionStatus === 'Connect' && (
+                  <TouchableOpacity onPress={handleConnect} style={styles.btn}>
+                    <Text className="text-white font-bold text-center">
+                      {connectionStatus}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {connectionStatus === 'Pending' && (
+                  <View style={styles.btn}>
+                    <Text
+                      style={{
+                        color: 'white',
+                        textAlign: 'center',
+                        fontWeight: '500',
+                      }}>
+                      Pending
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('Chat', {
+                    name: user.name,
+                    userId,
+                    profilePicture: user.profilePicture,
+                  })
+                }
+                style={{
+                  backgroundColor: 'black',
+                  padding: 10,
+                  borderWidth: 1,
+                  borderColor: '#888888',
+                  borderRadius: 7,
+                }}>
+                <Feather name="mail" size={20} color="#888888" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Connections', {userId})}>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 22,
+                    fontWeight: '500',
+                  }}>
+                  {user?.friends?.length}
+                </Text>
+                <Text style={{color: 'white', fontWeight: '500', fontSize: 12}}>
+                  Connections
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('MyCommOrEvents', {
+                    screen: 'Communities',
+                    userId,
+                  })
+                }>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 22,
+                    fontWeight: '500',
+                  }}>
+                  {communityCount}
+                </Text>
+                <Text style={{color: 'white', fontWeight: '500', fontSize: 12}}>
+                  Communities
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{position: 'relative', zIndex: 100}}>
+              {/* <TouchableOpacity
+                style={{
+                  backgroundColor: '#313034',
+                  borderRadius: 7,
+                  padding: 10,
+                }}
+                onPress={() => {
+                  setActionModalVisible(!actionModalVisible);
+                }}>
+                <SimpleLineIcons name="options" size={20} color="white" />
+              </TouchableOpacity> */}
+              {actionModalVisible && (
+                <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setActionModalVisible(false);
+                      const data = {
+                        name: user?.name,
+                        profilePicture: user?.profilePicture,
+                        about: user?.bio,
+                        location: user?.location,
+                        socialLinks: user?.socialLinks,
+                        experience: user?.experience,
+                        education: user?.education,
+                        skills: user?.skills,
+                        interests: user?.interests,
+                      };
+                      dispatch(populateProfile(data));
+                      navigation.navigate('CreateProfileStepOne');
+                    }}>
+                    <Text style={styles.dropdownItemText}>Edit Profile</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setActionModalVisible(false);
+                      navigation.navigate('ShareScreen');
+                    }}>
+                    <Text style={styles.dropdownItemText}>Share Profile</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
           <View
             style={{
               flexDirection: 'row',
               gap: 20,
-              // justifyContent: 'space-between',
-            }}>
-            <ProfilePicture
-              profilePictureUri={user.profilePicture}
-              width={120}
-              height={120}
-              borderRadius={60}
-              borderColor="#242760"
-            />
-            <View style={{marginRight: 10}}>
-              <Text style={styles.userName}>{user.name}</Text>
-              <Text style={styles.userLocation}>
-                {user.location?.state || 'State'},{' '}
-                {user.location?.country || 'Country'}
-              </Text>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 7,
-                  marginTop: 8,
-                }}>
-                <Icons name="logo-linkedin" size={25} color="#0A66C2" />
-                <AntDesignIcons name="github" size={25} color="#24292F" />
-                <FontAwesome name="reddit" size={25} color="#FF4500" />
-                <FontAwesome name="whatsapp" size={25} color="#25D366" />
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
-      <View
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          alignSelf: 'center',
-          marginTop: 10,
-        }}>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('Connections', {userId: user?._id})
-          }>
-          <Text
-            style={{
-              color: '#A274FF',
-              fontSize: 22,
-              fontWeight: '500',
-              textAlign: 'center',
-            }}>
-            {user?.friends?.length}
-          </Text>
-          <Text style={{color: 'black', fontWeight: '500'}}>Connections</Text>
-        </TouchableOpacity>
-        <View>
-          <Text
-            style={{
-              color: '#A274FF',
-              fontSize: 22,
-              fontWeight: '500',
-              textAlign: 'center',
-            }}>
-            0
-          </Text>
-          <Text style={{color: 'black', fontWeight: '500'}}>Communities</Text>
-        </View>
-        <View>
-          <Text
-            style={{
-              color: '#A274FF',
-              fontSize: 22,
-              fontWeight: '500',
-              textAlign: 'center',
-            }}>
-            0
-          </Text>
-          <Text style={{color: 'black', fontWeight: '500'}}>Events Done</Text>
-        </View>
-      </View>
-      <View style={styles.earthIconWrapper}>
-        <ImageBackground
-          style={styles.imageBackground}
-          imageStyle={styles.imageBackgroundImage}
-          source={require('../assets/majlis-earth.png')}
-        />
-      </View>
-      <Text style={styles.modalTitle}>MajlisAI</Text>
-      <View style={{marginTop: 90}}>
-        {connectionStatus === 'Accept/Decline' && (
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: 10,
-              gap: 15,
-              paddingHorizontal: 30,
+              alignItems: 'center',
+              justifyContent: 'space-evenly',
+              marginTop: 20,
+              padding: 10,
             }}>
             <TouchableOpacity
-              onPress={handleAccept}
+              onPress={() => handleTabPress('Info')}
+              onLayout={event => saveLayout('Info', event)}
               style={{
-                backgroundColor: '#A274FF',
-                padding: 13,
-                borderRadius: 30,
-                flex: 1,
-              }}>
-              <Text className="text-white font-bold text-center">Accept</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleDecline}
-              style={{
-                backgroundColor: 'white',
-                padding: 12,
-                borderRadius: 30,
-                borderWidth: 1.4,
-                borderColor: '#585C60',
+                backgroundColor: activeTab === 'Info' ? '#A274FF' : '#A274FF66',
+                paddingVertical: 7,
+                paddingHorizontal: 20,
+                borderRadius: 7,
                 flex: 1,
               }}>
               <Text
                 style={{
-                  color: '#585C60',
+                  fontSize: 13,
+                  color: 'white',
                   textAlign: 'center',
-                  fontWeight: '500',
                 }}>
-                Decline
+                Info
               </Text>
             </TouchableOpacity>
-          </View>
-        )}
-        {connectionStatus === 'Message' && (
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('Chat', {
-                name: user.name,
-                userId,
-                profilePicture: user.profilePicture,
-              })
-            }
-            style={{
-              backgroundColor: '#A274FF',
-              padding: 13,
-              borderRadius: 30,
-              flex: 1,
-              width: 200,
-              alignSelf: 'center',
-            }}>
-            <Text className="text-white font-bold text-center">Message</Text>
-          </TouchableOpacity>
-        )}
-        {connectionStatus === 'Connect' && (
-          <TouchableOpacity
-            onPress={handleConnect}
-            style={{
-              backgroundColor: '#A274FF',
-              padding: 13,
-              borderRadius: 30,
-              flex: 1,
-              width: 200,
-              alignSelf: 'center',
-            }}>
-            <Text className="text-white font-bold text-center">
-              {connectionStatus}
-            </Text>
-          </TouchableOpacity>
-        )}
-        {connectionStatus === 'Pending' && (
-          <View
-            style={{
-              backgroundColor: 'white',
-              padding: 12,
-              borderRadius: 30,
-              borderWidth: 1.4,
-              borderColor: '#585C60',
-              flex: 1,
-              width: 200,
-              alignSelf: 'center',
-            }}>
-            <Text
+            <TouchableOpacity
+              onPress={() => handleTabPress('Feed')}
+              onLayout={event => saveLayout('Feed', event)}
               style={{
-                color: '#585C60',
-                textAlign: 'center',
-                fontWeight: '500',
-              }}>
-              Pending
-            </Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.mainCard}>
-        {/* About Section */}
-        {/* <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>About</Text>
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.sectionText}>{user.bio}</Text>
-        </View> */}
-
-        {/* Experience Section */}
-        <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>Experience</Text>
-          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-            {/* <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
-              <AntDesignIcons name="plus" size={21} color="#A274FF" />
-            </TouchableOpacity> */}
-            {/* <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
-              <SimpleLineIcons name="pencil" size={18} color="#A274FF" />
-            </TouchableOpacity> */}
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          {user.experience?.map((exp, index) => (
-            <View key={index} style={styles.experienceItem}>
-              <View
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                <Text style={styles.experienceCompany}>{exp.company}</Text>
-                <Text style={styles.experienceDuration}>
-                  {formatDate(exp.startDate)}-
-                  {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
-                </Text>
-              </View>
-              <Text style={styles.experienceTitle}>{exp.role}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Education Section */}
-        <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>Education</Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: 10,
-              alignItems: 'center',
-            }}></View>
-        </View>
-
-        <View style={styles.card}>
-          {user?.education?.map((edu, index) => (
-            <View key={index} style={styles.experienceItem}>
-              <View
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                <Text style={styles.experienceCompany}>{edu.school}</Text>
-                <Text style={styles.experienceDuration}>
-                  {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
-                </Text>
-              </View>
-              <Text style={styles.experienceTitle}>{edu.degree}</Text>
-            </View>
-          ))}
-        </View>
-        {/* Interest Section */}
-        {/* <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>Interests</Text>
-        </View>
-        <View
-          style={[
-            styles.card,
-            {flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20},
-          ]}>
-          {user?.interests?.map((interest, index) => (
-            <View
-              key={index}
-              style={{
-                margin: 5,
+                backgroundColor: activeTab === 'Feed' ? '#A274FF' : '#A274FF66',
                 paddingVertical: 7,
-                paddingHorizontal: 18,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: '#4B164C33',
+                paddingHorizontal: 20,
+                borderRadius: 7,
+                flex: 1,
               }}>
-              <Text style={styles.sectionText}>{interest}</Text>
-            </View>
-          ))}
-        </View> */}
-
-        {/* On the Web Section */}
-        {/* <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>On the Web</Text>
-        </View>
-        <View style={styles.card}>
-          {webData ? (
-            <>
-              <Text style={styles.sectionText}>
-                LinkedIn: {webData.linkedin}
-              </Text>
-              <Text style={styles.sectionText}>GitHub: {webData.github}</Text>
-              <Text style={styles.sectionText}>Website: {webData.website}</Text>
-            </>
-          ) : (
-            <Text style={styles.sectionText}>Loading web data...</Text>
-          )}
-        </View>
-        <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>Posts</Text>
-        </View>
-        <FlatList
-          data={userPosts}
-          keyExtractor={item => item._id}
-          renderItem={renderPost}
-          contentContainerStyle={{paddingBottom: 65}}
-          ListEmptyComponent={<Text>No Posts yet</Text>}
-        /> */}
-      </View>
-      {searchResults?.length > 0 && searchVisible && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 60, // Adjust this based on where your TextInput ends
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            backgroundColor: 'white',
-            borderRadius: 8,
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 5, // For Android shadow
-            margin: 20,
-            padding: 10,
-            maxHeight: '60%', // To prevent overflow on smaller screens
-          }}>
-          {searchResults
-            ?.filter(res => res._id !== currentUser?._id)
-            ?.map((item, index) => (
-              <TouchableOpacity
+              <Text
                 style={{
-                  position: 'relative',
-                  zIndex: 50,
-                  borderBottomWidth: 1,
-                  borderColor: '#F5F5F5',
-                }}
-                key={item._id || index} // Ensure unique keys
-                onPress={() => {
-                  setSearchVisible(false);
-                  setQuery(item.name);
-                  setSearchResults([]);
-                  navigation.navigate('UserProfile', {userId: item._id});
+                  fontSize: 13,
+                  color: 'white',
+                  textAlign: 'center',
                 }}>
-                <View
-                  style={[
-                    styles.resultItem,
-                    {flexDirection: 'row', padding: 10},
-                  ]}>
-                  <ProfilePicture
-                    profilePictureUri={item.profilePicture}
-                    width={40}
-                    height={40}
-                    borderRadius={20}
-                    marginRight={10}
+                Feed
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleTabPress('MajlisAI')}
+              onLayout={event => saveLayout('MajlisAI', event)}
+              style={{
+                backgroundColor:
+                  activeTab === 'MajlisAI' ? '#A274FF' : '#A274FF66',
+                paddingVertical: 7,
+                paddingHorizontal: 20,
+                borderRadius: 7,
+                flex: 1,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}>
+                MajlisAI
+              </Text>
+            </TouchableOpacity>
+            {/* Animated Arrow */}
+            {/* <Animated.View
+              style={[styles.arrow, {transform: [{translateX: arrowPosition}]}]}
+            /> */}
+            <SineWaveArrow arrowPosition={arrowPosition} />
+          </View>
+        </View>
+
+        <View style={{backgroundColor: 'black', paddingTop: 30, zIndex: 10}}>
+          {activeTab === 'Info' && (
+            <View
+              style={{
+                backgroundColor: '#A274FF',
+                borderTopRightRadius: 25,
+                borderTopLeftRadius: 25,
+                minHeight: 500,
+                paddingHorizontal: 20,
+                paddingBottom: 30,
+              }}>
+              <Text style={[styles.title, {marginTop: 10}]}>About:</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginTop: 10,
+                }}>
+                <Icons name="briefcase" size={20} color="white" />
+                <Text style={{color: 'white'}}>{user?.bio}</Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginTop: 10,
+                }}>
+                <FontAwesome name="group" size={20} color="white" />
+                <Text style={{color: 'white'}}>{user?.skills?.join(', ')}</Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginTop: 10,
+                  marginBottom: 20,
+                }}>
+                <Icons name="location" size={20} color="white" />
+                <Text style={{color: 'white'}}>{user?.location}</Text>
+              </View>
+              {user?.socialLinks?.map((link, index) => (
+                <View key={index} style={styles.linkContainer}>
+                  <Entypo
+                    name={`${link.logo}`}
+                    size={20}
+                    color={`${link.color}`}
                   />
-                  <View>
-                    <Text style={styles.userName} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    <Text style={styles.userLocation} numberOfLines={1}>
-                      {item.location?.state || 'Unknown Location'}
+                  <Text style={styles.platformName}>{link.platform}:</Text>
+                  <Text style={styles.platformName}>{link?.url}</Text>
+                </View>
+              ))}
+              {/* Experience Section */}
+              <View style={{marginVertical: 20}}>
+                <Text style={styles.sectionTitle}>Experience:</Text>
+              </View>
+
+              {user.experience?.map((exp, index) => (
+                <View key={index} style={styles.card}>
+                  <View key={index} style={styles.experienceItem}>
+                    <View
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={[styles.experienceCompany, {color: '#2D3F7B'}]}>
+                        {exp.company}
+                      </Text>
+
+                      <Text
+                        style={[styles.experienceDuration, {color: '#2D3F7B'}]}>
+                        {formatDate(exp.startDate)}-
+                        {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
+                      {exp.role}
                     </Text>
                   </View>
                 </View>
-              </TouchableOpacity>
-            ))}
+              ))}
+
+              {/* Education Section */}
+              <View style={{marginVertical: 20}}>
+                <Text style={styles.sectionTitle}>Education:</Text>
+              </View>
+
+              <View style={styles.card}>
+                {user?.education?.map((edu, index) => (
+                  <View key={index} style={styles.experienceItem}>
+                    <View
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={[styles.experienceCompany, {color: '#2D3F7B'}]}>
+                        {edu.school}
+                      </Text>
+
+                      <Text
+                        style={[styles.experienceDuration, {color: '#2D3F7B'}]}>
+                        {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
+                      {edu.degree}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              <View style={{marginVertical: 20}}>
+                <Text style={styles.sectionTitle}>Interests:</Text>
+              </View>
+              <View
+                style={{
+                  flexWrap: 'wrap',
+                  flexDirection: 'row',
+                  gap: 8,
+                  // justifyContent: 'center',
+                }}>
+                {user?.interests?.map((interest, index) => (
+                  <View
+                    style={[
+                      styles.card,
+                      {
+                        height: 60,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '45%',
+                      },
+                    ]}
+                    key={index}>
+                    <Text
+                      style={{
+                        color: 'black',
+                        fontWeight: '500',
+                        textAlign: 'center',
+                      }}>
+                      {interest}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+          {activeTab === 'Feed' && (
+            <View
+              style={{
+                backgroundColor: '#A274FF',
+                borderTopRightRadius: 25,
+                borderTopLeftRadius: 25,
+                minHeight: 500,
+              }}>
+              {userPosts?.length ? (
+                userPosts?.map(item => renderPost(item))
+              ) : (
+                <Text
+                  style={{color: 'white', marginTop: 50, textAlign: 'center'}}>
+                  No Posts yet
+                </Text>
+              )}
+            </View>
+          )}
+          {/* Events and members section */}
+          {activeTab === 'MajlisAI' && (
+            <View
+              style={{
+                backgroundColor: '#A274FF',
+                borderTopRightRadius: 25,
+                borderTopLeftRadius: 25,
+                minHeight: 500,
+                padding: 15,
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  marginTop: 50,
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    height: 80,
+                    flex: 1,
+                    borderRadius: 20,
+                    shadowColor: 'white',
+                    shadowOffset: {width: 1, height: 1},
+                    shadowOpacity: 0.9,
+                    shadowRadius: 10,
+                    elevation: 10,
+                  }}>
+                  <Svg height="40" width="70" viewBox="0 0 200 5">
+                    <Defs>
+                      <LinearGradient
+                        id="grad"
+                        x1="100%"
+                        y1="0%"
+                        x2="0%"
+                        y2="0%">
+                        <Stop offset="0%" stopColor="red" />
+                        <Stop offset="50%" stopColor="yellow" />
+                        <Stop offset="100%" stopColor="green" />
+                      </LinearGradient>
+                    </Defs>
+                    <Circle
+                      cx="100"
+                      cy="160"
+                      r={radius}
+                      fill="none"
+                      stroke="lightgray"
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={circumference}
+                      strokeDashoffset={0} // Fully visible
+                      strokeLinecap="round"
+                      transform="rotate(-180, 100, 100)" // Start at top-center
+                    />
+
+                    {/* Progress Circle */}
+                    <Circle
+                      cx="100"
+                      cy="160"
+                      r={radius}
+                      fill="none"
+                      stroke="url(#grad)"
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={circumference}
+                      strokeDashoffset={
+                        (1 - Math.max(0, Math.min(progress, 100)) / 100) *
+                        circumference
+                      }
+                      strokeLinecap="round"
+                      transform="rotate(-180, 100, 100)"
+                    />
+                  </Svg>
+                  <View style={{marginLeft: 10}}>
+                    <Text style={styles.percentageText}>{`${progress}%`}</Text>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        color: 'gray',
+                      }}>
+                      Relevancy
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    height: 80,
+                    flex: 1,
+                    borderRadius: 20,
+                    shadowColor: 'white',
+                    shadowOffset: {width: 0, height: 0},
+                    shadowOpacity: 0.9,
+                    shadowRadius: 10,
+                    elevation: 10,
+                  }}>
+                  <Feather name="check" size={30} color="#7FDD53" />
+                  <View style={{marginLeft: 10}}>
+                    <Text style={styles.percentageText}>{`${83}%`}</Text>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        color: 'gray',
+                      }}>
+                      Relevancy
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                }}>
+                {/* <Text style={styles.title}>Something</Text> */}
+
+                {/* {community.createdBy?._id === user?._id && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate('CreateEvent', {
+                        myCommunities: [community],
+                        communityId,
+                      })
+                    }
+                    style={{marginRight: 40}}>
+                    <AntDesignIcons name="plus" size={25} color="#A274FF" />
+                  </TouchableOpacity>
+                )} */}
+              </View>
+            </View>
+          )}
         </View>
-      )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: 'white',
-    position: 'relative',
+  proku: {
+    fontFamily: 'BalooTamma2-Bold',
   },
-  mainCard: {
-    backgroundColor: 'white',
-    zIndex: 2,
-  },
-  profileCard: {
-    position: 'relative',
+  qrContainer: {
     alignItems: 'center',
-    zIndex: 50,
+    marginTop: 20,
+    backgroundColor: '#FFE4E1', // Light pink for a softer look
+    width: 180,
+    margin: 'auto',
+    borderRadius: 12, // Slightly rounded corners
+    padding: 20, // Increased padding for better spacing
+    shadowColor: '#000', // Adding shadow for card effect
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2, // Subtle shadow
+    shadowRadius: 6, // Softer shadow radius
+    // elevation: 5, // For Android elevation
   },
-  coverPicture: {
-    width: '100%',
-    height: 250,
-    alignSelf: 'center',
-    resizeMode: 'cover',
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left',
+    marginTop: 60,
+  },
+  postActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 25,
+    gap: 25,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: 40,
+  },
+  actionIcon: {
+    width: 22,
+    height: 22,
+    objectFit: 'cover',
+  },
+  actionText: {
+    color: '#7B7B7B',
+  },
+  btn: {
+    backgroundColor: '#A274FF',
+    padding: 7,
+    width: 120,
+    borderRadius: 7,
+    marginTop: 10,
+  },
+  listContent: {
+    minHeight: '100%',
+    paddingBottom: 20,
+    backgroundColor: '#A274FF',
+    marginTop: 10,
+  },
+  userCard: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    aspectRatio: 0.75,
+  },
+  cardWrapper: {
+    flex: 1,
+    margin: 8,
+    maxWidth: '45%', // Ensure three columns fit evenly
+    // backgroundColor: 'red',
   },
   profilePicture: {
     width: '100%',
-    height: 500,
-    alignSelf: 'center',
+    height: '100%',
+  },
+  communityProfilePicture: {
+    position: 'absolute',
+    width: '100%',
+    height: '90%',
+    // overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+  },
+  profilePicture: {
+    width: '100%',
+    height: '100%',
+  },
+  userProfilePicture: {
+    position: 'absolute',
+    width: '100%',
+    height: '90%',
+    backgroundColor: '#F5F5F5',
+  },
+  profilePictureImage: {
+    objectFit: 'cover',
   },
   overlay: {
     position: 'absolute',
-    width: '100%',
     height: '100%',
-    top: 0,
-    left: 0,
-    zIndex: 1,
-  },
-  closeIconContainer: {
-    backgroundColor: 'white',
-    padding: 8,
-  },
-  profileIconContainer: {
     width: '100%',
-    paddingHorizontal: 30,
-    position: 'absolute',
-    top: 40,
-    zIndex: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  },
+  overlayContent: {
+    paddingBottom: 10,
+    height: 550,
+    flex: 1,
+    // padding: 10,
+    justifyContent: 'flex-end',
   },
   userName: {
-    fontSize: 25,
-    fontWeight: '500',
-    textAlign: 'left',
-    color: 'black',
-    zIndex: 2,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
   },
   userLocation: {
-    fontSize: 17,
-    textAlign: 'left',
-    color: '#585C60',
-    marginTop: 5,
-    zIndex: 2,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    // paddingVertical: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  titleSection: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    // marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-    color: 'black',
-  },
-  sectionText: {
-    fontSize: 14,
-    color: 'black',
-  },
-  experienceItem: {
-    // marginBottom: 10,
-    borderBottomWidth: 1,
-    padding: 20,
-    borderColor: '#E0DFDC',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#FDF7FD',
-    padding: 20,
-    borderBottomStartRadius: 10,
-    borderBottomEndRadius: 10,
-    width: '100%',
-    height: '100%',
-    alignSelf: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  experienceTitle: {
-    color: 'black',
-  },
-  experienceCompany: {
-    color: 'black',
-    fontWeight: '500',
-    fontSize: 16,
-  },
-  experienceDuration: {
-    color: 'black',
-  },
-  input: {
-    // borderWidth: 1,
-    // borderColor: '#DDD',
-    paddingHorizontal: 10,
-    // height: 200,
-    backgroundColor: 'white',
-    marginBottom: 15,
-    borderRadius: 5,
-    color: 'black',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
     marginBottom: 10,
+    color: '#FFFFFF',
   },
-  button: {
-    padding: 10,
-    backgroundColor: '#007BFF',
-    borderRadius: 5,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  uploadButton: {
-    padding: 10,
-    backgroundColor: '#28A745',
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  imagePreview: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
-  },
-  earthIconWrapper: {
-    height: 70,
-    width: 70,
-    alignItems: 'center',
+  headerBtn: {
+    padding: 5,
+    // backgroundColor: '#ffffff3e',
+    height: 40,
+    width: 40,
+    borderRadius: 7,
     justifyContent: 'center',
-    alignSelf: 'center',
-    marginTop: 10,
+    alignItems: 'center',
   },
-  imageBackground: {
-    height: '100%',
-    width: '100%',
-  },
-  imageBackgroundImage: {
-    resizeMode: 'contain', // Ensures the entire image is visible without cropping
-  },
-
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  communityHeader: {
+    // alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     marginBottom: 10,
-    textAlign: 'center',
-    color: '#A274FF',
+    borderRadius: 10,
+    backgroundColor: 'white',
+  },
+  communityName: {
+    textAlign: 'left',
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'white',
+    paddingStart: 10,
+  },
+  communityDescription: {
+    color: 'black',
+    marginLeft: 20,
+  },
+  linkContainer: {
+    borderWidth: 1,
+    borderColor: 'white',
+    borderRadius: 10,
+    padding: 15,
+    paddingStart: 20,
+    marginBottom: 16,
+    color: 'white',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  platformName: {
+    color: 'white',
+    fontSize: 16,
   },
   iconButtons: {
     padding: 2,
     height: 50,
     width: 50,
     borderRadius: 25,
-    borderColor: '#4b164c5a',
-    borderWidth: 1.2,
+    backgroundColor: '#F1F4F5',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {
-    width: 25,
-    height: 25,
+  arrow: {
+    position: 'absolute',
+    top: 50, // Adjust based on your layout
+    width: 50,
+    height: 25, // Reduce height to create a "wave" effect
+    backgroundColor: '#A274FF',
+    zIndex: 150,
+    borderRadius: 25, // Fully round the top
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    transform: [{translateY: -15}], // Slight upward adjustment
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    padding: 4,
-  },
-  searchContainer: {
+
+  commentContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 10,
+    alignItems: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#F1F4F5', // Light grey divider
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-  },
-  cancelButton: {
-    marginLeft: 10,
-  },
-  cancelText: {
-    color: '#4B164C',
+  percentageText: {
     fontWeight: 'bold',
+
+    color: 'black',
+    fontSize: 20,
   },
-  resultItem: {
+  commentInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 10,
-    borderRadius: 10,
     marginTop: 10,
   },
-  profilePicture: {
+  commentInput: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 15,
+    paddingStart: 20,
+  },
+  addCommentButton: {
+    marginLeft: 10,
+    backgroundColor: '#A274FF',
+    padding: 15,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addCommentText: {
+    color: '#fff',
+  },
+  commentUserName: {
+    fontWeight: 'bold',
+    color: '#19295C', // Darker text color for better readability
+    fontSize: 14,
+    marginBottom: 2, // Spacing between username and content
+  },
+  commentContent: {
+    color: '#99A1BE', // Slightly lighter text for the content
+    fontSize: 13,
+    lineHeight: 18, // Better readability with line spacing
+  },
+  noCommentsText: {
+    textAlign: 'center',
+    color: '#999', // Grey text for "no comments" message
+    fontSize: 14,
+    paddingVertical: 10,
+  },
+  // profilePicture: {
+  //   width: 30,
+  //   height: 30,
+  //   borderRadius: 15,
+  //   marginRight: 10, // Space between image and text
+  // },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 35, // Adjust position relative to the action icon
+    right: 10,
+    width: 120,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    elevation: 5, // Adds shadow for Android
+    shadowColor: '#000', // Adds shadow for iOS
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowRadius: 5,
+    zIndex: 2, // Ensures the dropdown is on top of other elements
+  },
+  dropdownItem: {
+    padding: 15,
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: 'black',
+    fontWeight: '500',
+  },
+  modalActionOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Semi-transparent overlay for full-screen modals
+  },
+  modalActionContent: {
+    width: '80%',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    padding: 20,
+  },
+  friendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 7,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    padding: 5,
+    marginHorizontal: 5,
+    backgroundColor: 'white',
+  },
+  friendImage: {
     width: 40,
     height: 40,
     borderRadius: 20,
     marginRight: 10,
   },
-  userName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#22172A',
-  },
-  userLocation: {
+  friendName: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: '500',
+    color: 'black',
+  },
+  sectionTitle: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
   },
 });
 

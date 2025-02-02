@@ -11,6 +11,7 @@ import IonIcon from 'react-native-vector-icons/Ionicons';
 import FA6Icon from 'react-native-vector-icons/FontAwesome6';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Communities from './Communities';
+import MenuScreen from './MenuScreen';
 
 // Create the Tab Navigator
 const Tab = createBottomTabNavigator();
@@ -24,7 +25,7 @@ const DashboardScreen = ({navigation}) => {
         return FA6Icon;
       case 'Network':
         return IonIcon;
-      case 'Message':
+      case 'MenuScreen':
         return Entypo;
       default:
         return Icon;
@@ -38,7 +39,7 @@ const DashboardScreen = ({navigation}) => {
         const iconName =
           route.name === 'Home'
             ? 'home'
-            : route.name === 'Message'
+            : route.name === 'MenuScreen'
             ? 'grid'
             : route.name === 'Discover'
             ? 'compass-outline'
@@ -93,16 +94,17 @@ const DashboardScreen = ({navigation}) => {
         options={{headerShown: false}}
       />
       <Tab.Screen
-        name="Message"
-        component={MessageScreen}
-        options={{
-          tabBarButton: props => (
-            <TouchableOpacity
-              {...props}
-              onPress={() => navigation.navigate('Message')}
-            />
-          ),
-        }}
+        name="MenuScreen"
+        component={MenuScreen}
+        options={{headerShown: false}}
+        // options={{
+        //   tabBarButton: props => (
+        //     <TouchableOpacity
+        //       {...props}
+        //       onPress={() => navigation.navigate('Message')}
+        //     />
+        //   ),
+        // }}
       />
     </Tab.Navigator>
   );

@@ -13,6 +13,7 @@ import {axiosInstance} from '../api/axios';
 import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import ProfilePicture from '../components/ProfilePicture';
 
 const ConnectionsScreen = ({route}) => {
   const {userId} = route.params;
@@ -80,7 +81,7 @@ const ConnectionsScreen = ({route}) => {
             </View>
             <Text style={styles.userName}>{item.name}</Text>
             <Text style={styles.userLocation}>
-              {item.location?.country || 'Unknown'}
+              {item.location || 'Unknown'}
             </Text>
           </View>
         </ImageBackground>
@@ -114,9 +115,37 @@ const ConnectionsScreen = ({route}) => {
         value={searchQuery}
         onChangeText={handleSearch}
       />
-
-      {/* Connections List */}
       <FlatList
+        data={filteredConnections}
+        keyExtractor={item => item._id} // Assuming each friend has a unique `id`
+        renderItem={({item}) => (
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('UserProfile', {
+                userId: item._id,
+              });
+            }}>
+            <View style={styles.friendItem}>
+              <ProfilePicture
+                profilePictureUri={item.profilePicture}
+                width={60}
+                height={60}
+                borderRadius={30}
+                marginRight={10}
+              />
+              <View>
+                <Text style={styles.friendName}>{item?.name}</Text>
+                <Text style={styles.location}>{item?.location}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={() => (
+          <Text style={styles.emptyMessage}>No friends found</Text>
+        )}
+      />
+      {/* Connections List */}
+      {/* <FlatList
         data={filteredConnections}
         keyExtractor={item => item._id}
         renderItem={renderUserCard}
@@ -125,7 +154,7 @@ const ConnectionsScreen = ({route}) => {
         ListEmptyComponent={() => (
           <Text style={styles.emptyMessage}>No connections found</Text>
         )}
-      />
+      /> */}
     </View>
   );
 };
@@ -133,7 +162,7 @@ const ConnectionsScreen = ({route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: 'white',
     paddingHorizontal: 25,
     paddingTop: 20,
   },
@@ -177,6 +206,39 @@ const styles = StyleSheet.create({
   },
   profilePictureImage: {
     borderRadius: 10,
+  },
+  friendItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 7,
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: '#ccc',
+    padding: 10,
+    elevation: 3,
+    backgroundColor: 'white',
+  },
+  friendImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  friendName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'black',
+  },
+  location: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'gray',
+  },
+  emptyMessage: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 14,
+    color: '#999',
   },
   overlay: {
     position: 'absolute',

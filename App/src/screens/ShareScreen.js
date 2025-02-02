@@ -2,17 +2,21 @@ import {
   Alert,
   Linking,
   Modal,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
 import {useSelector} from 'react-redux';
-import Octicons from 'react-native-vector-icons/Octicons';
-import ProfilePicture from '../components/ProfilePicture';
+import Feather from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {captureRef} from 'react-native-view-shot';
+import Share from 'react-native-share';
 import {
   Camera,
   useCameraDevice,
@@ -28,8 +32,10 @@ const ShareScreen = ({navigation}) => {
   const [lastScannedCode, setLastScannedCode] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState('qr');
 
   const device = useCameraDevice('back');
+  const qrRef = useRef();
 
   // Hook for barcode scanning
   // const [barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE]);
@@ -104,117 +110,198 @@ const ShareScreen = ({navigation}) => {
     }
     setModalVisible(false);
   };
+
+  const shareQRCode = async () => {
+    try {
+      const uri = await captureRef(qrRef, {
+        format: 'png',
+        quality: 0.9,
+      });
+
+      const shareOptions = {
+        title: 'Scan this QR Code',
+        message: 'Check out my profile by scanning this QR code!',
+        url: uri, // Share the captured image
+      };
+
+      await Share.open(shareOptions);
+    } catch (error) {
+      console.error('Error sharing QR Code:', error);
+    }
+  };
   return (
-    <View style={{flex: 1, backgroundColor: '#E9E5DF'}}>
+    <View style={{flex: 1, backgroundColor: '#000000D6'}}>
+      <StatusBar hidden />
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          padding: 10,
-          backgroundColor: 'white',
+          padding: 20,
+          // backgroundColor: 'white',
         }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Octicons name="arrow-left" size={30} color="black" />
+        <TouchableOpacity
+          style={{backgroundColor: '#333333', borderRadius: 10, padding: 5}}
+          onPress={() => navigation.goBack()}>
+          <Feather name="chevron-left" size={30} color="#FDB623" />
         </TouchableOpacity>
         <Text
           style={{
-            color: 'black',
+            color: 'white',
             fontSize: 20,
             fontWeight: '500',
             marginLeft: 40,
           }}>
-          Majlis QR Code
+          {activeTab === 'qr'
+            ? 'QR Code'
+            : activeTab === 'history'
+            ? 'History'
+            : 'Scanner'}
         </Text>
       </View>
       <View
         style={{
+          position: 'absolute',
+          bottom: 30,
           flexDirection: 'row',
-          justifyContent: 'space-around',
-          marginBottom: isQR ? 30 : 0,
+          justifyContent: 'center',
+          backgroundColor: '#333333',
+          marginHorizontal: 40,
+          zIndex: 20,
+          borderRadius: 20,
+          elevation: 5,
+          gap: 100,
         }}>
         <TouchableOpacity
           activeOpacity={1}
           style={{
-            borderBottomWidth: isQR ? 2 : 0,
-            borderColor: '#A274FF',
+            alignItems: 'center',
+            justifyContent: 'center',
             flex: 1,
-            padding: 5,
-            backgroundColor: 'white',
+            padding: 15,
           }}
-          onPress={() => setIsQR(true)}>
+          onPress={() => setActiveTab('qr')}>
+          <MaterialIcons
+            name="qr-code-2"
+            size={30}
+            color={activeTab !== 'qr' ? 'white' : '#FDB623'}
+          />
           <Text
-            style={{textAlign: 'center', color: !isQR ? 'black' : '#A274FF'}}>
-            My Code
+            style={{
+              textAlign: 'center',
+              color: activeTab !== 'qr' ? 'white' : '#FDB623',
+            }}>
+            Generate
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           activeOpacity={1}
           style={{
-            borderBottomWidth: !isQR ? 2 : 0,
-            borderColor: '#A274FF',
             flex: 1,
             padding: 5,
-            backgroundColor: 'white',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#FDB623',
+            height: 70,
+            width: 70,
+            borderRadius: 35,
+            position: 'absolute',
+            top: -35,
+            alignSelf: 'center',
+            elevation: 15,
+            shadowColor: '#FDB623',
+            shadowOffset: {width: 5, height: 5},
+            shadowOpacity: 0.5,
+            shadowRadius: 10,
           }}
-          onPress={() => setIsQR(false)}>
+          onPress={() => setActiveTab('scanner')}>
+          <MaterialIcons name="qr-code-scanner" size={50} color="white" />
+          <View style={{position: 'absolute'}}>
+            <MaterialCommunityIcons
+              name="line-scan"
+              size={50}
+              color="#333333"
+            />
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={{
+            flex: 1,
+            padding: 5,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onPress={() => setActiveTab('history')}>
+          <MaterialIcons
+            name="history"
+            size={30}
+            color={activeTab !== 'history' ? 'white' : '#FDB623'}
+          />
           <Text
-            style={{textAlign: 'center', color: isQR ? 'black' : '#A274FF'}}>
-            Scanner
+            style={{
+              textAlign: 'center',
+              color: activeTab !== 'history' ? 'white' : '#FDB623',
+            }}>
+            History
           </Text>
         </TouchableOpacity>
       </View>
 
-      {isQR ? (
-        <View
-          style={{
-            alignItems: 'center',
-            marginTop: 50,
-            backgroundColor: 'white',
-            padding: 30,
-            marginHorizontal: 20,
-            borderRadius: 20,
-            elevation: 5,
-          }}>
-          <View style={{marginTop: -70}}>
-            <ProfilePicture
-              profilePictureUri={user?.profilePicture}
-              height={80}
-              width={80}
-              borderRadius={40}
-              borderWidth={1}
+      {activeTab === 'qr' && (
+        <>
+          <View
+            ref={qrRef}
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 50,
+              backgroundColor: 'white',
+              padding: 30,
+              marginHorizontal: 20,
+              borderRadius: 20,
+              elevation: 5,
+              width: '60%',
+              alignSelf: 'center',
+            }}>
+            <QRCode
+              // value={`prokutumb://profile/${user?._id}`}
+              value={`https://prokutumb-mob.onrender.com/redirect.html?userId=${user?._id}`}
+              size={180}
+              color="black"
+              backgroundColor="transparent"
             />
           </View>
-          <Text
-            style={{
-              color: 'black',
-              fontSize: 17,
-              fontWeight: '500',
-            }}>
-            {user?.name}
-          </Text>
-          <Text
-            style={{
-              marginBottom: 20,
-              color: 'grey',
-            }}>
-            {user?.bio}
-          </Text>
-          <QRCode
-            // value={`prokutumb://profile/${user?._id}`}
-            value={`https://prokutumb-mob.onrender.com/redirect.html?userId=${user?._id}`}
-            size={180}
-            color="black"
-            backgroundColor="transparent"
-          />
-        </View>
-      ) : (
+          <View>
+            <TouchableOpacity
+              onPress={shareQRCode}
+              style={{
+                backgroundColor: '#A274FF',
+                width: 60,
+                height: 60,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 8,
+                marginTop: 10,
+                alignSelf: 'center',
+              }}>
+              <MaterialCommunityIcons
+                name="share-variant"
+                size={25}
+                color="black"
+              />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
+      {activeTab === 'scanner' && (
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
           {!hasCameraPermission ? (
             device ? (
               <Camera
                 style={StyleSheet.absoluteFill}
                 device={device}
-                isActive={!isQR}
+                isActive={activeTab === 'scanner'}
                 codeScanner={codeScanner}
               />
             ) : (
@@ -253,6 +340,8 @@ const ShareScreen = ({navigation}) => {
           </Modal>
         </View>
       )}
+
+      {activeTab === 'history' && <View></View>}
     </View>
   );
 };

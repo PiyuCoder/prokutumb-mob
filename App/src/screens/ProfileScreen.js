@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,13 @@ import {
   Keyboard,
   FlatList,
   ImageBackground,
+  Animated,
+  Share,
+  Alert,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
-import LinearGradient from 'react-native-linear-gradient';
+import LinearGradientR from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
 import {
   editAbout,
@@ -29,16 +32,36 @@ import {
 import ExperienceModal from '../components/ExperienceModal';
 import ProfilePicture from '../components/ProfilePicture';
 import InterestsSelector from '../components/InterestsSelector';
+import Feather from 'react-native-vector-icons/Feather';
+import Entypo from 'react-native-vector-icons/Entypo';
 import Icons from 'react-native-vector-icons/Ionicons';
-import AntDesignIcons from 'react-native-vector-icons/AntDesign';
+import Octicons from 'react-native-vector-icons/Octicons';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import Fontisto from 'react-native-vector-icons/Fontisto';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {axiosInstance} from '../api/axios';
+import Loader from '../components/Loader';
+import SineWaveArrow from '../components/SineWaveArrow';
+import Svg, {Circle, Defs, LinearGradient, Stop} from 'react-native-svg';
+import {populateProfile} from '../store/slices/profileSlice';
+import {
+  commentOnPost,
+  deletePost,
+  editPost,
+  incrementShare,
+  likePost,
+} from '../store/slices/postSlice';
+import Video from 'react-native-video';
+import SelectModal from '../components/SelectModal';
+
+const tagList = ['Networking', 'Business', 'Technology', 'Marketing'];
 
 const ProfileScreen = () => {
   const {user} = useSelector(state => state.auth);
   const [userInfo, setUserInfo] = useState({});
   const dispatch = useDispatch();
+  const posts = useSelector(state => state.posts.posts);
   const [webData, setWebData] = useState(null);
   const navigation = useNavigation();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
@@ -50,11 +73,27 @@ const ProfileScreen = () => {
   const [editedEducation, setEditedEducation] = useState({});
   const [editedAbout, setEditedAbout] = useState(user.bio);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [openCommentPostId, setOpenCommentPostId] = useState(null);
+  const [openActionPostId, setOpenActionPostId] = useState(null);
+  const [currentComment, setCurrentComment] = useState('');
   const [isEdu, setIsEdu] = useState(false);
+  const [showBackButton, setShowBackButton] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('Info');
+  const arrowPosition = useRef(new Animated.Value(0)).current;
+  const [actionModalVisible, setActionModalVisible] = useState(false);
+  const [actionPostModalVisible, setPostActionModalVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isTagsModalVisible, setIsTagsModalVisible] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [newPostContent, setNewPostContent] = useState('');
 
   // Fetch user info from external APIs (LinkedIn, etc.)
   const fetchUserInfo = async () => {
     try {
+      setIsLoading(true);
       console.log(user?._id);
       const res = await axiosInstance.get(
         `/api/user/fetchUserInfo/${user?._id}`,
@@ -65,12 +104,14 @@ const ProfileScreen = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchUserInfo();
-  }, [user?._id, isExperienceModalVisible]);
+  }, [user?._id]);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -163,547 +204,902 @@ const ProfileScreen = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  console.log(user.interests);
+  const buttonLayouts = useRef({}); // To store layout data for each button
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Profile Section */}
-      <View style={styles.profileCard}>
-        <View
-          style={{
-            width: '100%',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: 15,
-            borderBottomWidth: 1,
-            borderColor: '#E0DFDC',
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-around',
-              gap: 70,
-            }}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <AntDesignIcons name="arrowleft" size={30} color="#585C60" />
-            </TouchableOpacity>
-            <Text style={{color: 'black', fontSize: 20}}>MY PROFILE</Text>
-          </View>
-          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-            <Icons name="settings-sharp" size={30} color="black" />
-          </TouchableOpacity>
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: '100%',
-            padding: 5,
-            paddingTop: 14,
-            justifyContent: 'space-between',
-          }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              gap: 20,
-              // justifyContent: 'space-between',
-            }}>
-            <ProfilePicture
-              profilePictureUri={user.profilePicture}
-              width={120}
-              height={120}
-              borderRadius={60}
-              borderColor="#242760"
-            />
-            <View style={{marginRight: 10}}>
-              <Text style={styles.userName}>{user.name}</Text>
-              <Text style={styles.userLocation}>
-                {user.location?.state || 'State'},{' '}
-                {user.location?.country || 'Country'}
-              </Text>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 7,
-                  marginTop: 8,
-                }}>
-                <Icons name="logo-linkedin" size={25} color="#0A66C2" />
-                <AntDesignIcons name="github" size={25} color="#24292F" />
-                <FontAwesome name="reddit" size={25} color="#FF4500" />
-                <FontAwesome name="whatsapp" size={25} color="#25D366" />
-              </View>
-            </View>
-          </View>
-          <TouchableOpacity
-            style={{marginRight: 15}}
-            onPress={() => navigation.navigate('EditProfile')}>
-            <SimpleLineIcons name="pencil" size={20} color="#585C60" />
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View style={{marginTop: 20}}>
-        <View
-          style={{
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-            alignSelf: 'center',
-            marginTop: 10,
-          }}>
-          <TouchableOpacity
+  const radius = 80; // Radius of the circle
+  const strokeWidth = 20; // Stroke width
+  const circumference = Math.PI * radius; // Circumference of the semi-circle
+  const progress = 50;
+
+  const moveArrow = xPosition => {
+    Animated.spring(arrowPosition, {
+      toValue: xPosition,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleTabPress = tab => {
+    const layout = buttonLayouts.current[tab];
+    if (layout) {
+      moveArrow(layout.x + layout.width / 2 - 50); // Move arrow to the center of the button
+      setActiveTab(tab);
+    }
+  };
+
+  const saveLayout = (tab, event) => {
+    const layout = event.nativeEvent.layout;
+    buttonLayouts.current[tab] = layout;
+    // Set arrow position for the initial active tab
+    if (tab === activeTab) {
+      moveArrow(layout.x + layout.width / 2 - 50);
+    }
+  };
+
+  const handleScroll = event => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    // Hide the back button when scrolling up (offset > 0)
+    setShowBackButton(offsetY <= 200);
+  };
+
+  const toggleCommentSection = postId => {
+    setOpenCommentPostId(prevPostId => (prevPostId === postId ? null : postId));
+  };
+  const toggleActionSection = postId => {
+    setOpenActionPostId(prevPostId => (prevPostId === postId ? null : postId));
+  };
+
+  const handleAddComment = post => {
+    if (currentComment.trim() !== '') {
+      // console.log(post);
+      dispatch(
+        commentOnPost({
+          postId: post._id,
+          userId: user?._id,
+          content: currentComment,
+        }),
+      );
+      setCurrentComment(''); // Clear input
+    }
+  };
+
+  const handleUserPress = userId => {
+    navigation.navigate('UserProfile', {userId});
+  };
+  // Function to pick media (image or video)
+  const pickMedia = async mediaType => {
+    const options = {
+      mediaType: mediaType === 'image' ? 'photo' : 'video',
+      includeBase64: false,
+      quality: 1,
+    };
+
+    launchImageLibrary(options, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        setSelectedMedia(response.assets[0]); // Set the selected media
+      }
+    });
+  };
+
+  const sharePost = async post => {
+    try {
+      const postUrl = `https://prokutumb-mob.onrender.com/posts/${post._id}`;
+      const result = await Share.share({
+        message: `Check out this post: ${postUrl}`,
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('Post shared with activity:', result.activityType);
+        } else {
+          console.log('Post shared!');
+          // Increment the share count
+          await dispatch(incrementShare(post._id));
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('Share dismissed');
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
+  };
+
+  const handleSavePost = async () => {
+    if (newPostContent.trim()) {
+      const formData = new FormData();
+
+      // Add post content (text) to form data
+      formData.append('user', user?._id); // User ID
+      formData.append('content', newPostContent); // Post content
+      formData.append('tags', tags); // Post content
+
+      // Add media if selected
+      if (selectedMedia && selectedMedia?.type) {
+        formData.append('media', {
+          uri: selectedMedia?.uri || selectedMedia?.mediaUrl, // URI of the media file
+          type: selectedMedia?.type || selectedMedia?.mediaType, // MIME type of the media (image/video)
+          name: `media.${selectedMedia?.type?.split('/')[1]}` || 'unknown', // Name of the file with appropriate extension
+        });
+      }
+
+      await dispatch(editPost({formData, postId: openActionPostId}));
+      setIsEditMode(false);
+
+      // Reset modal and post input
+      setModalVisible(false);
+      setNewPostContent('');
+      setSelectedMedia(null);
+      setOpenActionPostId(null);
+    } else {
+      alert('Please enter post content.');
+    }
+  };
+
+  const handleEditPost = post => {
+    setIsEditMode(true);
+    setModalVisible(true);
+    setNewPostContent(post?.content);
+    console.log(post);
+    setTags(post?.tags[0].split(','));
+    if (post?.mediaUrl && post?.mediaType)
+      setSelectedMedia({mediaUrl: post?.mediaUrl, mediaType: post?.mediaType});
+  };
+
+  const handleDeletePost = postId => {
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            // Dispatch Redux action or call an API to delete the post
+            dispatch(deletePost(postId));
+            setOpenActionPostId(null);
+          },
+        },
+      ],
+      {cancelable: true},
+    );
+  };
+
+  const renderPost = item => (
+    <View
+      key={item._id}
+      className="border border-gray-200"
+      style={{
+        margin: 10,
+        padding: 10,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 25,
+      }}>
+      {/* User info (Profile Picture and Name) */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+        <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
+          <ProfilePicture
+            profilePictureUri={item.user.profilePicture}
+            width={40}
+            height={40}
+            borderRadius={20}
+            marginRight={10}
+          />
+          <Text
             onPress={() =>
-              navigation.navigate('Connections', {userId: user?._id})
-            }>
-            <Text
-              style={{
-                color: '#A274FF',
-                fontSize: 22,
-                fontWeight: '500',
-                textAlign: 'center',
+              user?._id === item.user._id
+                ? navigation.navigate('Profile')
+                : handleUserPress(item.user._id)
+            }
+            style={{fontWeight: 'bold', color: '#19295C'}}>
+            {item.user.name}
+          </Text>
+        </View>
+        {user?._id === item.user._id && (
+          <View style={{position: 'relative', zIndex: 100}}>
+            <TouchableOpacity
+              style={styles.iconButtons}
+              onPress={() => {
+                toggleActionSection(item._id);
+                setPostActionModalVisible(!actionPostModalVisible);
               }}>
-              {user?.friends?.length}
-            </Text>
-            <Text style={{color: 'black', fontWeight: '500'}}>Connections</Text>
-          </TouchableOpacity>
-          <View>
-            <Text
-              style={{
-                color: '#A274FF',
-                fontSize: 22,
-                fontWeight: '500',
-                textAlign: 'center',
-              }}>
-              {userInfo?.communities?.total}
-            </Text>
-            <Text style={{color: 'black', fontWeight: '500'}}>Communities</Text>
+              <SimpleLineIcons name="options" size={20} color="#99A1BE" />
+            </TouchableOpacity>
+            {actionPostModalVisible && openActionPostId === item._id && (
+              <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setPostActionModalVisible(false);
+                    handleEditPost(item);
+                  }}>
+                  <Text style={styles.dropdownItemText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setPostActionModalVisible(false);
+                    handleDeletePost(item._id);
+                    // setOpenActionPostId(null);
+                  }}>
+                  <Text style={styles.dropdownItemText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-          <View>
-            <Text
-              style={{
-                color: '#A274FF',
-                fontSize: 22,
-                fontWeight: '500',
-                textAlign: 'center',
-              }}>
-              0
-            </Text>
-            <Text style={{color: 'black', fontWeight: '500'}}>Events Done</Text>
+        )}
+      </View>
+
+      {/* Post Content */}
+      <Text style={{marginTop: 10, color: '#2D3F7B'}}>{item.content}</Text>
+
+      {/* Display media if it exists */}
+      {item.mediaUrl && item.mediaType === 'image' && (
+        <Image
+          source={{uri: item.mediaUrl}}
+          style={{
+            width: '100%',
+            height: 200,
+            borderRadius: 8,
+            marginTop: 10,
+          }}
+          resizeMode="cover"
+        />
+      )}
+
+      {item.mediaUrl && item.mediaType === 'video' && (
+        <Video
+          source={{uri: item.mediaUrl}}
+          style={{
+            width: '100%',
+            height: 200,
+            borderRadius: 8,
+            marginTop: 10,
+          }}
+          controls={true} // Show video controls (optional)
+          resizeMode="cover"
+        />
+      )}
+
+      {/* Like, comment and share counts */}
+      <View style={{flexDirection: 'row', marginTop: 20, gap: 5}}>
+        <Text style={styles.actionText}>{item.likes.length} Likes .</Text>
+        <Text style={styles.actionText}>{item.comments.length} Comments .</Text>
+        <Text style={styles.actionText}>{item.shares} Shares</Text>
+      </View>
+
+      {/* Post Actions: Likes, Comments, Views, and Share */}
+      <View style={styles.postActions}>
+        <TouchableOpacity
+          onPress={() =>
+            dispatch(likePost({userId: user?._id, postId: item._id}))
+          }
+          style={[
+            styles.iconButtons,
+            {
+              backgroundColor: item?.likes?.includes(user?._id)
+                ? '#A274FF'
+                : '#C3E4FF47',
+            },
+          ]}>
+          <AntDesign
+            name="like1"
+            size={20}
+            color={item?.likes?.includes(user?._id) ? 'white' : '#A274FF'}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => toggleCommentSection(item._id)}
+          style={[styles.iconButtons, {backgroundColor: '#C3E4FF47'}]}>
+          <Icons name="chatbubble-ellipses" size={20} color="#A274FF" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => sharePost(item)}
+          style={[styles.iconButtons, {backgroundColor: '#C3E4FF47'}]}>
+          <Fontisto name="share-a" size={20} color="#A274FF" />
+        </TouchableOpacity>
+      </View>
+      {/* Comment Section */}
+      {openCommentPostId === item._id && (
+        <View style={styles.commentSection}>
+          <View
+            style={{
+              margin: 6,
+              marginVertical: 20,
+              borderTopWidth: 1,
+              borderColor: '#F1F4F5',
+            }}
+          />
+
+          {item.comments?.length > 0 ? (
+            item.comments.map(comment => (
+              <View key={comment._id} style={styles.commentContainer}>
+                {/* <Image
+                  source={{uri: comment.user?.profilePicture}}
+                  style={styles.profilePicture}
+                /> */}
+                <ProfilePicture
+                  profilePictureUri={comment.user?.profilePicture}
+                  width={30}
+                  height={30}
+                  borderRadius={15}
+                  marginRight={10}
+                />
+                <View>
+                  <Text style={styles.commentUserName}>
+                    {comment.user?.name}
+                  </Text>
+                  <Text style={styles.commentContent}>{comment.content}</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noCommentsText}>No comments yet</Text>
+          )}
+
+          {/* Add Comment Input */}
+          <View style={styles.commentInputContainer}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Add a comment..."
+              value={currentComment}
+              onChangeText={setCurrentComment}
+            />
+            <TouchableOpacity
+              style={styles.addCommentButton}
+              onPress={() => handleAddComment(item)}>
+              <Icons name="send" size={20} color="white" />
+            </TouchableOpacity>
           </View>
         </View>
+      )}
+    </View>
+  );
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: 'white',
+      }}>
+      <StatusBar hidden />
+      {isLoading && <Loader isLoading={isLoading} />}
+      {showBackButton && (
         <View
           style={{
+            width: '100%',
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginTop: 10,
-            gap: 10,
-            paddingHorizontal: 20,
+            padding: 10,
+            position: 'absolute',
+            zIndex: 1,
           }}>
           <TouchableOpacity
-            // onPress={() => navigation.navigate('EditProfile')}
-            style={{
-              backgroundColor: '#A274FF',
-              padding: 13,
-              borderRadius: 30,
-              flex: 1,
-            }}>
-            <Text
-              style={{color: 'white', textAlign: 'center', fontWeight: '500'}}>
-              My Posts
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            // onPress={() => navigation.navigate('Match')}
-            style={{
-              backgroundColor: 'white',
-              padding: 12,
-              borderRadius: 30,
-              borderWidth: 1.4,
-              borderColor: '#585C60',
-              flex: 1,
-            }}>
-            <Text
-              style={{
-                color: '#585C60',
-                textAlign: 'center',
-                fontWeight: '500',
-              }}>
-              Add Section
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 1.4,
-              borderColor: '#585C60',
-            }}>
-            <SimpleLineIcons name="options" size={20} color="#585C60" />
+            style={styles.headerBtn}
+            onPress={() => navigation.goBack()}>
+            <Octicons name="chevron-left" size={25} color="white" />
           </TouchableOpacity>
         </View>
-        <View
-          style={{
-            backgroundColor: '#E9E5DF',
-            margin: 15,
-            padding: 15,
-            borderRadius: 10,
-          }}>
+      )}
+      <ImageBackground
+        source={{uri: user?.profilePicture || ''}}
+        style={styles.userProfilePicture}
+        imageStyle={styles.profilePictureImage}></ImageBackground>
+
+      <ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        style={{paddingBottom: 200}}>
+        <View style={styles.overlayContent}>
+          <LinearGradientR
+            // className="bg-[#c4c4c421]"
+            colors={['#c4c4c400', '#c4c4c400', 'black']}
+            start={{x: 0, y: 0}}
+            end={{x: 0, y: 1}}
+            style={styles.overlay}
+          />
+          <Text style={styles.communityName}>
+            {user?.name?.toUpperCase() || ''}
+          </Text>
+          <Text style={{color: 'white', paddingStart: 10}}>@{user?.name}</Text>
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
+              marginTop: 16,
+              paddingHorizontal: 10,
             }}>
-            <Text style={{fontWeight: 'bold', color: 'black'}}>
-              Networking Goal
-            </Text>
-            {!aboutModalVisible ? (
-              <TouchableOpacity onPress={() => setAboutModalVisible(true)}>
-                <SimpleLineIcons name="pencil" size={15} color="#585C60" />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => {
-                  setAboutModalVisible(false);
-                  handleAboutSave();
-                }}>
-                <SimpleLineIcons name="check" size={15} color="#A274FF" />
-              </TouchableOpacity>
-            )}
-          </View>
-          {!aboutModalVisible ? (
-            <Text style={{color: 'black', marginBottom: 5}}>{user?.bio}</Text>
-          ) : (
-            <TextInput
-              value={editedAbout}
-              onChangeText={setEditedAbout}
-              placeholder="Edit About"
-              placeholderTextColor={'gray'}
-              style={{color: 'black'}}
-              autoFocus={true} // Auto-focus on the TextInput when the modal opens
-            />
-          )}
-
-          <TouchableOpacity>
-            <Text style={{color: '#A274FF'}}>See all details</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View style={{backgroundColor: '#A274FF', padding: 15}}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-          <Text style={{fontSize: 17, fontWeight: '500', color: 'white'}}>
-            Your Dashboard
-          </Text>
-          <View>
-            <Text style={{fontSize: 17, fontWeight: '500', color: 'white'}}>
-              ALL-STAR
-            </Text>
-          </View>
-        </View>
-        <Text style={{fontStyle: 'italic', color: 'white', marginBottom: 8}}>
-          Private to you
-        </Text>
-        <View
-          style={{
-            backgroundColor: 'white',
-            // padding: 5,
-            borderRadius: 10,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-evenly',
-          }}>
-          <View
-            style={{
-              borderRightWidth: 1,
-              padding: 5,
-              flex: 1,
-              justifyContent: 'flex-start',
-              borderColor: '#E0DFDC',
-              margin: 5,
-            }}>
-            <Text
-              style={{
-                textAlign: 'center',
-                color: '#0A66C2',
-                fontWeight: 'bold',
-                fontSize: 18,
-              }}>
-              22,25,200
-            </Text>
-            <Text style={{textAlign: 'center', color: '#585C60'}}>
-              Who viewed your profile
-            </Text>
-          </View>
-          <View
-            style={{
-              padding: 2,
-              flex: 1,
-              flexDirection: 'column',
-              alignSelf: 'flex-start',
-              height: '100%',
-              margin: 5,
-            }}>
-            <Text
-              style={{
-                textAlign: 'center',
-                color: '#0A66C2',
-                fontWeight: 'bold',
-                fontSize: 18,
-              }}>
-              22,25,200
-            </Text>
-            <Text style={{textAlign: 'center', color: '#585C60'}}>
-              Post views
-            </Text>
-          </View>
-          <View
-            style={{
-              borderLeftWidth: 1,
-              padding: 5,
-              flex: 1,
-              margin: 5,
-              borderColor: '#E0DFDC',
-            }}>
-            <Text
-              style={{
-                textAlign: 'center',
-                color: '#0A66C2',
-                fontWeight: 'bold',
-                fontSize: 18,
-              }}>
-              22,25,200
-            </Text>
-            <Text style={{textAlign: 'center', color: '#585C60'}}>
-              Search appearances
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.mainCard}>
-        {/* About Section */}
-        {/* <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <TouchableOpacity onPress={handleAboutEditPress}>
-            <Image style={{height: 15, width: 15}} source={penIcon} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.sectionText}>{user.bio}</Text>
-        </View> */}
-
-        {/* Experience Section */}
-        <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>Experience</Text>
-          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-            <TouchableOpacity onPress={() => setExperienceModalVisible(true)}>
-              <AntDesignIcons name="plus" size={21} color="#A274FF" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                editIndex ? setEditIndex(null) : setEditIndex(true)
-              }>
-              <SimpleLineIcons
-                name={editIndex !== null ? 'close' : 'pencil'}
-                size={18}
-                color="#A274FF"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          {user.experience?.map((exp, index) => (
-            <View key={index} style={styles.experienceItem}>
-              {editIndex != null && (
-                <TouchableOpacity
-                  style={{alignSelf: 'flex-end'}}
-                  onPress={() =>
-                    editIndex === index
-                      ? handleSave(index, exp._id)
-                      : setEditIndex(index)
-                  }>
-                  <SimpleLineIcons
-                    name={editIndex === index ? 'check' : 'pencil'}
-                    size={18}
-                    color="#A274FF"
-                  />
-                </TouchableOpacity>
-              )}
-              <View
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                {editIndex === index ? (
-                  <TextInput
-                    defaultValue={exp.company || ''}
-                    style={[styles.experienceInput, styles.experienceCompany]}
-                    value={editedExperience.company}
-                    onChangeText={text => handleInputChange('company', text)}
-                  />
-                ) : (
-                  <Text style={styles.experienceCompany}>{exp.company}</Text>
-                )}
-                <Text style={styles.experienceDuration}>
-                  {formatDate(exp.startDate)}-
-                  {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
-                </Text>
-              </View>
-              {editIndex === index ? (
-                <TextInput
-                  defaultValue={exp.role || ''}
-                  style={[styles.experienceInput, styles.experienceTitle]}
-                  value={editedExperience.role}
-                  onChangeText={text => handleInputChange('role', text)}
-                />
-              ) : (
-                <Text style={styles.experienceTitle}>{exp.role}</Text>
-              )}
-            </View>
-          ))}
-        </View>
-
-        {/* Education Section */}
-        <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>Education</Text>
-          <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-            <TouchableOpacity
-              onPress={() => {
-                setExperienceModalVisible(true);
-                setIsEdu(true);
-              }}>
-              <AntDesignIcons name="plus" size={21} color="#A274FF" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                editEduIndex ? setEditEduIndex(null) : setEditEduIndex(true);
-              }}>
-              <SimpleLineIcons
-                name={editEduIndex !== null ? 'close' : 'pencil'}
-                size={18}
-                color="#A274FF"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          {user?.education?.map((edu, index) => (
-            <View key={index} style={styles.experienceItem}>
-              {editEduIndex !== null && (
-                <TouchableOpacity
-                  style={{alignSelf: 'flex-end'}}
-                  onPress={() =>
-                    editEduIndex === index
-                      ? handleSaveEdu(index, edu._id)
-                      : setEditEduIndex(index)
-                  }>
-                  <SimpleLineIcons
-                    name={editEduIndex === index ? 'check' : 'pencil'}
-                    size={18}
-                    color="#A274FF"
-                  />
-                </TouchableOpacity>
-              )}
-              <View
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                {editEduIndex === index ? (
-                  <TextInput
-                    defaultValue={edu.school || ''}
-                    style={[styles.experienceInput, styles.experienceTitle]}
-                    value={editedEducation.school}
-                    onChangeText={text => handleInputEduChange('school', text)}
-                  />
-                ) : (
-                  <Text style={styles.experienceCompany}>{edu.school}</Text>
-                )}
-                <Text style={styles.experienceDuration}>
-                  {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
-                </Text>
-              </View>
-
-              {editEduIndex === index ? (
-                <TextInput
-                  defaultValue={edu.degree || ''}
-                  style={[styles.experienceInput, styles.experienceTitle]}
-                  value={editedEducation.degree}
-                  onChangeText={text => handleInputEduChange('degree', text)}
-                />
-              ) : (
-                <Text style={styles.experienceTitle}>{edu.degree}</Text>
-              )}
-            </View>
-          ))}
-        </View>
-
-        {/* Interest Section */}
-        {/* <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>Interests</Text>
-          <TouchableOpacity onPress={handleInterestEditPress}>
-            <Image style={{height: 15, width: 15}} source={penIcon} />
-          </TouchableOpacity>
-        </View>
-        <View
-          style={[
-            styles.card,
-            {flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20},
-          ]}>
-          {user?.interests?.map((interest, index) => (
             <View
-              key={index}
               style={{
-                margin: 5,
-                paddingVertical: 7,
-                paddingHorizontal: 18,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: '#4B164C33',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 16,
+                gap: 10,
               }}>
-              <Text style={styles.sectionText}>{interest}</Text>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('Connections', {userId: user?._id})
+                }>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 22,
+                    fontWeight: '500',
+                  }}>
+                  {user?.friends?.length}
+                </Text>
+                <Text style={{color: 'white', fontWeight: '500'}}>
+                  Connections
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('MyCommOrEvents', {
+                    screen: 'Communities',
+                  })
+                }>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 22,
+                    fontWeight: '500',
+                  }}>
+                  {userInfo?.communities?.total}
+                </Text>
+                <Text style={{color: 'white', fontWeight: '500'}}>
+                  Communities
+                </Text>
+              </TouchableOpacity>
             </View>
-          ))}
-        </View> */}
 
-        {/* On the Web Section */}
-        {/* <View style={styles.titleSection}>
-          <Text style={styles.sectionTitle}>On the Web</Text>
-          <Image style={{height: 15, width: 15}} source={penIcon} />
-        </View>
-        <View style={styles.card}>
-          {webData ? (
-            <>
-              <Text style={styles.sectionText}>
-                LinkedIn: {webData.linkedin}
+            <View style={{position: 'relative', zIndex: 100}}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#313034',
+                  borderRadius: 7,
+                  padding: 10,
+                }}
+                onPress={() => {
+                  setActionModalVisible(!actionModalVisible);
+                }}>
+                <SimpleLineIcons name="options" size={20} color="white" />
+              </TouchableOpacity>
+              {actionModalVisible && (
+                <View style={[styles.dropdownMenu, {zIndex: 1000}]}>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setActionModalVisible(false);
+                      const data = {
+                        name: user?.name,
+                        profilePicture: user?.profilePicture,
+                        about: user?.bio,
+                        location: user?.location,
+                        socialLinks: user?.socialLinks,
+                        experience: user?.experience,
+                        education: user?.education,
+                        skills: user?.skills,
+                        interests: user?.interests,
+                      };
+                      dispatch(populateProfile(data));
+                      navigation.navigate('CreateProfileStepOne');
+                    }}>
+                    <Text style={styles.dropdownItemText}>Edit Profile</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setActionModalVisible(false);
+                      navigation.navigate('ShareScreen');
+                    }}>
+                    <Text style={styles.dropdownItemText}>Share Profile</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 20,
+              alignItems: 'center',
+              justifyContent: 'space-evenly',
+              marginTop: 20,
+              padding: 10,
+            }}>
+            <TouchableOpacity
+              onPress={() => handleTabPress('Info')}
+              onLayout={event => saveLayout('Info', event)}
+              style={{
+                backgroundColor: activeTab === 'Info' ? '#A274FF' : '#A274FF66',
+                paddingVertical: 7,
+                paddingHorizontal: 20,
+                borderRadius: 7,
+                flex: 1,
+              }}>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: 'white',
+                  textAlign: 'center',
+                }}>
+                Info
               </Text>
-              <Text style={styles.sectionText}>GitHub: {webData.github}</Text>
-              <Text style={styles.sectionText}>Website: {webData.website}</Text>
-            </>
-          ) : (
-            <Text style={styles.sectionText}>Loading web data...</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleTabPress('Feed')}
+              onLayout={event => saveLayout('Feed', event)}
+              style={{
+                backgroundColor: activeTab === 'Feed' ? '#A274FF' : '#A274FF66',
+                paddingVertical: 7,
+                paddingHorizontal: 20,
+                borderRadius: 7,
+                flex: 1,
+              }}>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: 'white',
+                  textAlign: 'center',
+                }}>
+                Feed
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleTabPress('MajlisAI')}
+              onLayout={event => saveLayout('MajlisAI', event)}
+              style={{
+                backgroundColor:
+                  activeTab === 'MajlisAI' ? '#A274FF' : '#A274FF66',
+                paddingVertical: 7,
+                paddingHorizontal: 20,
+                borderRadius: 7,
+                flex: 1,
+              }}>
+              <Text
+                style={{
+                  color: 'white',
+                  fontSize: 13,
+                  textAlign: 'center',
+                }}>
+                MajlisAI
+              </Text>
+            </TouchableOpacity>
+            {/* Animated Arrow */}
+            {/* <Animated.View
+              style={[styles.arrow, {transform: [{translateX: arrowPosition}]}]}
+            /> */}
+            <SineWaveArrow arrowPosition={arrowPosition} />
+          </View>
+        </View>
+
+        <View style={{backgroundColor: 'black', paddingTop: 30, zIndex: 10}}>
+          {activeTab === 'Info' && (
+            <View
+              style={{
+                backgroundColor: '#A274FF',
+                borderTopRightRadius: 25,
+                borderTopLeftRadius: 25,
+                minHeight: 500,
+                paddingHorizontal: 20,
+                paddingBottom: 30,
+              }}>
+              <Text style={[styles.title, {marginTop: 10}]}>About:</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginTop: 10,
+                }}>
+                <Icons name="briefcase" size={20} color="white" />
+                <Text style={{color: 'white'}}>{user?.bio}</Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginTop: 10,
+                }}>
+                <FontAwesome name="group" size={20} color="white" />
+                <Text style={{color: 'white'}}>{user?.skills?.join(', ')}</Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginTop: 10,
+                  marginBottom: 20,
+                }}>
+                <Icons name="location" size={20} color="white" />
+                <Text style={{color: 'white'}}>{user?.location}</Text>
+              </View>
+              {user?.socialLinks?.map((link, index) => (
+                <View key={index} style={styles.linkContainer}>
+                  <Entypo
+                    name={`${link.logo}`}
+                    size={20}
+                    color={`${link.color}`}
+                  />
+                  <Text style={styles.platformName}>{link.platform}:</Text>
+                  <Text style={styles.platformName}>{link?.url}</Text>
+                </View>
+              ))}
+              {/* Experience Section */}
+              <View style={{marginVertical: 20}}>
+                <Text style={styles.sectionTitle}>Experience:</Text>
+              </View>
+
+              {user.experience?.map((exp, index) => (
+                <View key={index} style={styles.card}>
+                  <View key={index} style={styles.experienceItem}>
+                    <View
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={[styles.experienceCompany, {color: '#2D3F7B'}]}>
+                        {exp.company}
+                      </Text>
+
+                      <Text
+                        style={[styles.experienceDuration, {color: '#2D3F7B'}]}>
+                        {formatDate(exp.startDate)}-
+                        {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
+                      {exp.role}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+
+              {/* Education Section */}
+              <View style={{marginVertical: 20}}>
+                <Text style={styles.sectionTitle}>Education:</Text>
+              </View>
+
+              <View style={styles.card}>
+                {user?.education?.map((edu, index) => (
+                  <View key={index} style={styles.experienceItem}>
+                    <View
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={[styles.experienceCompany, {color: '#2D3F7B'}]}>
+                        {edu.school}
+                      </Text>
+
+                      <Text
+                        style={[styles.experienceDuration, {color: '#2D3F7B'}]}>
+                        {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
+                      {edu.degree}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              <View style={{marginVertical: 20}}>
+                <Text style={styles.sectionTitle}>Interests:</Text>
+              </View>
+              <View
+                style={{
+                  flexWrap: 'wrap',
+                  flexDirection: 'row',
+                  gap: 8,
+                  // justifyContent: 'center',
+                }}>
+                {user?.interests?.map((interest, index) => (
+                  <View
+                    style={[
+                      styles.card,
+                      {
+                        height: 60,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '45%',
+                      },
+                    ]}
+                    key={index}>
+                    <Text
+                      style={{
+                        color: 'black',
+                        fontWeight: '500',
+                        textAlign: 'center',
+                      }}>
+                      {interest}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           )}
-        </View> */}
-      </View>
+          {activeTab === 'Feed' && (
+            <View
+              style={{
+                backgroundColor: '#A274FF',
+                borderTopRightRadius: 25,
+                borderTopLeftRadius: 25,
+                minHeight: 500,
+              }}>
+              {posts?.length ? (
+                posts?.map(item => renderPost(item))
+              ) : (
+                <Text
+                  style={{color: 'white', marginTop: 50, textAlign: 'center'}}>
+                  No Posts yet
+                </Text>
+              )}
+            </View>
+          )}
+          {/* Events and members section */}
+          {activeTab === 'MajlisAI' && (
+            <View
+              style={{
+                backgroundColor: '#A274FF',
+                borderTopRightRadius: 25,
+                borderTopLeftRadius: 25,
+                minHeight: 500,
+                padding: 15,
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  marginTop: 50,
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    height: 80,
+                    flex: 1,
+                    borderRadius: 20,
+                    shadowColor: 'white',
+                    shadowOffset: {width: 1, height: 1},
+                    shadowOpacity: 0.9,
+                    shadowRadius: 10,
+                    elevation: 10,
+                  }}>
+                  <Svg height="40" width="70" viewBox="0 0 200 5">
+                    <Defs>
+                      <LinearGradient
+                        id="grad"
+                        x1="100%"
+                        y1="0%"
+                        x2="0%"
+                        y2="0%">
+                        <Stop offset="0%" stopColor="red" />
+                        <Stop offset="50%" stopColor="yellow" />
+                        <Stop offset="100%" stopColor="green" />
+                      </LinearGradient>
+                    </Defs>
+                    <Circle
+                      cx="100"
+                      cy="160"
+                      r={radius}
+                      fill="none"
+                      stroke="lightgray"
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={circumference}
+                      strokeDashoffset={0} // Fully visible
+                      strokeLinecap="round"
+                      transform="rotate(-180, 100, 100)" // Start at top-center
+                    />
+
+                    {/* Progress Circle */}
+                    <Circle
+                      cx="100"
+                      cy="160"
+                      r={radius}
+                      fill="none"
+                      stroke="url(#grad)"
+                      strokeWidth={strokeWidth}
+                      strokeDasharray={circumference}
+                      strokeDashoffset={
+                        (1 - Math.max(0, Math.min(progress, 100)) / 100) *
+                        circumference
+                      }
+                      strokeLinecap="round"
+                      transform="rotate(-180, 100, 100)"
+                    />
+                  </Svg>
+                  <View style={{marginLeft: 10}}>
+                    <Text style={styles.percentageText}>{`${progress}%`}</Text>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        color: 'gray',
+                      }}>
+                      Relevancy
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    height: 80,
+                    flex: 1,
+                    borderRadius: 20,
+                    shadowColor: 'white',
+                    shadowOffset: {width: 0, height: 0},
+                    shadowOpacity: 0.9,
+                    shadowRadius: 10,
+                    elevation: 10,
+                  }}>
+                  <Feather name="check" size={30} color="#7FDD53" />
+                  <View style={{marginLeft: 10}}>
+                    <Text style={styles.percentageText}>{`${83}%`}</Text>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        color: 'gray',
+                      }}>
+                      Relevancy
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                }}>
+                {/* <Text style={styles.title}>Something</Text> */}
+
+                {/* {community.createdBy?._id === user?._id && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate('CreateEvent', {
+                        myCommunities: [community],
+                        communityId,
+                      })
+                    }
+                    style={{marginRight: 40}}>
+                    <AntDesignIcons name="plus" size={25} color="#A274FF" />
+                  </TouchableOpacity>
+                )} */}
+              </View>
+            </View>
+          )}
+        </View>
+      </ScrollView>
 
       {/* Edit About Modal */}
 
@@ -731,168 +1127,523 @@ const ProfileScreen = () => {
           />
         </Modal>
       )}
-    </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}>
+        <View
+          style={{
+            paddingHorizontal: 10,
+            alignItems: 'center',
+            borderColor: '#F1F4F5',
+            backgroundColor: 'white',
+            flex: 1,
+          }}>
+          <View
+            style={{
+              marginTop: 20,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '100%',
+            }}>
+            <TouchableOpacity
+              onPress={() => {
+                if (isEditMode) setIsEditMode(false);
+                setModalVisible(false);
+                setNewPostContent('');
+                setSelectedMedia(null);
+                setOpenActionPostId(null);
+              }}>
+              <AntDesign name="close" size={30} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSavePost}>
+              <Text style={{color: '#19295C', fontSize: 18, fontWeight: '500'}}>
+                Save Post
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              width: '100%',
+              flexDirection: 'row',
+              justifyContent: 'flex-start',
+              gap: 10,
+              paddingTop: 10,
+              marginTop: 10,
+              borderTopWidth: 1,
+              borderColor: '#F1F4F5',
+            }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#D0E8FF',
+                padding: 10,
+                paddingHorizontal: 14,
+                borderRadius: 30,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 2,
+              }}>
+              <Icons name="earth-sharp" size={7} color="#1F1F1F" />
+              <Text style={{color: '#1F1F1F', fontSize: 12}}>Anyone</Text>
+              <Icons name="caret-down-outline" size={10} color="#1F1F1F" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#D0E8FF',
+                padding: 10,
+                paddingHorizontal: 14,
+                borderRadius: 30,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 2,
+              }}>
+              <Text style={{color: '#1F1F1F', fontSize: 12}}>Schedule</Text>
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            placeholder={``}
+            maxLength={500}
+            multiline
+            value={newPostContent}
+            placeholderTextColor={'gray'}
+            onChangeText={text => setNewPostContent(text)}
+            style={{
+              height: 200,
+              paddingVertical: 10,
+              borderRadius: 10,
+              marginBottom: 15,
+              width: '100%',
+              textAlignVertical: 'top',
+              color: 'black',
+              fontSize: 18,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '100%',
+              gap: 10,
+              bottom: 20,
+            }}>
+            <TouchableOpacity
+              onPress={() => pickMedia('image')}
+              style={{
+                backgroundColor: '#F1F4F5',
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+                borderRadius: 15,
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+              }}>
+              <Image
+                style={{height: 15, width: 15}}
+                source={require('../assets/icons/camera.png')}
+                resizeMode="contain"
+              />
+              <Text style={{color: '#535767', fontSize: 13}}>Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => pickMedia('video')}
+              style={{
+                backgroundColor: '#F1F4F5',
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+                borderRadius: 15,
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+              }}>
+              <Image
+                style={{height: 15, width: 15}}
+                source={require('../assets/icons/camcorder.png')}
+                resizeMode="contain"
+              />
+              <Text style={{color: '#535767', fontSize: 13}}>Video</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setIsTagsModalVisible(true)}
+              style={{
+                backgroundColor: '#F1F4F5',
+                paddingVertical: 10,
+                paddingHorizontal: 20,
+                borderRadius: 15,
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+              }}>
+              <Image
+                style={{height: 15, width: 15}}
+                source={require('../assets/icons/eye.png')}
+                resizeMode="contain"
+              />
+              <Text style={{color: '#535767', fontSize: 13}}>Tags</Text>
+            </TouchableOpacity>
+          </View>
+          {selectedMedia && (
+            <View style={{marginTop: 15}}>
+              {(selectedMedia?.uri || selectedMedia?.mediaUrl) &&
+              (selectedMedia?.type?.startsWith('image') ||
+                selectedMedia?.mediaType === 'image') ? (
+                <Image
+                  source={{
+                    uri: selectedMedia?.uri || selectedMedia?.mediaUrl, // Ensure uri is a string
+                  }}
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 10,
+                    marginTop: 10,
+                  }}
+                />
+              ) : (
+                <Video
+                  source={{
+                    uri: selectedMedia?.uri || selectedMedia?.mediaUrl,
+                  }}
+                  style={{
+                    width: 200,
+                    height: 200,
+                    borderRadius: 10,
+                    marginTop: 10,
+                  }}
+                  controls={true} // Enables play, pause, seek controls
+                  resizeMode="contain"
+                  paused // Auto-play video
+                />
+              )}
+            </View>
+          )}
+          <Text style={{color: 'gray'}}>
+            {tags?.length ? `#${tags?.join(' #')}` : ''}
+          </Text>
+        </View>
+        <SelectModal
+          visible={isTagsModalVisible}
+          items={tagList}
+          selectedItems={tags}
+          onClose={() => setIsTagsModalVisible(false)}
+          onSelect={item => setTags(item)}
+        />
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: 'white',
+  proku: {
+    fontFamily: 'BalooTamma2-Bold',
   },
-  mainCard: {
-    backgroundColor: 'white',
-    zIndex: 2,
-  },
-  profileCard: {
-    position: 'relative',
+  qrContainer: {
     alignItems: 'center',
+    marginTop: 20,
+    backgroundColor: '#FFE4E1', // Light pink for a softer look
+    width: 180,
+    margin: 'auto',
+    borderRadius: 12, // Slightly rounded corners
+    padding: 20, // Increased padding for better spacing
+    shadowColor: '#000', // Adding shadow for card effect
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2, // Subtle shadow
+    shadowRadius: 6, // Softer shadow radius
+    // elevation: 5, // For Android elevation
   },
-  coverPicture: {
-    width: '100%',
-    height: 250,
-    alignSelf: 'center',
-    resizeMode: 'cover',
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left',
+    marginTop: 60,
+  },
+  postActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 25,
+    gap: 25,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: 40,
+  },
+  actionIcon: {
+    width: 22,
+    height: 22,
+    objectFit: 'cover',
+  },
+  actionText: {
+    color: '#7B7B7B',
+  },
+  listContent: {
+    minHeight: '100%',
+    paddingBottom: 20,
+    backgroundColor: '#A274FF',
+    marginTop: 10,
+  },
+  userCard: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    aspectRatio: 0.75,
+  },
+  cardWrapper: {
+    flex: 1,
+    margin: 8,
+    maxWidth: '45%', // Ensure three columns fit evenly
+    // backgroundColor: 'red',
   },
   profilePicture: {
     width: '100%',
-    height: 500,
-    alignSelf: 'center',
+    height: '100%',
+  },
+  communityProfilePicture: {
+    position: 'absolute',
+    width: '100%',
+    height: '90%',
+    // overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+  },
+  profilePicture: {
+    width: '100%',
+    height: '100%',
+  },
+  userProfilePicture: {
+    position: 'absolute',
+    width: '100%',
+    height: '90%',
+    backgroundColor: '#F5F5F5',
+  },
+  profilePictureImage: {
+    objectFit: 'cover',
   },
   overlay: {
     position: 'absolute',
-    width: '100%',
     height: '100%',
-    top: 0,
-    left: 0,
-    zIndex: 1,
-  },
-  experienceInput: {
-    borderBottomWidth: 1,
-    borderColor: '#A274FF',
-    padding: 5,
-    fontSize: 14,
-    color: '#333',
-  },
-  closeIconContainer: {
-    backgroundColor: 'white',
-    padding: 8,
-  },
-  profileIconContainer: {
     width: '100%',
-    paddingHorizontal: 30,
-    position: 'absolute',
-    top: 40,
-    zIndex: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  },
+  overlayContent: {
+    paddingBottom: 10,
+    height: 550,
+    flex: 1,
+    // padding: 10,
+    justifyContent: 'flex-end',
   },
   userName: {
-    fontSize: 25,
-    fontWeight: '500',
-    textAlign: 'left',
-    color: 'black',
-    zIndex: 2,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
   },
   userLocation: {
-    fontSize: 17,
-    textAlign: 'left',
-    color: '#585C60',
-    marginTop: 5,
-    zIndex: 2,
+    marginBottom: 10,
+    color: '#FFFFFF',
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    // paddingVertical: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  titleSection: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  headerBtn: {
+    padding: 5,
+    // backgroundColor: '#ffffff3e',
+    height: 40,
+    width: 40,
+    borderRadius: 7,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  communityHeader: {
+    // alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginBottom: 10,
+    borderRadius: 10,
+    backgroundColor: 'white',
+  },
+  communityName: {
+    textAlign: 'left',
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'white',
+    paddingStart: 10,
+  },
+  communityDescription: {
+    color: 'black',
+    marginLeft: 20,
+  },
+  linkContainer: {
+    borderWidth: 1,
+    borderColor: 'white',
+    borderRadius: 10,
     padding: 15,
-    // marginBottom: 10,
+    paddingStart: 20,
+    marginBottom: 16,
+    color: 'white',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
-    color: 'black',
-  },
-  sectionText: {
-    fontSize: 14,
-    color: 'black',
-  },
-  experienceItem: {
-    // marginBottom: 10,
-    borderBottomWidth: 1,
-    padding: 20,
-    borderColor: '#E0DFDC',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#FDF7FD',
-    padding: 20,
-    borderBottomStartRadius: 10,
-    borderBottomEndRadius: 10,
-    width: '100%',
-    height: '100%',
-    alignSelf: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  experienceTitle: {
-    color: 'black',
-  },
-  experienceCompany: {
-    color: 'black',
-    fontWeight: '500',
+  platformName: {
+    color: 'white',
     fontSize: 16,
   },
-  experienceDuration: {
-    color: 'black',
+  iconButtons: {
+    padding: 2,
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+    backgroundColor: '#F1F4F5',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  input: {
-    // borderWidth: 1,
-    // borderColor: '#DDD',
+  arrow: {
+    position: 'absolute',
+    top: 50, // Adjust based on your layout
+    width: 50,
+    height: 25, // Reduce height to create a "wave" effect
+    backgroundColor: '#A274FF',
+    zIndex: 150,
+    borderRadius: 25, // Fully round the top
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    transform: [{translateY: -15}], // Slight upward adjustment
+  },
+
+  commentContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 8,
     paddingHorizontal: 10,
-    // height: 200,
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#F1F4F5', // Light grey divider
+  },
+  percentageText: {
+    fontWeight: 'bold',
+
+    color: 'black',
+    fontSize: 20,
+  },
+  commentInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  commentInput: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 15,
+    paddingStart: 20,
+  },
+  addCommentButton: {
+    marginLeft: 10,
+    backgroundColor: '#A274FF',
+    padding: 15,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addCommentText: {
+    color: '#fff',
+  },
+  commentUserName: {
+    fontWeight: 'bold',
+    color: '#19295C', // Darker text color for better readability
+    fontSize: 14,
+    marginBottom: 2, // Spacing between username and content
+  },
+  commentContent: {
+    color: '#99A1BE', // Slightly lighter text for the content
+    fontSize: 13,
+    lineHeight: 18, // Better readability with line spacing
+  },
+  noCommentsText: {
+    textAlign: 'center',
+    color: '#999', // Grey text for "no comments" message
+    fontSize: 14,
+    paddingVertical: 10,
+  },
+  // profilePicture: {
+  //   width: 30,
+  //   height: 30,
+  //   borderRadius: 15,
+  //   marginRight: 10, // Space between image and text
+  // },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 35, // Adjust position relative to the action icon
+    right: 10,
+    width: 120,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    elevation: 5, // Adds shadow for Android
+    shadowColor: '#000', // Adds shadow for iOS
+    shadowOpacity: 0.1,
+    shadowOffset: {width: 0, height: 2},
+    shadowRadius: 5,
+    zIndex: 2, // Ensures the dropdown is on top of other elements
+  },
+  dropdownItem: {
+    padding: 15,
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: 'black',
+    fontWeight: '500',
+  },
+  modalActionOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Semi-transparent overlay for full-screen modals
+  },
+  modalActionContent: {
+    width: '80%',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    padding: 20,
+  },
+  friendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 7,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    padding: 5,
+    marginHorizontal: 5,
     backgroundColor: 'white',
-    marginBottom: 15,
-    borderRadius: 5,
+  },
+  friendImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  friendName: {
+    fontSize: 14,
+    fontWeight: '500',
     color: 'black',
   },
-  title: {
+  sectionTitle: {
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+    marginTop: 20,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 15,
     marginBottom: 10,
-  },
-  button: {
-    padding: 10,
-    backgroundColor: '#007BFF',
-    borderRadius: 5,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  uploadButton: {
-    padding: 10,
-    backgroundColor: '#28A745',
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  imagePreview: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
   },
 });
 

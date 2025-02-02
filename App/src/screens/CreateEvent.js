@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -221,6 +222,66 @@ const CreateEvent = ({navigation, route}) => {
             isEvent: true,
             isRegistered: false,
           });
+        }
+      } catch (error) {
+        console.error('Error creating event:', error.message);
+        alert('Failed to create event. Please try again.');
+      }
+    } else {
+      alert('Please fill all fields');
+    }
+  };
+  const handleCreateDraftEvent = async () => {
+    if (
+      eventName &&
+      profilePic &&
+      description &&
+      eventType &&
+      eventStartDate &&
+      address &&
+      timezone &&
+      communityId
+    ) {
+      try {
+        const formData = new FormData();
+        formData.append('name', eventName);
+        formData.append('eventType', eventType);
+        formData.append('startDate', eventStartDate);
+        formData.append('endDate', eventEndDate);
+        formData.append('startTime', eventStartTime);
+        formData.append('endTime', eventEndTime);
+        formData.append('description', description);
+        formData.append('communityId', communityId);
+        formData.append('address', address);
+        formData.append('freeTickets', freeTickets);
+        formData.append('paidTickets', paidTickets);
+        formData.append('timezone', timezone);
+        formData.append('category', category);
+
+        formData.append('profilePicture', {
+          uri: profilePic,
+          type: 'image/jpeg',
+          name: 'profile.jpg',
+        });
+
+        formData.append('createdBy', user?._id); // Ensure user object is passed correctly
+        const res = await axiosInstanceForm.post(
+          '/api/communities/events',
+          formData,
+        );
+        if (res.status === 201) {
+          // alert('Event created successfully!');
+          // Reset form state
+          setEventName('');
+          setProfilePic(null);
+          setDescription('');
+          setEventOcassion('');
+          setEventLocation('');
+          setStartEventDate('');
+          setEventStartTime('');
+          setEventEndTime('');
+          ToastAndroid.show('Saved as draft!', ToastAndroid.SHORT);
+          navigation.goBack();
         }
       } catch (error) {
         console.error('Error creating event:', error.message);
@@ -1070,6 +1131,7 @@ const CreateEvent = ({navigation, route}) => {
             </TouchableOpacity>
           </View>
           <TouchableOpacity
+            onPress={handleCreateDraftEvent}
             style={[styles.submitButton, {backgroundColor: 'black'}]}>
             <Text style={styles.submitButtonText}>Save as Draft</Text>
           </TouchableOpacity>
