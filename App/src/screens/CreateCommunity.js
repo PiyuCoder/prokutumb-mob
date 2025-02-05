@@ -1,4 +1,5 @@
 import {
+  Alert,
   Image,
   ImageBackground,
   Modal,
@@ -99,10 +100,24 @@ const CreateCommunity = ({navigation}) => {
 
   const handleCreateCommunity = async () => {
     if (activeTab === 'Basic') {
+      if (!communityName || !profilePic || !description) {
+        Alert.alert(
+          'Missing Fields',
+          'Please fill in all required fields before proceeding.',
+        );
+        return;
+      }
       setActiveTab('Schedule');
       setStep(2);
       return;
     } else if (activeTab === 'Schedule') {
+      if (!communityLocation || !timezone) {
+        Alert.alert(
+          'Missing Fields',
+          'Please fill in all required fields before proceeding.',
+        );
+        return;
+      }
       setActiveTab('MembershipDetails');
       setStep(3);
       return;

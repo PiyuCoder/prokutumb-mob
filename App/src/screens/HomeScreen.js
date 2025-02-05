@@ -17,6 +17,7 @@ import {
   Alert,
   Animated,
   Dimensions,
+  BackHandler,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -96,11 +97,26 @@ const HomeScreen = ({navigation}) => {
     dispatch(fetchUserData(user?._id));
   }, [user?._id]);
 
-  // console.log(user);
-  // const stories = [
-  //   {id: '1', name: 'My Post', image: user?.profilePicture, isUser: true},
-  //   // Add other stories here as needed
-  // ];
+  useEffect(() => {
+    const backAction = () => {
+      if (navigation.isFocused() && !navigation.canGoBack()) {
+        // If this is the first screen, show exit alert
+        Alert.alert('Exit App', 'Are you sure you want to exit?', [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'Exit', onPress: () => BackHandler.exitApp()},
+        ]);
+        return true; // Prevents default back action
+      }
+      return false; // Allows normal back navigation
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove(); // Cleanup on unmount
+  }, [navigation]);
 
   // Fetch initial posts on component mount
   useEffect(() => {

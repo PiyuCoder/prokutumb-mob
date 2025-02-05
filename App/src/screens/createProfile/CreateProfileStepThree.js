@@ -1,4 +1,5 @@
 import {
+  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -67,6 +68,19 @@ const CreateProfileStepThree = ({navigation}) => {
   };
 
   const onSubmit = () => {
+    // Check if any field is empty
+    const hasEmptyFields = educations.some(
+      edu => !edu.school || !edu.degree || !edu.fieldOfStudy,
+    );
+
+    if (hasEmptyFields) {
+      Alert.alert(
+        'Missing Fields',
+        'Please fill in all required fields before proceeding.',
+      );
+      return; // Stop the function if fields are empty
+    }
+
     const serializedEducations = educations.map(exp => ({
       ...exp,
       startDate: exp.startDate.toISOString().split('T')[0],
@@ -216,7 +230,7 @@ const CreateProfileStepThree = ({navigation}) => {
 
             <TextInput
               style={styles.input}
-              placeholder={'Description'}
+              placeholder={'Field of study'}
               placeholderTextColor={'gray'}
               value={edu.fieldOfStudy}
               onChangeText={text =>

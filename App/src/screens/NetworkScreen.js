@@ -21,13 +21,16 @@ import EntypoIcon from 'react-native-vector-icons/Entypo';
 import Sound from 'react-native-sound';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
-const NetworkScreen = ({navigation}) => {
+const NetworkScreen = ({navigation, route}) => {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [messages, setMessages] = useState([]);
   const scrollViewRef = useRef();
   const {user} = useSelector(state => state.auth);
+  const queryType = route?.params?.queryType
+    ? route?.params?.queryType
+    : 'profile';
 
   useEffect(() => {
     // Fetch previous messages on load
@@ -152,9 +155,11 @@ const NetworkScreen = ({navigation}) => {
       const res = await axiosInstance.post('/api/interactions', {
         userId: user?._id,
         query,
+        queryType,
       });
 
       const data = res.data; // Get response data directly
+      console.log(data);
       setMessages(prev => {
         // Update the latest message with the actual AI response
         const updatedMessages = [...prev];
@@ -254,9 +259,17 @@ const NetworkScreen = ({navigation}) => {
               <Text style={styles.queryTimeText}>
                 {formatTime(msg.createdAt)}
               </Text>
-              <Text style={[styles.messageText, styles.aiMessage]}>
-                {msg.response}
-              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('ResultsScreen', {
+                    results: JSON.parse(msg.response),
+                  })
+                }>
+                <Text style={[styles.messageText, styles.aiMessage]}>
+                  You have {JSON?.parse(msg?.response)?.length || 0} results.
+                  <Text style={{color: 'blue'}}>Click to view</Text>
+                </Text>
+              </TouchableOpacity>
               <Text style={styles.timeText}>{formatTime(msg.createdAt)}</Text>
             </View>
           ))}

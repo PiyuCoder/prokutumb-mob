@@ -1,4 +1,5 @@
 import {
+  Alert,
   Image,
   ImageBackground,
   Modal,
@@ -70,6 +71,8 @@ const CreateEvent = ({navigation, route}) => {
 
   const [selectedInvitees, setSelectedInvitees] = useState([]);
   const [isPreview, setIsPreview] = useState(false);
+
+  const haveCommunity = communityId !== '';
 
   useEffect(() => {
     if (route.params?.communityId || myCommunities?.length) {
@@ -309,8 +312,25 @@ const CreateEvent = ({navigation, route}) => {
     }
   };
 
-  // console.log(selectedInvitees);
-  console.log('communityId:', selectedInvitees);
+  useEffect(() => {
+    if (!haveCommunity) {
+      Alert.alert(
+        'Community Required',
+        'You need to create a community before you can create an event.',
+        [
+          {
+            text: 'Go Back',
+            onPress: () => navigation.goBack(),
+            style: 'cancel',
+          }, // Navigate back
+          {
+            text: 'Create Community',
+            onPress: () => navigation.navigate('CreateCommunity'),
+          }, // Navigate to create community screen
+        ],
+      );
+    }
+  }, [haveCommunity]);
 
   return (
     <ScrollView ref={formRef} style={styles.container}>
@@ -592,6 +612,7 @@ const CreateEvent = ({navigation, route}) => {
               </TouchableOpacity>
               <DatePicker
                 modal
+                minimumDate={new Date.now()}
                 open={isStartDatePickerVisible}
                 date={new Date()}
                 mode="date"
@@ -620,6 +641,7 @@ const CreateEvent = ({navigation, route}) => {
               )}
               <DatePicker
                 modal
+                minimumDate={new Date.now()}
                 open={isEndDatePickerVisible}
                 date={new Date()}
                 mode="date"

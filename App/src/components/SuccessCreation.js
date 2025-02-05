@@ -78,18 +78,12 @@ const SuccessCreation = ({navigation, route}) => {
         </Text>
       </TouchableOpacity> */}
       <TouchableOpacity
-        onPress={() =>
-          navigation.reset({
-            index: 1,
-            routes: [
-              {name: 'Communities'},
-              {
-                name: isEvent ? 'CreateEvent' : 'CreateCommunity',
-                params: {screen: 'Events'},
-              },
-            ],
-          })
-        }
+        onPress={() => {
+          navigation.navigate('Dashboard', {
+            screen: 'Communities',
+            params: {screen: 'Events'},
+          });
+        }}
         style={{
           backgroundColor: 'white',
           padding: 14,

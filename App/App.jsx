@@ -49,6 +49,7 @@ import CreateProfileStepThree from './src/screens/createProfile/CreateProfileSte
 import CreateProfileStepFour from './src/screens/createProfile/CreateProfileStepFour';
 import Tickets from './src/screens/Tickets';
 import MyCommOrEvents from './src/screens/MyCommOrEvents';
+import ResultsScreen from './src/screens/ResultsScreen';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -226,6 +227,11 @@ export default function App() {
               options={{headerShown: false}}
             />
             <Stack.Screen
+              name="ResultsScreen"
+              component={ResultsScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
               name="Network"
               component={NetworkScreen}
               options={{headerShown: false}}
@@ -270,11 +276,11 @@ export default function App() {
               component={Notifications}
               options={{headerShown: false}}
             />
-            <Stack.Screen
+            {/* <Stack.Screen
               name="Communities"
               component={Communities}
               options={{headerShown: false}}
-            />
+            /> */}
             <Stack.Screen
               name="CommunityHome"
               component={CommunityHomeScreen}

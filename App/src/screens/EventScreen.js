@@ -172,15 +172,17 @@ const EventScreen = ({navigation, route}) => {
             justifyContent: 'space-between',
             marginTop: 16,
           }}>
-          {event?.members?.slice(0, 2)?.map(member => (
-            <ProfilePicture
-              key={member?._id}
-              profilePictureUri={member?.profilePicture}
-              height={30}
-              width={30}
-              borderRadius={15}
-            />
-          ))}
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            {event?.members?.slice(0, 2)?.map(member => (
+              <ProfilePicture
+                key={member?._id}
+                profilePictureUri={member?.profilePicture}
+                height={30}
+                width={30}
+                borderRadius={15}
+              />
+            ))}
+          </View>
           <Text style={{color: 'black'}}>
             {event?.members?.length} Participants
           </Text>

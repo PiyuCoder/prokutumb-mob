@@ -6,6 +6,7 @@ const Feed = require("../models/Feed");
 const Notification = require("../models/Notification");
 const Communitymob = require("../models/Community");
 const Event = require("../models/Event");
+const axios = require("axios");
 
 const updateUserLocation = async (userId, latitude, longitude) => {
   try {
@@ -132,30 +133,56 @@ async function detectIntentText(query) {
 }
 
 exports.prokuInteraction = async (req, res) => {
-  const { userId, query } = req.body;
+  const { userId, query, queryType } = req.body;
 
-  console.log(userId, query);
+  const user = await Member.findById(userId);
+
+  let updatedQuery;
+
+  if (queryType === "profile") {
+    const interestsString = user.interests.join(", ");
+    const skillsString = user.skills.join(", ");
+
+    // Modify the query by appending interests and skills
+    updatedQuery = `${query} based on interests: ${interestsString} and skills: ${skillsString}`;
+  } else if (queryType === "community") {
+    updatedQuery = query;
+  } else {
+    updatedQuery = query;
+  }
 
   try {
-    const genAI = new GoogleGenerativeAI(
-      "AIzaSyA2MXxVjM_sygMcocVFRfvyvZKQicvvc38"
+    // Make a request to the new AI API
+    const apiResponse = await axios.post(
+      "http://34.150.183.91:8000/generate/",
+      {
+        input_text: updatedQuery, // Sending user's query
+        num_responses: 5, // Number of responses required
+      },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
     );
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const prompt = "Explain how AI works";
+    console.log(apiResponse);
 
-    const result = await model.generateContent(query);
-    // detectIntentText(query);
-    console.log(result.response.text());
-    const responseText = result.response.text();
+    // Extract response from AI API
+    const responseText = JSON.stringify(apiResponse.data.responses);
+
+    console.log("AI Response:", responseText);
 
     // Save user query and AI response to the database
     const member = await Member.findById(userId);
+    if (!member) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const interaction = {
       query,
       response: responseText,
       createdAt: new Date(),
     };
+
     member.chatbotInteractions.push(interaction);
     await member.save();
 

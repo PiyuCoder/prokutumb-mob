@@ -1,4 +1,5 @@
 import {
+  Alert,
   FlatList,
   Modal,
   ScrollView,
@@ -9,10 +10,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Entypo from 'react-native-vector-icons/Entypo';
 import {useDispatch, useSelector} from 'react-redux';
 import {saveProfile, setSocialLinks} from '../../store/slices/profileSlice';
+import Loader from '../../components/Loader';
 
 const platformsList = [
   {name: 'Facebook', logo: 'facebook', color: '#0073DE'},
@@ -25,6 +27,7 @@ const platformsList = [
 
 const CreateProfileStepFour = ({navigation}) => {
   const profileData = useSelector(state => state.profile);
+  const [loading, setLoading] = useState(false);
   const [socialLinkes, setSocialLinkes] = useState(
     !profileData?.socialLinks?.length
       ? [
@@ -54,7 +57,25 @@ const CreateProfileStepFour = ({navigation}) => {
       ]);
     setIsModalVisible(false);
   };
+  useEffect(() => {
+    setLoading(false);
+  }, []);
   const onSubmit = () => {
+    setLoading(true);
+    // Check if any field is empty
+    const hasEmptyFields = socialLinkes.some(
+      link => link.url === '@' || !link.url,
+    );
+
+    if (hasEmptyFields) {
+      setLoading(false);
+      Alert.alert(
+        'Missing Fields',
+        'Please fill in all required fields before proceeding.',
+      );
+      return; // Stop the function if fields are empty
+    }
+
     const formData = new FormData();
     formData.append('name', profileData.name);
     formData.append('profilePicture', {
@@ -73,6 +94,7 @@ const CreateProfileStepFour = ({navigation}) => {
 
     dispatch(saveProfile(formData)).then(action => {
       if (saveProfile.fulfilled.match(action)) {
+        setLoading(false);
         navigation.replace('Dashboard');
       }
     });
@@ -82,9 +104,12 @@ const CreateProfileStepFour = ({navigation}) => {
     updatedLinks[index]['url'] = value;
     setSocialLinkes(updatedLinks);
   };
+
+  if (loading) return <Loader isLoading={loading} />;
   return (
     <ScrollView>
       <StatusBar hidden />
+
       <View
         style={{
           flexDirection: 'row',

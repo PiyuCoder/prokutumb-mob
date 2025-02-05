@@ -313,7 +313,7 @@ const UserProfile = ({route}) => {
   };
 
   const formatDate = dateString => {
-    const options = {year: 'numeric', month: 'long', day: 'numeric'};
+    const options = {year: 'numeric', month: 'short', day: 'numeric'};
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
@@ -422,17 +422,23 @@ const UserProfile = ({route}) => {
 
       {/* Like, comment and share counts */}
       <View style={{flexDirection: 'row', marginTop: 20, gap: 5}}>
-        <Text style={styles.actionText}>{item.likes.length} Likes .</Text>
-        <Text style={styles.actionText}>{item.comments.length} Comments .</Text>
-        <Text style={styles.actionText}>{item.shares} Shares</Text>
+        {/* <Text style={styles.actionText}>{item.likes.length} Likes .</Text> */}
+        {item?.comments?.length > 0 && (
+          <TouchableOpacity onPress={() => toggleCommentSection(item._id)}>
+            <Text className="ml-2" style={[styles.actionText]}>
+              {openCommentPostId === item?._id
+                ? 'Hide Comments'
+                : 'View Comments'}
+            </Text>
+          </TouchableOpacity>
+        )}
+        {/* <Text style={styles.actionText}>{item.shares} Shares</Text> */}
       </View>
 
       {/* Post Actions: Likes, Comments, Views, and Share */}
       <View style={styles.postActions}>
         <TouchableOpacity
-          onPress={() =>
-            dispatch(likePost({userId: currentUser?._id, postId: item._id}))
-          }
+          onPress={() => handleLike(item)}
           style={[
             styles.iconButtons,
             {
@@ -1452,6 +1458,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
+    overflow: 'hidden',
   },
 });
 

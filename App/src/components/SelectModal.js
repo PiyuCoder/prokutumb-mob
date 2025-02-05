@@ -71,11 +71,12 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 16,
+    color: 'black',
   },
   selectedText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'blue',
+    color: '#A274FF',
   },
   doneButton: {
     marginTop: 20,
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
   },
   doneText: {
     fontSize: 18,
-    color: 'blue',
+    color: '#A274FF',
   },
 });
 

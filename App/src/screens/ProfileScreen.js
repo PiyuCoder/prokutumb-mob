@@ -759,7 +759,7 @@ const ProfileScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => handleTabPress('MajlisAI')}
+              onPress={() => navigation.navigate('Network')}
               onLayout={event => saveLayout('MajlisAI', event)}
               style={{
                 backgroundColor:
@@ -1644,6 +1644,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
+    overflow: 'hidden',
   },
 });
 

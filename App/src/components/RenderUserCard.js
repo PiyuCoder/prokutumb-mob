@@ -6,24 +6,43 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import ProfilePicture from './ProfilePicture';
 import {useNavigation} from '@react-navigation/native';
 import ConnectButtonWithModal from './ConnectButtonWithModal';
+import {useSelector} from 'react-redux';
 
-const RenderUserCard = ({item}) => {
+const RenderUserCard = ({item, results}) => {
   const navigation = useNavigation();
+  const {user} = useSelector(state => state.auth);
+  const [resultItem, setResultItem] = useState({});
+
+  useEffect(() => {
+    if (results) {
+      const itemArr = item?.split(' ');
+      const resultItem = {
+        _id: itemArr[0],
+        type: itemArr[1],
+        name: `${itemArr[2]} ${itemArr[3]}`,
+        match: itemArr[4],
+      };
+      setResultItem(resultItem);
+    }
+  }, [item, results]);
   return (
     <TouchableOpacity
+      disabled={results}
       onPress={() =>
         navigation.navigate('UserProfile', {
-          userId: item._id,
+          userId: results ? resultItem?._id : item._id,
         })
       }
       style={styles.cardWrapper}>
       {/* Match Text */}
       <View style={styles.matchTextWrapper}>
-        <Text style={styles.matchText}>100% Match</Text>
+        <Text style={styles.matchText}>
+          {results ? resultItem?.match : '100'}% Match
+        </Text>
       </View>
 
       {/* User Card */}
@@ -39,8 +58,12 @@ const RenderUserCard = ({item}) => {
 
         {/* User Info */}
         <View>
-          <Text style={styles.userName}>{item?.name}</Text>
-          <Text style={styles.mutual}>{item?.location}</Text>
+          <Text style={styles.userName}>
+            {results ? resultItem?.name : item?.name}
+          </Text>
+          <Text style={styles.mutual}>
+            {results ? 'Unknown' : item?.location}
+          </Text>
         </View>
 
         {/* Earth Icon */}
@@ -58,13 +81,20 @@ const RenderUserCard = ({item}) => {
         </TouchableOpacity> */}
         {/* <ConnectButtonWithModal /> */}
         <TouchableOpacity
+          disabled={results}
           style={styles.connectBtn}
           onPress={() =>
             navigation.navigate('UserProfile', {
               userId: item._id,
             })
           }>
-          <Text style={styles.connectBtnText}>Add Friend</Text>
+          <Text style={styles.connectBtnText}>
+            {user?.friendRequests?.find(
+              request => request?.fromUser === user?._id,
+            ) || !user?.friends?.find(friend => friend?._id === item._id)
+              ? 'Add Friend'
+              : 'Pending'}
+          </Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>

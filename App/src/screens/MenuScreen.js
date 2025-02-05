@@ -104,7 +104,9 @@ const MenuScreen = ({navigation}) => {
         style={styles.card}>
         <Image source={{uri: item.profilePicture}} style={styles.cardImage} />
       </TouchableOpacity>
-      <Text style={styles.cardText}>{item.name}</Text>
+      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.cardText}>
+        {item.name}
+      </Text>
     </View>
   );
 
@@ -239,11 +241,13 @@ const MenuScreen = ({navigation}) => {
           <FlatList
             data={communities}
             renderItem={item => renderCard(item, 'community')}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item?._id}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
-            ListEmptyComponent={<Text>No Communities</Text>}
+            ListEmptyComponent={
+              <Text style={styles.noUsersText}>No Communities</Text>
+            }
           />
 
           <View
@@ -267,11 +271,13 @@ const MenuScreen = ({navigation}) => {
           <FlatList
             data={events}
             renderItem={item => renderCard(item, 'event')}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item?._id}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
-            ListEmptyComponent={<Text>No Events</Text>}
+            ListEmptyComponent={
+              <Text style={styles.noUsersText}>No Events</Text>
+            }
           />
           <View style={{paddingHorizontal: 16, marginBottom: 20}}>
             <Text
@@ -404,6 +410,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     color: '#99A1BE',
+    width: 120,
   },
   iconButtons: {
     padding: 2,
@@ -438,6 +445,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     // marginBottom: 8,
+  },
+  noUsersText: {
+    textAlign: 'center',
+    color: 'gray',
+    marginTop: 10,
   },
   gridcardText: {
     fontSize: 14,

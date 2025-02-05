@@ -882,17 +882,20 @@ exports.fetchTopNetworkers = async (req, res) => {
 exports.fetchPeopleYouMayKnow = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.params.userId);
-    const user = await Member.findById(userId);
+    const user = await Member.findById(userId).populate("friends", "_id");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Find people with shared interests
+    // Get the list of friend IDs
+    const friendIds = user.friends.map((friend) => friend._id);
+
+    // Find people with shared interests, excluding friends
     const peopleYouMayKnow = await Member.aggregate([
       {
         $match: {
-          _id: { $ne: userId }, // Exclude the current user
+          _id: { $nin: [...friendIds, userId] }, // Exclude friends and self
           interests: { $in: user.interests }, // Match based on shared interests
         },
       },
@@ -906,7 +909,7 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
         },
       },
       { $match: { commonInterests: { $gt: 0 } } }, // Ensure at least one shared interest
-      { $sort: { commonInterests: -1 } }, // Sort by most shared interests
+      { $sort: { commonInterests: -1 } }, // Sort by highest shared interests
       { $limit: 10 }, // Limit results to 10 users
     ]);
 

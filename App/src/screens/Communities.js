@@ -100,11 +100,7 @@ export default function Communities({navigation, route}) {
   }, [user?._id, isEvent]);
 
   const renderHorizontalList = (data, title) => (
-    <View
-      style={[
-        styles.sectionWrapper,
-        {marginBottom: title.includes('you May') ? 100 : 10},
-      ]}>
+    <View style={[styles.sectionWrapper]}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <FlatList
         data={data}
@@ -173,7 +169,9 @@ export default function Communities({navigation, route}) {
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      contentContainerStyle={{paddingBottom: 100}}
+      style={styles.container}>
       <StatusBar backgroundColor="white" barStyle={'dark-content'} />
       {loading && <Loader isLoading={loading} />}
       <View style={styles.headerActions}>
@@ -360,6 +358,7 @@ const styles = StyleSheet.create({
     margin: 10,
     gap: 15,
     paddingEnd: 4,
+    marginTop: 20,
   },
   modalContainer: {
     flex: 1,

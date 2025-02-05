@@ -69,7 +69,10 @@ const CreateProfileStepOne = ({navigation}) => {
     ) {
       navigation.navigate('CreateProfileStepTwo');
     } else {
-      alert('Fill all fields');
+      Alert.alert(
+        'Missing Fields',
+        'Please fill in all required fields before proceeding.',
+      );
     }
   };
   return (
@@ -117,14 +120,16 @@ const CreateProfileStepOne = ({navigation}) => {
         <TouchableOpacity
           onPress={() => setIsInterestsModalVisible(true)}
           style={styles.input}>
-          <Text>
+          <Text style={{color: interests.length > 0 ? 'black' : 'gray'}}>
             {interests.length > 0 ? interests.join(', ') : 'Select Interests'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setIsSkillsModalVisible(true)}
           style={styles.input}>
-          <Text>{skills.length > 0 ? skills.join(', ') : 'Select Skills'}</Text>
+          <Text style={{color: skills.length > 0 ? 'black' : 'gray'}}>
+            {skills.length > 0 ? skills.join(', ') : 'Select Skills'}
+          </Text>
         </TouchableOpacity>
         <View style={styles.media}>
           {profilePicture ? (
@@ -147,7 +152,7 @@ const CreateProfileStepOne = ({navigation}) => {
           placeholder="Location"
           value={location}
           onChangeText={text => dispatch(setLocation(text))}
-          style={styles.input}
+          style={[styles.input, {marginTop: 10}]}
           placeholderTextColor={'gray'}
         />
         <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
