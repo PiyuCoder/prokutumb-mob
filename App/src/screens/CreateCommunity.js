@@ -136,7 +136,7 @@ const CreateCommunity = ({navigation}) => {
       try {
         const formData = new FormData();
         formData.append('name', communityName);
-        formData.append('type', communityType);
+        formData.append('communityType', communityType);
         formData.append('timezone', timezone);
         formData.append('location', communityLocation);
         formData.append('description', description);

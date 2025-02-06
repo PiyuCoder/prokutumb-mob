@@ -25,6 +25,7 @@ import DatePicker from 'react-native-date-picker';
 import {format} from 'date-fns';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import Loader from '../components/Loader';
 
 const CreateEvent = ({navigation, route}) => {
   const {user} = useSelector(state => state.auth);
@@ -60,6 +61,7 @@ const CreateEvent = ({navigation, route}) => {
   const [filteredConnections, setFilteredConnections] = useState([]);
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   //   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
@@ -72,7 +74,7 @@ const CreateEvent = ({navigation, route}) => {
   const [selectedInvitees, setSelectedInvitees] = useState([]);
   const [isPreview, setIsPreview] = useState(false);
 
-  const haveCommunity = communityId !== '';
+  const haveCommunity = myCommunities?.length > 0;
 
   useEffect(() => {
     if (route.params?.communityId || myCommunities?.length) {
@@ -161,10 +163,30 @@ const CreateEvent = ({navigation, route}) => {
 
   const handleCreateEvent = async () => {
     if (activeTab === 'Basic') {
+      if (!eventName || !profilePic || !description || !communityId) {
+        Alert.alert(
+          'Missing Fields',
+          'Please fill in all required fields before proceeding.',
+        );
+        return;
+      }
       setActiveTab('Schedule');
       setStep(2);
       return;
     } else if (activeTab === 'Schedule') {
+      if (
+        !address ||
+        !eventStartDate ||
+        !timezone ||
+        !eventStartTime ||
+        !eventEndTime
+      ) {
+        Alert.alert(
+          'Missing Fields',
+          'Please fill in all required fields before proceeding.',
+        );
+        return;
+      }
       setActiveTab('TicketDetails');
       setStep(3);
       return;
@@ -183,6 +205,7 @@ const CreateEvent = ({navigation, route}) => {
       communityId
     ) {
       try {
+        setIsLoading(true);
         const formData = new FormData();
         formData.append('name', eventName);
         formData.append('eventType', eventType);
@@ -229,9 +252,12 @@ const CreateEvent = ({navigation, route}) => {
       } catch (error) {
         console.error('Error creating event:', error.message);
         alert('Failed to create event. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
     } else {
       alert('Please fill all fields');
+      setIsLoading(false);
     }
   };
   const handleCreateDraftEvent = async () => {
@@ -335,6 +361,7 @@ const CreateEvent = ({navigation, route}) => {
   return (
     <ScrollView ref={formRef} style={styles.container}>
       <StatusBar hidden />
+      <Loader isLoading={isLoading} />
       <View
         style={{
           flexDirection: 'row',
@@ -612,7 +639,7 @@ const CreateEvent = ({navigation, route}) => {
               </TouchableOpacity>
               <DatePicker
                 modal
-                minimumDate={new Date.now()}
+                minimumDate={new Date()}
                 open={isStartDatePickerVisible}
                 date={new Date()}
                 mode="date"
@@ -641,7 +668,7 @@ const CreateEvent = ({navigation, route}) => {
               )}
               <DatePicker
                 modal
-                minimumDate={new Date.now()}
+                minimumDate={new Date()}
                 open={isEndDatePickerVisible}
                 date={new Date()}
                 mode="date"
@@ -910,75 +937,14 @@ const CreateEvent = ({navigation, route}) => {
                       borderWidth: 1,
                       borderColor: 'black',
                       borderRadius: 10,
-                      paddingHorizontal: 10,
+                      padding: 10,
                       marginBottom: 16,
                       marginTop: 15,
                       backgroundColor: 'white',
+                      alignSelf: 'center',
+                      borderColor: 'gold',
                     }}>
-                    <Text style={{color: '#333333'}}>Number of tickets *</Text>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                      }}>
-                      {/* Decrease Button */}
-                      <TouchableOpacity
-                        onPress={() =>
-                          paidTickets > 0 && setPaidTickets(prev => prev - 1)
-                        }
-                        style={{borderWidth: 1, borderRadius: 30, padding: 4}}>
-                        <AntDesign name="minus" size={20} color="black" />
-                      </TouchableOpacity>
-
-                      {/* Ticket Input */}
-                      <TextInput
-                        style={{
-                          textAlign: 'center',
-                          fontSize: 20,
-                          color: '#273C54',
-                          paddingHorizontal: 15,
-                        }}
-                        value={String(paidTickets)} // Convert number to string for TextInput
-                        keyboardType="numeric" // Ensure numeric input only
-                        onChangeText={text => {
-                          const value = parseInt(text, 10); // Parse input as an integer
-                          if (!isNaN(value)) {
-                            setPaidTickets(value);
-                          } else {
-                            setPaidTickets(0); // Reset to 0 if input is invalid
-                          }
-                        }}
-                      />
-
-                      {/* Increase Button */}
-                      <TouchableOpacity
-                        onPress={() => setPaidTickets(prev => prev + 1)}
-                        style={{borderWidth: 1, borderRadius: 30, padding: 4}}>
-                        <AntDesign name="plus" size={20} color="black" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 15,
-                    }}>
-                    <TextInput
-                      placeholder="Ticket name"
-                      value={ticketName}
-                      onChangeText={setTicketName}
-                      style={[styles.input, {width: '60%'}]}
-                      placeholderTextColor={'gray'}
-                    />
-                    <TextInput
-                      placeholder="Price in $"
-                      value={price}
-                      onChangeText={setPrice}
-                      style={[styles.input, {flex: 1}]}
-                      placeholderTextColor={'gray'}
-                    />
+                    <Text style={{color: 'gold'}}>Launching soon!</Text>
                   </View>
                   <View style={{height: 45}} />
                 </>

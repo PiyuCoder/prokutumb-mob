@@ -64,7 +64,10 @@ module.exports = (io, userSocketMap) => {
     communityController.fetchCommEvents
   );
   router.get("/events/fetchAllEvents", communityController.fetchAllEvents);
-  router.get("/events/fetchAnEvent/:eventId", communityController.fetchAnEvent);
+  router.get(
+    "/events/fetchAnEvent/:eventId/:userId",
+    communityController.fetchAnEvent
+  );
   router.put("/events/bookseat/:eventId", communityController.bookSeat);
   router.delete("/:postId", communityController.deletePost);
   router.put("/like/:postId", communityController.likePost);
@@ -72,7 +75,7 @@ module.exports = (io, userSocketMap) => {
   router.put("/share/:postId", communityController.incerementPostShare);
   router.post("/comment/:postId", communityController.addComment);
   router.get("/", communityController.fetchCommunities);
-  router.get("/:communityId", communityController.fetchCommunity);
+  router.get("/:communityId/:userId", communityController.fetchCommunity);
   router.post(
     "/",
     upload.single("profilePicture"),

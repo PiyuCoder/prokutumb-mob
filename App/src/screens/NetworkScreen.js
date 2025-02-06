@@ -159,7 +159,9 @@ const NetworkScreen = ({navigation, route}) => {
       });
 
       const data = res.data; // Get response data directly
-      console.log(data);
+      console.log('Data: ', data);
+
+      // console.log('parsedResponse', parsedResponse);
       setMessages(prev => {
         // Update the latest message with the actual AI response
         const updatedMessages = [...prev];
@@ -169,6 +171,8 @@ const NetworkScreen = ({navigation, route}) => {
           response: data.response,
           createdAt: data.createdAt || currentTime,
         };
+
+        // console.log('updatedMessages: ', updatedMessages[lastMessageIndex]);
         return updatedMessages;
       });
     } catch (error) {
@@ -262,11 +266,11 @@ const NetworkScreen = ({navigation, route}) => {
               <TouchableOpacity
                 onPress={() =>
                   navigation.navigate('ResultsScreen', {
-                    results: JSON.parse(msg.response),
+                    results: msg.response,
                   })
                 }>
                 <Text style={[styles.messageText, styles.aiMessage]}>
-                  You have {JSON?.parse(msg?.response)?.length || 0} results.
+                  You have {msg?.response?.length || 0} results.
                   <Text style={{color: 'blue'}}>Click to view</Text>
                 </Text>
               </TouchableOpacity>

@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     width: 370,
     alignSelf: 'center',
+    marginRight: 15,
   },
   ticketTitle: {
     fontSize: 18,

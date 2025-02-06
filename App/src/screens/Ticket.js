@@ -1,126 +1,178 @@
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import React, {useState} from 'react';
+import {
+  ImageBackground,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import QRCode from 'react-native-qrcode-svg';
-import {useSelector} from 'react-redux';
-import Octicons from 'react-native-vector-icons/Octicons';
-import ProfilePicture from '../components/ProfilePicture';
+import Barcode from '@kichiyaki/react-native-barcode-generator';
+import Feather from 'react-native-vector-icons/Feather';
 
-const Ticket = ({navigation}) => {
-  const {user} = useSelector(state => state.auth);
-  const [isQR, setIsQR] = useState(true);
+const Ticket = ({navigation, route}) => {
+  const {item} = route?.params;
+  const qrValue = JSON.stringify({
+    id: item?.buyer?._id,
+    name: item?.buyer?.name,
+  });
   return (
-    <View style={{flex: 1, backgroundColor: '#E9E5DF'}}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 10,
-          backgroundColor: 'white',
-        }}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Octicons name="arrow-left" size={30} color="black" />
-        </TouchableOpacity>
-        <Text
-          style={{
-            color: 'black',
-            fontSize: 20,
-            fontWeight: '500',
-            marginLeft: 40,
-          }}>
-          Event Ticket
-        </Text>
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          marginBottom: 30,
-        }}>
+    <LinearGradient colors={['#91B5FD', '#F0DDFF']} style={styles.container}>
+      <StatusBar hidden />
+      <View style={styles.header}>
         <TouchableOpacity
-          activeOpacity={1}
-          style={{
-            borderBottomWidth: isQR ? 2 : 0,
-            borderColor: '#A274FF',
-            flex: 1,
-            padding: 5,
-            backgroundColor: 'white',
-          }}
-          onPress={() => setIsQR(true)}>
-          <Text
-            style={{textAlign: 'center', color: !isQR ? 'black' : '#A274FF'}}>
-            My Code
-          </Text>
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
+          <Feather name="chevron-left" size={24} color="white" />
         </TouchableOpacity>
-        {/* <TouchableOpacity
-          activeOpacity={1}
-          style={{
-            borderBottomWidth: !isQR ? 2 : 0,
-            borderColor: '#A274FF',
-            flex: 1,
-            padding: 5,
-            backgroundColor: 'white',
-          }}
-          onPress={() => setIsQR(false)}>
-          <Text
-            style={{textAlign: 'center', color: isQR ? 'black' : '#A274FF'}}>
-            Scanner
-          </Text>
-        </TouchableOpacity> */}
+        <Text style={styles.headerTitle}>Tickets</Text>
       </View>
+      <View style={styles.ticketContainer}>
+        {/* Event Image */}
+        <ImageBackground
+          source={{uri: item?.profilePicture}}
+          style={styles.imageBackground}
+          imageStyle={{borderRadius: 18}}
+          resizeMode="cover">
+          <View style={styles.overlay} />
+        </ImageBackground>
 
-      {isQR ? (
-        <View
-          style={{
-            alignItems: 'center',
-            marginTop: 50,
-            backgroundColor: 'white',
-            padding: 30,
-            marginHorizontal: 20,
-            borderRadius: 20,
-            elevation: 5,
-          }}>
-          <View style={{marginTop: -70}}>
-            <ProfilePicture
-              profilePictureUri={user?.profilePicture}
-              height={80}
-              width={80}
-              borderRadius={40}
-              borderWidth={1}
-            />
+        <View style={{marginTop: 10, paddingHorizontal: 10}}>
+          <Text style={styles.ticketTitle}>{item?.name}</Text>
+          <Text style={styles.ticketDescription}>{item?.description}</Text>
+        </View>
+
+        {/* User Info & Event Type */}
+        <View style={styles.infoContainer}>
+          <View>
+            <Text style={styles.eventInfo}>Name</Text>
+            <Text style={styles.detail}>{item?.buyer?.name || 'N/A'}</Text>
           </View>
-          <Text
-            style={{
-              color: 'black',
-              fontSize: 17,
-              fontWeight: '500',
-            }}>
-            {user?.name}
-          </Text>
-          <Text
-            style={{
-              marginBottom: 20,
-              color: 'grey',
-            }}>
-            Strategy at Youtube
-          </Text>
-          <QRCode
-            // value={`prokutumb://profile/${user?._id}`}
-            value={`https://prokutumb-mob.onrender.com/redirect.html?userId=${user?._id}`}
-            size={180}
-            color="black"
-            backgroundColor="transparent"
-          />
+          <View>
+            <Text style={styles.eventInfo}>Type</Text>
+            <Text style={styles.detail}>{item?.eventType} Event</Text>
+          </View>
         </View>
-      ) : (
-        <View>
-          <Text>Scanner</Text>
+
+        {/* Event Details */}
+        <View style={styles.detailsContainer}>
+          <Text style={styles.eventInfo}>
+            📅 {item?.startDate} - {item?.endDate}
+          </Text>
+          <Text style={styles.eventInfo}>
+            ⏰ {item?.startTime} - {item?.endTime} ({item?.timezone})
+          </Text>
+          <Text style={styles.eventInfo}>📍 {item?.address}</Text>
+
+          {/* QR Code Section */}
+          <View style={styles.qrContainer}>
+            <Barcode value={qrValue || '123456789'} height={60} />
+            <Text style={styles.qrText}>
+              Scan your barcode at the entry gate
+            </Text>
+          </View>
         </View>
-      )}
-    </View>
+      </View>
+    </LinearGradient>
   );
 };
 
 export default Ticket;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // marginBottom: 16,
+    padding: 10,
+  },
+  backButton: {
+    padding: 10,
+    backgroundColor: '#FFFFFF33',
+    borderRadius: 8,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginLeft: 10,
+  },
+  ticketContainer: {
+    padding: 16,
+    backgroundColor: 'white',
+    marginBottom: 10,
+    borderRadius: 18,
+    width: 370,
+    alignSelf: 'center',
+    marginRight: 15,
+  },
+  ticketTitle: {
+    fontSize: 18,
+    color: 'black',
+  },
+  detail: {
+    fontSize: 16,
+    color: 'black',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: 'white',
+    fontSize: 16,
+  },
+  imageBackground: {
+    width: '100%',
+    height: 200,
+    justifyContent: 'flex-end',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)', // Dark overlay for better text visibility
+    borderRadius: 18,
+  },
+  detailsContainer: {
+    padding: 15,
+  },
+  ticketTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  ticketDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginVertical: 5,
+  },
+  eventInfo: {
+    fontSize: 13,
+    color: '#555',
+    marginBottom: 3,
+  },
+  button: {
+    marginTop: 10,
+    backgroundColor: '#007bff',
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  qrContainer: {
+    padding: 20,
+    overflow: 'hidden',
+  },
+  qrText: {
+    color: 'black',
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 10,
+  },
+});

@@ -36,20 +36,20 @@ const features = [
     icon: <Ionicons name="chatbubbles" size={25} color="#07A6FF" />,
     path: 'Message',
   },
-  {
-    id: '3',
-    name: 'Saved Posts',
-    icon: <Ionicons name="bookmark" size={25} color="#01DDEB" />,
-    path: 'Message',
-  },
-  {
-    id: '4',
-    name: 'Rewards',
-    icon: (
-      <MaterialCommunityIcons name="treasure-chest" size={25} color="#F6DF0B" />
-    ),
-    path: 'Message',
-  },
+  // {
+  //   id: '3',
+  //   name: 'Saved Posts',
+  //   icon: <Ionicons name="bookmark" size={25} color="#01DDEB" />,
+  //   path: 'Message',
+  // },
+  // {
+  //   id: '4',
+  //   name: 'Rewards',
+  //   icon: (
+  //     <MaterialCommunityIcons name="treasure-chest" size={25} color="#F6DF0B" />
+  //   ),
+  //   path: 'Message',
+  // },
 ];
 
 const MenuScreen = ({navigation}) => {

@@ -8,6 +8,7 @@ const Feed = require("../models/Feed");
 const NotificationMob = require("../models/Notification");
 const Communitymob = require("../models/Community");
 const Event = require("../models/Event");
+const axios = require("axios");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -90,6 +91,10 @@ exports.fetchUserInfo = async (req, res) => {
   }
 };
 
+function getRandomScore() {
+  return Math.floor(Math.random() * (100 - 50 + 1)) + 50;
+}
+
 exports.fetchUser = async (req, res) => {
   try {
     const { userId, currentUserId } = req.params;
@@ -100,6 +105,7 @@ exports.fetchUser = async (req, res) => {
 
     // Fetch user details
     const user = await Member.findById(userId);
+    const currentUser = await Member.findById(currentUserId);
 
     if (!user) {
       return res.status(400).json({ message: "User not found." });
@@ -132,6 +138,35 @@ exports.fetchUser = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean(); // Convert MongoDB documents to plain JavaScript objects
 
+    // Create strings for AI API
+    const profile2 = `${user.bio} located in ${
+      user.location
+    } whose interests are ${user.interests.join(
+      ", "
+    )} and have skills like ${user.skills.join(", ")}`;
+    const profile1 = `${currentUser.bio} located in ${
+      currentUser.location
+    } whose interests are ${currentUser.interests.join(
+      ", "
+    )} and have skills like ${currentUser.skills.join(", ")}`;
+
+    console.log("Profile : ", profile1, profile2);
+
+    // Send request to AI similarity API
+    const apiResponse = await axios.post(
+      "http://34.150.183.91:8080/similarity",
+      {
+        type: "profile", // Assuming this defines the type of similarity check
+        profile1, // User profile details
+        profile2, // Event details
+      }
+    );
+
+    console.log(apiResponse.data.similarity_score);
+
+    // Extract AI similarity response
+    const similarityScore = apiResponse.data.similarity_score || 0;
+
     // Combine counts for total communities associated with the user
     const totalCommunities = createdCommunitiesCount + memberCommunitiesCount;
     // Return user details and posts
@@ -140,6 +175,8 @@ exports.fetchUser = async (req, res) => {
       user,
       posts,
       isAlreadyConnected,
+      similarityScore,
+      socialAvgScore: getRandomScore(),
       communities: {
         createdCount: createdCommunitiesCount,
         memberCount: memberCommunitiesCount,

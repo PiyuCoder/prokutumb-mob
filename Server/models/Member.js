@@ -121,7 +121,7 @@ const memberSchema = new mongoose.Schema({
   chatbotInteractions: [
     {
       query: String,
-      response: String, // Stores chatbot conversations
+      response: Array, // Stores chatbot conversations
       createdAt: { type: Date, default: Date.now },
     },
   ],

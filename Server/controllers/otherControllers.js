@@ -164,10 +164,12 @@ exports.prokuInteraction = async (req, res) => {
       }
     );
 
-    console.log(apiResponse);
-
     // Extract response from AI API
-    const responseText = JSON.stringify(apiResponse.data.responses);
+    let responseText = apiResponse.data.responses;
+
+    if (!Array.isArray(responseText)) {
+      responseText = [responseText]; // Convert to array if it's a string
+    }
 
     console.log("AI Response:", responseText);
 

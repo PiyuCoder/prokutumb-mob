@@ -97,6 +97,9 @@ const CommunityHomeScreen = ({route}) => {
   const circumference = Math.PI * radius; // Circumference of the semi-circle
   const progress = 50;
 
+  const [score, setScore] = useState(0);
+  const [socialScore, setSocialScore] = useState(0);
+
   const moveArrow = xPosition => {
     Animated.spring(arrowPosition, {
       toValue: xPosition,
@@ -139,13 +142,17 @@ const CommunityHomeScreen = ({route}) => {
   const loadMorePosts = async () => {
     try {
       if (communityId) {
-        const res = await axiosInstance.get(`/api/communities/${communityId}`);
+        const res = await axiosInstance.get(
+          `/api/communities/${communityId}/${user?._id}`,
+        );
         if (res.status === 200) {
           console.log(res.data.data);
           setCommunity(res?.data?.data || []); // Adjust based on backend response
           dispatch(setPosts(res?.data?.posts || []));
           setMembers(res?.data?.data?.members);
           setEvents(res?.data?.events || []);
+          setSocialScore(res?.data?.socialAvgScore);
+          setScore(res?.data?.similarityScore);
         }
       }
     } catch (error) {
@@ -889,7 +896,7 @@ const CommunityHomeScreen = ({route}) => {
                       strokeWidth={strokeWidth}
                       strokeDasharray={circumference}
                       strokeDashoffset={
-                        (1 - Math.max(0, Math.min(progress, 100)) / 100) *
+                        (1 - Math.max(0, Math.min(score, 100)) / 100) *
                         circumference
                       }
                       strokeLinecap="round"
@@ -897,7 +904,7 @@ const CommunityHomeScreen = ({route}) => {
                     />
                   </Svg>
                   <View style={{marginLeft: 10}}>
-                    <Text style={styles.percentageText}>{`${progress}%`}</Text>
+                    <Text style={styles.percentageText}>{`${score}%`}</Text>
                     <Text
                       style={{
                         fontSize: 18,
@@ -924,13 +931,14 @@ const CommunityHomeScreen = ({route}) => {
                   }}>
                   <Feather name="check" size={30} color="#7FDD53" />
                   <View style={{marginLeft: 10}}>
-                    <Text style={styles.percentageText}>{`${83}%`}</Text>
+                    <Text
+                      style={styles.percentageText}>{`${socialScore}%`}</Text>
                     <Text
                       style={{
                         fontSize: 18,
                         color: 'gray',
                       }}>
-                      Relevancy
+                      Score
                     </Text>
                   </View>
                 </View>

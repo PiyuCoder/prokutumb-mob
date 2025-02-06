@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import CommunityCard from '../components/CommunityCard';
@@ -60,12 +61,11 @@ export default function Communities({navigation, route}) {
   const [isActionModalVisible, setActionModalVisible] = useState(false);
   const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(false);
-  // const [filteredCommunities, setFilteredCommunities] = useState([])
-  // const [filteredEvents, setFilteredEvents] = useState([])
+  const [refreshing, setRefreshing] = useState(false);
 
   const {user} = useSelector(state => state.auth);
 
-  useEffect(() => {
+  const fetchData = () => {
     const fetchCommunities = async () => {
       setLoading(true);
       try {
@@ -92,12 +92,21 @@ export default function Communities({navigation, route}) {
         console.error('Error fetching events:', error.message);
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     };
-
     fetchCommunities();
     fetchEvents();
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [user?._id, isEvent]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
 
   const renderHorizontalList = (data, title) => (
     <View style={[styles.sectionWrapper]}>
@@ -170,6 +179,9 @@ export default function Communities({navigation, route}) {
 
   return (
     <ScrollView
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
       contentContainerStyle={{paddingBottom: 100}}
       style={styles.container}>
       <StatusBar backgroundColor="white" barStyle={'dark-content'} />

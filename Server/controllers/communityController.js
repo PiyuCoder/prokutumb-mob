@@ -8,6 +8,7 @@ const NotificationMob = require("../models/Notification");
 const Member = require("../models/Member");
 const Event = require("../models/Event");
 const Ticket = require("../models/Ticket");
+const axios = require("axios");
 
 exports.fetchCommunities = async (req, res) => {
   try {
@@ -24,9 +25,13 @@ exports.fetchCommunities = async (req, res) => {
   }
 };
 
+function getRandomScore() {
+  return Math.floor(Math.random() * (100 - 50 + 1)) + 50;
+}
+
 exports.fetchCommunity = async (req, res) => {
   try {
-    const { communityId } = req.params;
+    const { communityId, userId } = req.params;
     console.log("fetching community:", communityId);
     const community = await Communitymob.findById(communityId)
       .populate("createdBy", "name profilePicture")
@@ -43,7 +48,40 @@ exports.fetchCommunity = async (req, res) => {
       createdAt: -1,
     });
 
-    res.status(200).json({ success: true, data: community, posts, events });
+    const user = await Member.findById(userId);
+
+    // Create strings for AI API
+    const profile = `${user.bio} located in ${
+      user.location
+    } whose interests are ${user.interests.join(
+      ", "
+    )} and have skills like ${user.skills.join(", ")}`;
+    const event_features = `Event ${community.name}, ${community.description} which is ${community.communityType} type happening at ${community.location}`;
+
+    console.log("checking values: ", profile, event_features);
+    // Send request to AI similarity API
+    const apiResponse = await axios.post(
+      "http://34.150.183.91:8080/similarity",
+      {
+        type: "event", // Assuming this defines the type of similarity check
+        profile, // User profile details
+        event_features, // Event details
+      }
+    );
+
+    console.log(apiResponse.data.similarity_score);
+
+    // Extract AI similarity response
+    const similarityScore = apiResponse.data.similarity_score || 0;
+
+    res.status(200).json({
+      success: true,
+      data: community,
+      posts,
+      events,
+      similarityScore,
+      socialAvgScore: getRandomScore(),
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -376,16 +414,63 @@ const uploadToCloudinary = (file, resourceType) => {
 
 exports.fetchAnEvent = async (req, res) => {
   try {
-    const { eventId } = req.params;
-    const events = await Event.findById(eventId)
+    const { eventId, userId } = req.params;
+
+    // Fetch event details
+    const event = await Event.findById(eventId)
       .populate("createdBy", "name profilePicture")
       .populate("members", "name profilePicture");
 
-    res.status(200).json({ success: true, data: events });
+    if (!event) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Event not found" });
+    }
+
+    // Fetch user details
+    const user = await Member.findById(userId);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Create strings for AI API
+    const profile = `${user.bio} located in ${
+      user.location
+    } whose interests are ${user.interests.join(
+      ", "
+    )} and have skills like ${user.skills.join(", ")}`;
+    const event_features = `Event ${event.name}, ${event.description} which is ${event.eventType} type happening at ${event.address}`;
+
+    console.log("checking values: ", profile, event_features);
+    // Send request to AI similarity API
+    const apiResponse = await axios.post(
+      "http://34.150.183.91:8080/similarity",
+      {
+        type: "event", // Assuming this defines the type of similarity check
+        profile, // User profile details
+        event_features, // Event details
+      }
+    );
+
+    console.log(apiResponse.data.similarity_score);
+
+    // Extract AI similarity response
+    const similarityScore = apiResponse.data.similarity_score || 0;
+
+    // Send final response
+    res.status(200).json({
+      success: true,
+      data: event,
+      similarityScore,
+    });
   } catch (error) {
+    console.error("Error fetching event:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to fetch events",
+      message: "Failed to fetch event",
       error: error.message,
     });
   }

@@ -65,6 +65,8 @@ const UserProfile = ({route}) => {
   const [actionModalVisible, setActionModalVisible] = useState(false);
   const [actionPostModalVisible, setActionPostModalVisible] = useState(false);
   const [communityCount, setCommunityCount] = useState(0);
+  const [score, setScore] = useState(0);
+  const [socialScore, setSocialScore] = useState(0);
 
   // Hide the status bar when the screen is rendered
   useEffect(() => {
@@ -90,6 +92,8 @@ const UserProfile = ({route}) => {
 
           setUserPosts(res.data.posts);
           setCommunityCount(res?.data?.communities?.total);
+          setSocialScore(res?.data?.socialAvgScore);
+          setScore(res?.data?.similarityScore);
 
           // Check if they are already connected
           if (res.data.isAlreadyConnected) {
@@ -1071,7 +1075,7 @@ const UserProfile = ({route}) => {
                       strokeWidth={strokeWidth}
                       strokeDasharray={circumference}
                       strokeDashoffset={
-                        (1 - Math.max(0, Math.min(progress, 100)) / 100) *
+                        (1 - Math.max(0, Math.min(score, 100)) / 100) *
                         circumference
                       }
                       strokeLinecap="round"
@@ -1079,7 +1083,7 @@ const UserProfile = ({route}) => {
                     />
                   </Svg>
                   <View style={{marginLeft: 10}}>
-                    <Text style={styles.percentageText}>{`${progress}%`}</Text>
+                    <Text style={styles.percentageText}>{`${score}%`}</Text>
                     <Text
                       style={{
                         fontSize: 18,
@@ -1106,13 +1110,14 @@ const UserProfile = ({route}) => {
                   }}>
                   <Feather name="check" size={30} color="#7FDD53" />
                   <View style={{marginLeft: 10}}>
-                    <Text style={styles.percentageText}>{`${83}%`}</Text>
+                    <Text
+                      style={styles.percentageText}>{`${socialScore}%`}</Text>
                     <Text
                       style={{
                         fontSize: 18,
                         color: 'gray',
                       }}>
-                      Relevancy
+                      Social Avg Score
                     </Text>
                   </View>
                 </View>

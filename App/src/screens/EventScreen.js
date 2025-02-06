@@ -18,11 +18,13 @@ import {useDispatch, useSelector} from 'react-redux';
 import {follow, updateAsyncStorage} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
+import Loader from '../components/Loader';
 
 const EventScreen = ({navigation, route}) => {
   const {eventId} = route.params;
   const {user} = useSelector(state => state.auth);
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
   const [event, setEvent] = useState({
     _id: '1',
     name: 'Event One',
@@ -43,21 +45,23 @@ const EventScreen = ({navigation, route}) => {
     user?.following?.includes(event?.createdBy?._id) || false,
   );
 
-  console.log(user);
-
-  // console.log(user);
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     const fetchEvent = async () => {
+      setLoading(true);
       try {
         const res = await axiosInstance.get(
-          `/api/communities/events/fetchAnEvent/${eventId}`,
+          `/api/communities/events/fetchAnEvent/${eventId}/${user?._id}`,
         );
         if (res.status === 200) {
           setEvent(res?.data?.data || []);
+          setScore(res?.data?.similarityScore || 0);
         }
       } catch (error) {
         console.error('Error fetching event:', error.message);
+      } finally {
+        setLoading(false);
       }
     };
     fetchEvent();
@@ -66,6 +70,7 @@ const EventScreen = ({navigation, route}) => {
   // console.log(event);
 
   const bookSeat = async () => {
+    if (event?.createdBy?._id === user?._id) return;
     const res = await axiosInstance.put(
       `/api/communities/events/bookseat/${eventId}`,
       {userId: user?._id},
@@ -96,6 +101,7 @@ const EventScreen = ({navigation, route}) => {
   return (
     <ScrollView style={{flex: 1, backgroundColor: 'white'}}>
       <StatusBar hidden />
+      <Loader isLoading={loading} />
       <View
         style={{
           width: '100%',
@@ -188,7 +194,9 @@ const EventScreen = ({navigation, route}) => {
           </Text>
         </View>
       </View>
-      <TouchableOpacity style={{padding: 20, paddingHorizontal: 60}}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Network', {queryType: 'event'})}
+        style={{padding: 20, paddingHorizontal: 60}}>
         <Text
           style={{
             fontSize: 21,
@@ -196,7 +204,7 @@ const EventScreen = ({navigation, route}) => {
             color: 'black',
             fontWeight: '500',
           }}>
-          Relevancy: {87}%
+          Relevancy: {score}%
         </Text>
         <View style={styles.progressBar}>
           <LinearGradient
@@ -205,7 +213,7 @@ const EventScreen = ({navigation, route}) => {
             end={{x: 1, y: 0}}
             style={[
               styles.progressGradient,
-              {width: `${Math.max(0, Math.min(100, 87))}%`},
+              {width: `${Math.max(0, Math.min(100, score))}%`},
             ]}
           />
         </View>
@@ -288,7 +296,7 @@ const EventScreen = ({navigation, route}) => {
         ) : (
           <TouchableOpacity
             disabled={event?.createdBy?._id === user?._id}
-            onPress={() => navigation.navigate('TicketScreen')}
+            onPress={() => navigation.navigate('TicketScreen', {item: event})}
             style={{
               backgroundColor: '#761CBC',
               padding: 10,
