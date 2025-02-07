@@ -175,7 +175,7 @@ const CreateProfileStepFour = ({navigation}) => {
                       {
                         color: socialLinkes.find(l => l.platform === item.name)
                           ? 'purple'
-                          : '',
+                          : 'black',
                       },
                     ]}>
                     {item.name}
@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
   },
   platformText: {
     fontSize: 16,
+    color: 'black',
   },
   closeButton: {
     backgroundColor: '#A274FF',

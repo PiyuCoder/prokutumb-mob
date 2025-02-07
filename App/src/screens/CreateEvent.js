@@ -499,7 +499,7 @@ const CreateEvent = ({navigation, route}) => {
               />
               <TextInput
                 numberOfLines={4}
-                placeholder="Describe your event"
+                placeholder="Describe your event *"
                 value={description}
                 onChangeText={setDescription}
                 style={styles.input}
@@ -560,7 +560,7 @@ const CreateEvent = ({navigation, route}) => {
               <View style={[styles.input, {marginVertical: 20}]}>
                 <Text style={{color: 'black'}}>Select your community</Text>
                 <Picker
-                  placeholder="Select your community"
+                  placeholder="Select your community *"
                   dropdownIconColor={'black'}
                   selectedValue={communityId}
                   // itemStyle={{backgroundColor: 'red', color: 'yellow'}}
@@ -621,7 +621,7 @@ const CreateEvent = ({navigation, route}) => {
                 <SimpleLineIcons name="pencil" color="#200E32" />
               </TouchableOpacity>
               <TextInput
-                placeholder="Full Address"
+                placeholder="Full Address *"
                 value={address}
                 onChangeText={setAddress}
                 style={styles.input}
@@ -630,7 +630,7 @@ const CreateEvent = ({navigation, route}) => {
               {/* Start Date Picker */}
               <TouchableOpacity onPress={() => setStartDatePickerVisible(true)}>
                 <TextInput
-                  placeholder="Start Date"
+                  placeholder="Start Date *"
                   value={eventStartDate} // Display formatted string
                   style={styles.input}
                   placeholderTextColor="gray"
@@ -658,7 +658,7 @@ const CreateEvent = ({navigation, route}) => {
                   disabled={isDateToggled}
                   onPress={() => setEndDatePickerVisible(true)}>
                   <TextInput
-                    placeholder="End Date"
+                    placeholder="End Date *"
                     value={eventEndDate} // Display formatted string
                     style={styles.input}
                     placeholderTextColor="gray"
@@ -715,7 +715,7 @@ const CreateEvent = ({navigation, route}) => {
                 }}
               />
               <TextInput
-                placeholder="Select Timezone"
+                placeholder="Select Timezone *"
                 value={timezone} // Display formatted string
                 style={styles.input}
                 placeholderTextColor="gray"
@@ -729,14 +729,14 @@ const CreateEvent = ({navigation, route}) => {
                   gap: 20,
                 }}>
                 <TextInput
-                  placeholder="Start time"
+                  placeholder="Start time *"
                   value={eventStartTime}
                   onChangeText={setEventStartTime}
                   style={[styles.input, {flex: 1}]}
                   placeholderTextColor={'gray'}
                 />
                 <TextInput
-                  placeholder="End time"
+                  placeholder="End time *"
                   value={eventEndTime}
                   onChangeText={setEventEndTime}
                   style={[styles.input, {flex: 1}]}
@@ -1118,11 +1118,11 @@ const CreateEvent = ({navigation, route}) => {
               <Text style={styles.submitButtonText}>Continue</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={handleCreateDraftEvent}
             style={[styles.submitButton, {backgroundColor: 'black'}]}>
             <Text style={styles.submitButtonText}>Save as Draft</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </ScrollView>
       )}
     </ScrollView>

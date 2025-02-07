@@ -416,9 +416,15 @@ const HomeScreen = ({navigation}) => {
       )}
       {/* Like, comment and share counts */}
       <View style={{flexDirection: 'row', marginTop: 20, gap: 5}}>
-        <Text style={styles.actionText}>{item.likes.length} Likes .</Text>
-        <Text style={styles.actionText}>{item.comments.length} Comments .</Text>
-        <Text style={styles.actionText}>{item.shares} Shares</Text>
+        {item?.comments?.length > 0 && (
+          <TouchableOpacity onPress={() => toggleCommentSection(item._id)}>
+            <Text className="ml-2" style={[styles.actionText]}>
+              {openCommentPostId === item?._id
+                ? 'Hide Comments'
+                : 'View Comments'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Post Actions: Likes, Comments, Views, and Share */}
@@ -566,6 +572,7 @@ const HomeScreen = ({navigation}) => {
               borderBottomLeftRadius: 30,
               borderBottomRightRadius: 30,
               marginBottom: 10,
+              paddingTop: 15,
             }}>
             {/* Top Section */}
             <View

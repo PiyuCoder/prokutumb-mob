@@ -11,7 +11,7 @@ import {
   ScrollView,
   RefreshControl,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import CommunityCard from '../components/CommunityCard';
 import {useSelector} from 'react-redux';
 import {axiosInstance, axiosInstanceForm} from '../api/axios';
@@ -24,6 +24,7 @@ import {isAction} from '@reduxjs/toolkit';
 import EventCard from '../components/EventCard';
 import SearchCommNEvent from '../components/SearchCommNEvent';
 import Loader from '../components/Loader';
+import {useFocusEffect} from '@react-navigation/native';
 
 // const events = [
 //   {
@@ -99,9 +100,11 @@ export default function Communities({navigation, route}) {
     fetchEvents();
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [user?._id, isEvent]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData(); // Refresh data when screen is focused
+    }, [user?._id, isEvent]),
+  );
 
   const onRefresh = () => {
     setRefreshing(true);

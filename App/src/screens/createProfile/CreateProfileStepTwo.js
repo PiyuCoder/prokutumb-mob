@@ -138,7 +138,7 @@ const CreateProfileStepTwo = ({navigation}) => {
             )}
             <TextInput
               style={[styles.input, {marginTop: 10}]}
-              placeholder={'Company'}
+              placeholder={'Company *'}
               placeholderTextColor={'gray'}
               value={exp.company}
               onChangeText={text =>
@@ -148,7 +148,7 @@ const CreateProfileStepTwo = ({navigation}) => {
             <TextInput
               style={styles.input}
               placeholderTextColor={'gray'}
-              placeholder={'Role'}
+              placeholder={'Role *'}
               value={exp.role}
               onChangeText={text => handleExperienceChange(index, 'role', text)}
             />
@@ -162,7 +162,7 @@ const CreateProfileStepTwo = ({navigation}) => {
               <TextInput
                 style={styles.input}
                 placeholderTextColor={'gray'}
-                placeholder="Start Date"
+                placeholder="Start Date *"
                 value={exp.startDate.toISOString().split('T')[0]}
                 editable={false}
               />
@@ -204,7 +204,7 @@ const CreateProfileStepTwo = ({navigation}) => {
                   <TextInput
                     style={styles.input}
                     placeholderTextColor={'gray'}
-                    placeholder="End Date"
+                    placeholder="End Date *"
                     value={exp.endDate.toISOString().split('T')[0]}
                     editable={false}
                   />
@@ -228,7 +228,7 @@ const CreateProfileStepTwo = ({navigation}) => {
 
             <TextInput
               style={styles.input}
-              placeholder={'Description'}
+              placeholder={'Description *'}
               placeholderTextColor={'gray'}
               value={exp.description}
               onChangeText={text =>

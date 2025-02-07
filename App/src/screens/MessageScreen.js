@@ -135,21 +135,21 @@ const MessageScreen = () => {
         keyExtractor={item => item.message._id}
         renderItem={({item}) => {
           const contact =
-            item.message.sender === user?._id
+            item?.message?.sender === user?._id
               ? item.recipientDetails
               : item.senderDetails;
           return (
             <TouchableOpacity
               onPress={() =>
                 navigation.navigate('Chat', {
-                  name: contact.name,
-                  userId: contact._id,
-                  profilePicture: contact.profilePicture,
+                  name: contact?.name,
+                  userId: contact?._id,
+                  profilePicture: contact?.profilePicture,
                 })
               }>
               <View className="opacity-90" style={styles.conversationContainer}>
                 <ProfilePicture
-                  profilePictureUri={contact.profilePicture}
+                  profilePictureUri={contact?.profilePicture}
                   width={60}
                   height={60}
                   borderRadius={30}
@@ -162,10 +162,10 @@ const MessageScreen = () => {
                 <View style={styles.messageInfo}>
                   <View style={{flexDirection: 'row', gap: 3}}>
                     <Text style={styles.conversationName}>
-                      {contact.name}
+                      {contact?.name}
                       {/* {isUserOnline(item.senderDetails._id) ? '🟢' : '🟢'} */}
                     </Text>
-                    {isUserOnline(contact._id) && (
+                    {isUserOnline(contact?._id) && (
                       <View
                         style={{
                           width: 8,

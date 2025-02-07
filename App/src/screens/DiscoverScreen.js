@@ -305,16 +305,20 @@ const DiscoverScreen = ({navigation}) => {
         {
           <TouchableOpacity>
             <Text style={{color: '#1877F2', fontWeight: 'bold', marginTop: 10}}>
-              View All
+              {/* View All */}
             </Text>
           </TouchableOpacity>
         }
       </View>
 
       <View style={styles.cardsContainer}>
-        {people?.map(item => (
-          <RenderUserCard key={item._id} item={item} />
-        ))}
+        {people?.length > 0 ? (
+          people?.map(item => <RenderUserCard key={item._id} item={item} />)
+        ) : (
+          <Text style={{color: 'gray', marginTop: 20, textAlign: 'center'}}>
+            No Users Found.
+          </Text>
+        )}
       </View>
     </ScrollView>
   );

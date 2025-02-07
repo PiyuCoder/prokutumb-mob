@@ -385,7 +385,7 @@ const CreateCommunity = ({navigation}) => {
                 providing the details below
               </Text>
               <TextInput
-                placeholder="Community Name"
+                placeholder="Community Name *"
                 value={communityName}
                 onChangeText={setCommunityName}
                 style={styles.input}
@@ -393,7 +393,7 @@ const CreateCommunity = ({navigation}) => {
               />
               <TextInput
                 numberOfLines={4}
-                placeholder="Description"
+                placeholder="Description *"
                 value={description}
                 onChangeText={setDescription}
                 style={styles.input}
@@ -491,14 +491,14 @@ const CreateCommunity = ({navigation}) => {
                 <SimpleLineIcons name="pencil" color="#200E32" />
               </TouchableOpacity>
               <TextInput
-                placeholder="Enter Address"
+                placeholder="Enter Address *"
                 value={communityLocation}
                 onChangeText={setCommunityLocation}
                 style={styles.input}
                 placeholderTextColor={'gray'}
               />
               <TextInput
-                placeholder="Timezone"
+                placeholder="Timezone *"
                 value={timezone}
                 onChangeText={setTimezone}
                 style={styles.input}
@@ -779,11 +779,11 @@ const CreateCommunity = ({navigation}) => {
               <Text style={styles.submitButtonText}>Continue</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={handleCreateDraftCommunity}
             style={[styles.submitButton, {backgroundColor: 'black'}]}>
             <Text style={styles.submitButtonText}>Save as Draft</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </ScrollView>
       )}
     </ScrollView>

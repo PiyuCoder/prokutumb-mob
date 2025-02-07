@@ -20,23 +20,27 @@ import FAIcon from 'react-native-vector-icons/FontAwesome';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import Sound from 'react-native-sound';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import Loader from '../components/Loader';
 
 const NetworkScreen = ({navigation, route}) => {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [messages, setMessages] = useState([]);
   const scrollViewRef = useRef();
   const {user} = useSelector(state => state.auth);
   const queryType = route?.params?.queryType
     ? route?.params?.queryType
     : 'profile';
+  const id = route?.params?.id;
 
   useEffect(() => {
     // Fetch previous messages on load
     const fetchMessages = async () => {
       const res = await axiosInstance.get(`/api/interactions/${user?._id}`);
       setMessages(res?.data);
+      setIsFetching(false);
       // console.log('Response chats', res?.data);
     };
     fetchMessages();
@@ -45,7 +49,7 @@ const NetworkScreen = ({navigation, route}) => {
   useEffect(() => {
     // Scroll to the end of the ScrollView when messages change
     scrollViewRef.current?.scrollToEnd({animated: true});
-  }, [messages]);
+  }, [messages, isFetching]);
 
   useEffect(() => {
     // Monitor keyboard visibility
@@ -138,6 +142,23 @@ const NetworkScreen = ({navigation, route}) => {
     return `${hours} ${minutes}`; // Return formatted string
   };
 
+  function filterValidResponses(data, queryType) {
+    return data.filter(response => {
+      const parts = response.split(' ');
+      if (parts.length <= 2 || !['1', '2', '3'].includes(parts[1]))
+        return false;
+
+      // Apply additional filtering based on queryType
+      if (queryType === 'profile' && ['2', '3'].includes(parts[1]))
+        return false;
+      if (queryType === 'community' && ['1', '2'].includes(parts[1]))
+        return false;
+      if (queryType === 'event' && ['1', '3'].includes(parts[1])) return false;
+
+      return true;
+    });
+  }
+
   const sendMessage = async query => {
     const currentTime = new Date().toISOString();
 
@@ -146,8 +167,9 @@ const NetworkScreen = ({navigation, route}) => {
       ...prev,
       {
         query,
-        response: '...' /* Placeholder for AI response */,
+        response: [] /* Placeholder for AI response */,
         createdAt: currentTime,
+        loading: true,
       },
     ]);
 
@@ -156,10 +178,13 @@ const NetworkScreen = ({navigation, route}) => {
         userId: user?._id,
         query,
         queryType,
+        id,
       });
 
       const data = res.data; // Get response data directly
       console.log('Data: ', data);
+
+      const validResponses = filterValidResponses(data.response, queryType);
 
       // console.log('parsedResponse', parsedResponse);
       setMessages(prev => {
@@ -168,7 +193,7 @@ const NetworkScreen = ({navigation, route}) => {
         const lastMessageIndex = updatedMessages.length - 1;
         updatedMessages[lastMessageIndex] = {
           query: data.query,
-          response: data.response,
+          response: validResponses || [],
           createdAt: data.createdAt || currentTime,
         };
 
@@ -239,6 +264,7 @@ const NetworkScreen = ({navigation, route}) => {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={'#A274FF'} barStyle={'light-content'} />
+      <Loader isLoading={isFetching} />
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         style={styles.iconButtons}>
@@ -264,14 +290,31 @@ const NetworkScreen = ({navigation, route}) => {
                 {formatTime(msg.createdAt)}
               </Text>
               <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('ResultsScreen', {
-                    results: msg.response,
-                  })
-                }>
+                disabled={!msg?.response?.length}
+                onPress={() => {
+                  if (!msg?.response?.length) return;
+
+                  // Extract the category (1, 2, or 3) from the first valid response
+                  const firstResponse = msg.response[0]?.split(' ')[1];
+
+                  let screenName = 'ResultsScreen'; // Default to profile
+                  if (firstResponse === '3') {
+                    screenName = 'ResultsScreenCommunity';
+                  } else if (firstResponse === '2') {
+                    screenName = 'ResultsScreenEvent';
+                  }
+
+                  navigation.navigate(screenName, {results: msg.response});
+                }}>
                 <Text style={[styles.messageText, styles.aiMessage]}>
-                  You have {msg?.response?.length || 0} results.
-                  <Text style={{color: 'blue'}}>Click to view</Text>
+                  {msg?.loading
+                    ? '....'
+                    : msg?.response?.length
+                    ? `You have ${msg?.response?.length || 0} results.`
+                    : 'Sorry! There were no relevant responses for your query.'}
+                  {msg?.response?.length > 0 && (
+                    <Text style={{color: 'blue'}}> Click to view</Text>
+                  )}
                 </Text>
               </TouchableOpacity>
               <Text style={styles.timeText}>{formatTime(msg.createdAt)}</Text>

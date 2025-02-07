@@ -759,7 +759,12 @@ const ProfileScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => navigation.navigate('Network')}
+              onPress={() =>
+                navigation.navigate('Network', {
+                  queryType: 'profile',
+                  id: user?._id,
+                })
+              }
               onLayout={event => saveLayout('MajlisAI', event)}
               style={{
                 backgroundColor:

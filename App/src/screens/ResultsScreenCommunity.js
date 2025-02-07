@@ -7,8 +7,9 @@ import {
   View,
 } from 'react-native';
 import RenderUserCard from '../components/RenderUserCard';
+import RenderCommunityCard from '../components/RenderCommunityCard';
 
-const ResultsScreen = ({route, navigation}) => {
+const ResultsScreenCommunity = ({route, navigation}) => {
   const {results} = route.params; // Get results from navigation
 
   console.log(results);
@@ -33,8 +34,13 @@ const ResultsScreen = ({route, navigation}) => {
       </View>
 
       <View style={styles.cardsContainer}>
-        {results?.map(item => (
-          <RenderUserCard results key={item._id} item={item} />
+        {results?.map((item, index) => (
+          <RenderCommunityCard
+            index={index}
+            results
+            key={item._id}
+            item={item}
+          />
         ))}
       </View>
       {/* <TouchableOpacity
@@ -66,4 +72,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ResultsScreen;
+export default ResultsScreenCommunity;

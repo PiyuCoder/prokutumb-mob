@@ -165,11 +165,21 @@ const GoogleSignInButton = ({setIsLoading}) => {
         animationType="slide" // Optional: Adds smooth transition
       >
         <View style={styles.modalContainer}>
+          <Text
+            style={{
+              color: 'black',
+              fontWeight: '600',
+              fontSize: 24,
+              marginBottom: 15,
+            }}>
+            Enter Referral Code
+          </Text>
           <TextInput
             value={referralCode}
             onChangeText={text => setReferralCode(text)}
             style={styles.input}
-            placeholder="Enter Referral Code"
+            placeholder="Referral Code"
+            placeholderTextColor={'gray'}
           />
 
           <TouchableOpacity onPress={handleRegister} style={styles.button}>
@@ -225,6 +235,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white', // Change as needed
     paddingHorizontal: 20,
+    padding: 10,
   },
   input: {
     width: '90%',
@@ -235,6 +246,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: 16,
     marginBottom: 20,
+    color: 'black',
   },
   button: {
     backgroundColor: '#A274FF',

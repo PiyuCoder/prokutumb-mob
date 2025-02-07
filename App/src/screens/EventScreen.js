@@ -22,23 +22,22 @@ import Loader from '../components/Loader';
 
 const EventScreen = ({navigation, route}) => {
   const {eventId} = route.params;
+  console.log(eventId);
   const {user} = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [event, setEvent] = useState({
-    _id: '1',
-    name: 'Event One',
-    profilePicture:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdkxaQMX4NW8V5JvJ1hV1laDEmbgbPNvNEUA&s',
-    date: '12-Jan-2025',
-    time: '12:00 PM',
-    location: 'Queens, New York',
-    address: '756, Queens, New York',
+    _id: '',
+    name: '',
+    profilePicture: '',
+    date: '',
+    time: '',
+    location: '',
+    address: '',
     followers: 100,
-    createdBy: {name: 'John Doe'},
-    tags: 'Dance, Music',
-    description:
-      'Lorem ipsum dolor sit amet consectetur. Adipiscing metus tristique nec tortor dignissim nunc iaculis urna rhoncus. Ut.',
+    createdBy: {name: ''},
+    tags: '',
+    description: '',
   });
 
   const [isFollowing, setIsFollowing] = useState(
@@ -195,7 +194,9 @@ const EventScreen = ({navigation, route}) => {
         </View>
       </View>
       <TouchableOpacity
-        onPress={() => navigation.navigate('Network', {queryType: 'event'})}
+        onPress={() =>
+          navigation.navigate('Network', {queryType: 'event', id: eventId})
+        }
         style={{padding: 20, paddingHorizontal: 60}}>
         <Text
           style={{

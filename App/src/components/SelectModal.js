@@ -6,10 +6,13 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  TextInput,
 } from 'react-native';
 
 const SelectModal = ({visible, items, selectedItems, onClose, onSelect}) => {
   const [selected, setSelected] = useState(selectedItems);
+  const [customItems, setCustomItems] = useState(items);
+  const [newItem, setNewItem] = useState('');
 
   const toggleSelect = item => {
     if (selected.includes(item)) {
@@ -24,12 +27,33 @@ const SelectModal = ({visible, items, selectedItems, onClose, onSelect}) => {
     onClose();
   };
 
+  const handleAddItem = () => {
+    if (newItem.trim() && !customItems.includes(newItem)) {
+      setCustomItems([...customItems, newItem]); // Add new item to list
+      setSelected([...selected, newItem]); // Select it automatically
+      setNewItem(''); // Clear input
+    }
+  };
+
   return (
     <Modal visible={visible} transparent={true} animationType="slide">
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
+          {/* Input field to add new skills/interests */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Add more..."
+              value={newItem}
+              onChangeText={setNewItem}
+            />
+            <TouchableOpacity onPress={handleAddItem} style={styles.addButton}>
+              <Text style={styles.addButtonText}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
           <FlatList
-            data={items}
+            data={customItems}
             keyExtractor={item => item}
             renderItem={({item}) => (
               <TouchableOpacity
@@ -44,6 +68,7 @@ const SelectModal = ({visible, items, selectedItems, onClose, onSelect}) => {
               </TouchableOpacity>
             )}
           />
+
           <TouchableOpacity onPress={handleDone} style={styles.doneButton}>
             <Text style={styles.doneText}>Done</Text>
           </TouchableOpacity>
@@ -72,6 +97,29 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     color: 'black',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 8,
+    marginRight: 8,
+  },
+  addButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   selectedText: {
     fontSize: 16,

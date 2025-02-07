@@ -81,7 +81,7 @@ const SuccessCreation = ({navigation, route}) => {
         onPress={() => {
           navigation.navigate('Dashboard', {
             screen: 'Communities',
-            params: {screen: 'Events'},
+            params: {screen: isEvent ? 'Events' : 'Communities'},
           });
         }}
         style={{

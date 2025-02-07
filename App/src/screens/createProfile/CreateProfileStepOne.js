@@ -110,7 +110,7 @@ const CreateProfileStepOne = ({navigation}) => {
         />
         <TextInput
           numberOfLines={4}
-          placeholder="About"
+          placeholder="About *"
           value={about}
           onChangeText={text => dispatch(setAbout(text))}
           style={styles.input}
@@ -121,14 +121,14 @@ const CreateProfileStepOne = ({navigation}) => {
           onPress={() => setIsInterestsModalVisible(true)}
           style={styles.input}>
           <Text style={{color: interests.length > 0 ? 'black' : 'gray'}}>
-            {interests.length > 0 ? interests.join(', ') : 'Select Interests'}
+            {interests.length > 0 ? interests.join(', ') : 'Select Interests *'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setIsSkillsModalVisible(true)}
           style={styles.input}>
           <Text style={{color: skills.length > 0 ? 'black' : 'gray'}}>
-            {skills.length > 0 ? skills.join(', ') : 'Select Skills'}
+            {skills.length > 0 ? skills.join(', ') : 'Select Skills *'}
           </Text>
         </TouchableOpacity>
         <View style={styles.media}>
@@ -149,7 +149,7 @@ const CreateProfileStepOne = ({navigation}) => {
           </TouchableOpacity>
         </View>
         <TextInput
-          placeholder="Location"
+          placeholder="Location *"
           value={location}
           onChangeText={text => dispatch(setLocation(text))}
           style={[styles.input, {marginTop: 10}]}

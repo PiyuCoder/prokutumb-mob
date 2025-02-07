@@ -138,7 +138,7 @@ const CreateProfileStepThree = ({navigation}) => {
             )}
             <TextInput
               style={[styles.input, {marginTop: 10}]}
-              placeholder={'University Name'}
+              placeholder={'University Name *'}
               placeholderTextColor={'gray'}
               value={edu.school}
               onChangeText={text =>
@@ -148,7 +148,7 @@ const CreateProfileStepThree = ({navigation}) => {
             <TextInput
               style={styles.input}
               placeholderTextColor={'gray'}
-              placeholder={'Degree'}
+              placeholder={'Degree *'}
               value={edu.degree}
               onChangeText={text =>
                 handleEducationChange(index, 'degree', text)
@@ -164,7 +164,7 @@ const CreateProfileStepThree = ({navigation}) => {
               <TextInput
                 style={styles.input}
                 placeholderTextColor={'gray'}
-                placeholder="Start Date"
+                placeholder="Start Date *"
                 value={edu.startDate.toISOString().split('T')[0]}
                 editable={false}
               />
@@ -206,7 +206,7 @@ const CreateProfileStepThree = ({navigation}) => {
                   <TextInput
                     style={styles.input}
                     placeholderTextColor={'gray'}
-                    placeholder="End Date"
+                    placeholder="End Date *"
                     value={edu.endDate.toISOString().split('T')[0]}
                     editable={false}
                   />
@@ -230,7 +230,7 @@ const CreateProfileStepThree = ({navigation}) => {
 
             <TextInput
               style={styles.input}
-              placeholder={'Field of study'}
+              placeholder={'Field of study *'}
               placeholderTextColor={'gray'}
               value={edu.fieldOfStudy}
               onChangeText={text =>

@@ -427,6 +427,8 @@ exports.fetchAnEvent = async (req, res) => {
         .json({ success: false, message: "Event not found" });
     }
 
+    console.log(event);
+
     // Fetch user details
     const user = await Member.findById(userId);
 

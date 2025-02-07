@@ -1016,112 +1016,120 @@ const UserProfile = ({route}) => {
                 minHeight: 500,
                 padding: 15,
               }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  marginTop: 50,
-                }}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('Network', {
+                    queryType: 'profile',
+                    id: userId,
+                  })
+                }>
                 <View
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'white',
-                    height: 80,
-                    flex: 1,
-                    borderRadius: 20,
-                    shadowColor: 'white',
-                    shadowOffset: {width: 1, height: 1},
-                    shadowOpacity: 0.9,
-                    shadowRadius: 10,
-                    elevation: 10,
+                    gap: 8,
+                    marginTop: 50,
                   }}>
-                  <Svg height="40" width="70" viewBox="0 0 200 5">
-                    <Defs>
-                      <LinearGradient
-                        id="grad"
-                        x1="100%"
-                        y1="0%"
-                        x2="0%"
-                        y2="0%">
-                        <Stop offset="0%" stopColor="red" />
-                        <Stop offset="50%" stopColor="yellow" />
-                        <Stop offset="100%" stopColor="green" />
-                      </LinearGradient>
-                    </Defs>
-                    <Circle
-                      cx="100"
-                      cy="160"
-                      r={radius}
-                      fill="none"
-                      stroke="lightgray"
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={circumference}
-                      strokeDashoffset={0} // Fully visible
-                      strokeLinecap="round"
-                      transform="rotate(-180, 100, 100)" // Start at top-center
-                    />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'white',
+                      height: 80,
+                      flex: 1,
+                      borderRadius: 20,
+                      shadowColor: 'white',
+                      shadowOffset: {width: 1, height: 1},
+                      shadowOpacity: 0.9,
+                      shadowRadius: 10,
+                      elevation: 10,
+                    }}>
+                    <Svg height="40" width="70" viewBox="0 0 200 5">
+                      <Defs>
+                        <LinearGradient
+                          id="grad"
+                          x1="100%"
+                          y1="0%"
+                          x2="0%"
+                          y2="0%">
+                          <Stop offset="0%" stopColor="red" />
+                          <Stop offset="50%" stopColor="yellow" />
+                          <Stop offset="100%" stopColor="green" />
+                        </LinearGradient>
+                      </Defs>
+                      <Circle
+                        cx="100"
+                        cy="160"
+                        r={radius}
+                        fill="none"
+                        stroke="lightgray"
+                        strokeWidth={strokeWidth}
+                        strokeDasharray={circumference}
+                        strokeDashoffset={0} // Fully visible
+                        strokeLinecap="round"
+                        transform="rotate(-180, 100, 100)" // Start at top-center
+                      />
 
-                    {/* Progress Circle */}
-                    <Circle
-                      cx="100"
-                      cy="160"
-                      r={radius}
-                      fill="none"
-                      stroke="url(#grad)"
-                      strokeWidth={strokeWidth}
-                      strokeDasharray={circumference}
-                      strokeDashoffset={
-                        (1 - Math.max(0, Math.min(score, 100)) / 100) *
-                        circumference
-                      }
-                      strokeLinecap="round"
-                      transform="rotate(-180, 100, 100)"
-                    />
-                  </Svg>
-                  <View style={{marginLeft: 10}}>
-                    <Text style={styles.percentageText}>{`${score}%`}</Text>
-                    <Text
-                      style={{
-                        fontSize: 18,
-                        color: 'gray',
-                      }}>
-                      Relevancy
-                    </Text>
+                      {/* Progress Circle */}
+                      <Circle
+                        cx="100"
+                        cy="160"
+                        r={radius}
+                        fill="none"
+                        stroke="url(#grad)"
+                        strokeWidth={strokeWidth}
+                        strokeDasharray={circumference}
+                        strokeDashoffset={
+                          (1 - Math.max(0, Math.min(score, 100)) / 100) *
+                          circumference
+                        }
+                        strokeLinecap="round"
+                        transform="rotate(-180, 100, 100)"
+                      />
+                    </Svg>
+                    <View style={{marginLeft: 10}}>
+                      <Text style={styles.percentageText}>{`${score}%`}</Text>
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          color: 'gray',
+                        }}>
+                        Relevancy
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'white',
+                      height: 80,
+                      flex: 1,
+                      borderRadius: 20,
+                      shadowColor: 'white',
+                      shadowOffset: {width: 0, height: 0},
+                      shadowOpacity: 0.9,
+                      shadowRadius: 10,
+                      elevation: 10,
+                    }}>
+                    <Feather name="check" size={30} color="#7FDD53" />
+                    <View style={{marginLeft: 10}}>
+                      <Text
+                        style={styles.percentageText}>{`${socialScore}%`}</Text>
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          color: 'gray',
+                        }}>
+                        Social Avg Score
+                      </Text>
+                    </View>
                   </View>
                 </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'white',
-                    height: 80,
-                    flex: 1,
-                    borderRadius: 20,
-                    shadowColor: 'white',
-                    shadowOffset: {width: 0, height: 0},
-                    shadowOpacity: 0.9,
-                    shadowRadius: 10,
-                    elevation: 10,
-                  }}>
-                  <Feather name="check" size={30} color="#7FDD53" />
-                  <View style={{marginLeft: 10}}>
-                    <Text
-                      style={styles.percentageText}>{`${socialScore}%`}</Text>
-                    <Text
-                      style={{
-                        fontSize: 18,
-                        color: 'gray',
-                      }}>
-                      Social Avg Score
-                    </Text>
-                  </View>
-                </View>
-              </View>
+              </TouchableOpacity>
               <View
                 style={{
                   display: 'flex',

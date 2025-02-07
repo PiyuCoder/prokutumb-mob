@@ -132,29 +132,71 @@ async function detectIntentText(query) {
   console.log(`Current Page: ${response.queryResult.currentPage.displayName}`);
 }
 
+function filterValidResponses(data, queryType) {
+  const uniqueResponses = new Set();
+
+  return data.filter((response) => {
+    const parts = response.split(" ");
+    if (parts.length <= 2 || !["1", "2", "3"].includes(parts[1])) return false;
+
+    // Apply additional filtering based on queryType
+    if (queryType === "profile" && ["2", "3"].includes(parts[1])) return false;
+    if (queryType === "community" && ["1", "2"].includes(parts[1]))
+      return false;
+    if (queryType === "event" && ["1", "2"].includes(parts[1])) return false;
+
+    // Normalize response by removing the ID and trimming "nan" or extra spaces
+    let normalizedResponse = parts
+      .slice(1)
+      .join(" ")
+      .replace(/\bnan\b/g, "")
+      .trim();
+
+    if (uniqueResponses.has(normalizedResponse)) return false;
+    uniqueResponses.add(normalizedResponse);
+    return true;
+  });
+}
+
 exports.prokuInteraction = async (req, res) => {
-  const { userId, query, queryType } = req.body;
+  const { userId, query, queryType, id } = req.body;
+
+  console.log("queryType:", queryType);
 
   const user = await Member.findById(userId);
 
   let updatedQuery;
 
   if (queryType === "profile") {
-    const interestsString = user.interests.join(", ");
-    const skillsString = user.skills.join(", ");
+    const interestsString = user.interests?.join(", ") || "";
+    const skillsString = user.skills.join(", ") || "";
 
     // Modify the query by appending interests and skills
     updatedQuery = `${query} based on interests: ${interestsString} and skills: ${skillsString}`;
   } else if (queryType === "community") {
-    updatedQuery = query;
+    const community = await Communitymob.findById(id);
+    if (community)
+      updatedQuery = `A community focused on ${community.communityType} in ${community.location}. ${community.description}, ${query} `;
+    else updatedQuery = `A community ${query}`;
   } else {
-    updatedQuery = query;
+    const event = await Event.findById(id);
+    if (event)
+      updatedQuery = `A brief overview of the ${event.name} on ${
+        event.name
+      } event. A detailed description of what attendees can expect at ${
+        event.name
+      } on ${event.name}. ${
+        event.eventType === "Virtual" ? "Webinar" : "Concert"
+      } ${event.address} Can you suggest ${event.name}in ${
+        event.address
+      }?, ${query}`;
+    else updatedQuery = `event ${query}`;
   }
 
   try {
     // Make a request to the new AI API
     const apiResponse = await axios.post(
-      "http://34.150.183.91:8000/generate/",
+      "http://34.150.183.91:8000/generate",
       {
         input_text: updatedQuery, // Sending user's query
         num_responses: 5, // Number of responses required
@@ -171,7 +213,9 @@ exports.prokuInteraction = async (req, res) => {
       responseText = [responseText]; // Convert to array if it's a string
     }
 
-    console.log("AI Response:", responseText);
+    console.log(responseText);
+
+    responseText = filterValidResponses(responseText, queryType);
 
     // Save user query and AI response to the database
     const member = await Member.findById(userId);
@@ -198,6 +242,7 @@ exports.prokuInteraction = async (req, res) => {
 
 exports.fetchProkuInteractions = async (req, res) => {
   const { userId } = req.params;
+  console.log(userId);
   try {
     const member = await Member.findById(userId);
     res.status(200).json(member.chatbotInteractions);

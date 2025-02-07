@@ -50,6 +50,8 @@ import CreateProfileStepFour from './src/screens/createProfile/CreateProfileStep
 import Tickets from './src/screens/Tickets';
 import MyCommOrEvents from './src/screens/MyCommOrEvents';
 import ResultsScreen from './src/screens/ResultsScreen';
+import ResultsScreenEvent from './src/screens/ResultsScreenEvent';
+import ResultsScreenCommunity from './src/screens/ResultsScreenCommunity';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -229,6 +231,16 @@ export default function App() {
             <Stack.Screen
               name="ResultsScreen"
               component={ResultsScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="ResultsScreenCommunity"
+              component={ResultsScreenCommunity}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="ResultsScreenEvent"
+              component={ResultsScreenEvent}
               options={{headerShown: false}}
             />
             <Stack.Screen
