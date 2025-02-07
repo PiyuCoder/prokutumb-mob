@@ -504,6 +504,7 @@ const HomeScreen = ({navigation}) => {
               placeholder="Add a comment..."
               value={currentComment}
               onChangeText={setCurrentComment}
+              placeholderTextColor={'gray'}
             />
             <TouchableOpacity
               style={styles.addCommentButton}
@@ -1097,6 +1098,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
+    color: 'black',
   },
   addCommentButton: {
     marginLeft: 10,

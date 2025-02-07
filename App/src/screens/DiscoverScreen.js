@@ -27,6 +27,7 @@ import RenderUserCard from '../components/RenderUserCard';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ConnectionRequests from '../components/ConnectionRequests';
 import {fetchFriendRequests} from '../store/slices/authSlice';
+import {useFocusEffect} from '@react-navigation/native';
 
 // const people = [
 //   {
@@ -177,6 +178,7 @@ const DiscoverScreen = ({navigation}) => {
     // setRefreshing(true);
     // setLoading(true);
     dispatch(fetchFriendRequests(user?._id));
+    fetchPeople();
     // fetchLocationPermission();
     // fetchCommunities();
   }, []);
@@ -246,15 +248,26 @@ const DiscoverScreen = ({navigation}) => {
   //   </TouchableOpacity>
   // );
 
-  useEffect(() => {
-    const fetchPeople = async () => {
+  const fetchPeople = async () => {
+    try {
+      setLoading(true);
       const res = await axiosInstance.get(
         `/api/user/people-you-may-know/${user?._id}`,
       );
       setPeople(res?.data || []);
-    };
-    fetchPeople();
-  }, [user?._id]);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPeople();
+    }, [user?._id]),
+  );
+
   return (
     <ScrollView
       style={styles.container}

@@ -549,6 +549,7 @@ const ProfileScreen = () => {
           {/* Add Comment Input */}
           <View style={styles.commentInputContainer}>
             <TextInput
+              placeholderTextColor={'gray'}
               style={styles.commentInput}
               placeholder="Add a comment..."
               value={currentComment}
@@ -1547,6 +1548,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 15,
     paddingStart: 20,
+    color: 'black',
   },
   addCommentButton: {
     marginLeft: 10,

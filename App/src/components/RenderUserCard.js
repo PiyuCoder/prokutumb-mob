@@ -89,9 +89,9 @@ const RenderUserCard = ({item, results}) => {
             })
           }>
           <Text style={styles.connectBtnText}>
-            {user?.friendRequests?.find(
+            {!item?.friendRequests?.some(
               request => request?.fromUser === user?._id,
-            ) || !user?.friends?.find(friend => friend?._id === item._id)
+            ) && !user?.friends?.some(friend => friend?._id === item._id)
               ? 'Add Friend'
               : 'Pending'}
           </Text>

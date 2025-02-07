@@ -39,13 +39,17 @@ const SelectModal = ({visible, items, selectedItems, onClose, onSelect}) => {
     <Modal visible={visible} transparent={true} animationType="slide">
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
+          <Text style={{color: 'black', fontWeight: '600', marginBottom: 8}}>
+            Select Multiple
+          </Text>
           {/* Input field to add new skills/interests */}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Add more..."
+              placeholder="Type here to add more..."
               value={newItem}
               onChangeText={setNewItem}
+              placeholderTextColor={'gray'}
             />
             <TouchableOpacity onPress={handleAddItem} style={styles.addButton}>
               <Text style={styles.addButtonText}>Add</Text>
@@ -110,6 +114,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     marginRight: 8,
+    color: 'black',
   },
   addButton: {
     backgroundColor: '#007BFF',

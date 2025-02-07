@@ -12,6 +12,7 @@
   "dependencies": {
     "@kichiyaki/react-native-barcode-generator": "^0.6.7",
     "@react-native-async-storage/async-storage": "^2.0.0",
+    "@react-native-community/datetimepicker": "^8.3.0",
     "@react-native-community/geolocation": "^3.4.0",
     "@react-native-google-signin/google-signin": "^13.1.0",
     "@react-native-picker/picker": "^2.10.2",

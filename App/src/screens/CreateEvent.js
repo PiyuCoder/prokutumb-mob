@@ -22,6 +22,7 @@ import ProfilePicture from '../components/ProfilePicture';
 import {ScrollView} from 'react-native-gesture-handler';
 import {Picker} from '@react-native-picker/picker';
 import DatePicker from 'react-native-date-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {format} from 'date-fns';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
@@ -62,6 +63,8 @@ const CreateEvent = ({navigation, route}) => {
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [startTime, setStartTime] = useState(new Date());
+  const [endTime, setEndTime] = useState(new Date());
 
   //   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
@@ -75,6 +78,48 @@ const CreateEvent = ({navigation, route}) => {
   const [isPreview, setIsPreview] = useState(false);
 
   const haveCommunity = myCommunities?.length > 0;
+
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
+  const handleStartTimeChange = (event, selectedTime) => {
+    setShowStartPicker(false);
+    if (selectedTime) {
+      setStartTime(selectedTime);
+      setEventStartTime(formatTime(selectedTime));
+
+      // Reset end time if it's earlier than the new start time
+      if (selectedTime > endTime) {
+        setEndTime(selectedTime);
+        setEventEndTime(formatTime(selectedTime));
+      }
+    }
+  };
+
+  const handleEndTimeChange = (event, selectedTime) => {
+    setShowEndPicker(false);
+    if (selectedTime) {
+      if (selectedTime < startTime) {
+        Alert.alert(
+          'Invalid Time',
+          'End time cannot be earlier than start time.',
+        );
+        return;
+      }
+      setEndTime(selectedTime);
+      setEventEndTime(formatTime(selectedTime));
+    }
+  };
+
+  const formatTime = date => {
+    if (!date) return '';
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    let ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12; // Convert 24-hour to 12-hour format
+    minutes = minutes < 10 ? `0${minutes}` : minutes; // Add leading zero
+    return `${hours}:${minutes} ${ampm}`;
+  };
 
   useEffect(() => {
     if (route.params?.communityId || myCommunities?.length) {
@@ -260,6 +305,8 @@ const CreateEvent = ({navigation, route}) => {
       setIsLoading(false);
     }
   };
+
+  console.log(eventStartTime);
   const handleCreateDraftEvent = async () => {
     if (
       eventName &&
@@ -509,12 +556,16 @@ const CreateEvent = ({navigation, route}) => {
               <View style={[styles.input, {marginVertical: 10}]}>
                 <Picker
                   placeholder="Category"
-                  dropdownIconColor={'black'}
+                  dropdownIconColor="black"
                   selectedValue={category}
-                  onValueChange={(itemValue, itemIndex) =>
-                    setCategory(itemValue)
-                  }>
-                  {['Networking', 'Business', 'Technology', 'Marketing']?.map(
+                  onValueChange={itemValue => setCategory(itemValue)}>
+                  <Picker.Item
+                    label="Category (Optional)"
+                    value=""
+                    enabled={false}
+                    color="gray"
+                  />
+                  {['Networking', 'Business', 'Technology', 'Marketing'].map(
                     (cat, index) => (
                       <Picker.Item
                         color="black"
@@ -728,7 +779,42 @@ const CreateEvent = ({navigation, route}) => {
                   alignItems: 'center',
                   gap: 20,
                 }}>
-                <TextInput
+                {/* Start Time Picker */}
+                <TouchableOpacity
+                  onPress={() => setShowStartPicker(true)}
+                  style={[styles.input, {flex: 1, justifyContent: 'center'}]}>
+                  <Text style={{color: eventStartTime ? 'black' : 'gray'}}>
+                    {eventStartTime || 'Start Time *'}
+                  </Text>
+                </TouchableOpacity>
+                {showStartPicker && (
+                  <DateTimePicker
+                    value={new Date()}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    is24Hour={false}
+                    onChange={handleStartTimeChange}
+                  />
+                )}
+
+                {/* End Time Picker */}
+                <TouchableOpacity
+                  onPress={() => setShowEndPicker(true)}
+                  style={[styles.input, {flex: 1, justifyContent: 'center'}]}>
+                  <Text style={{color: eventEndTime ? 'black' : 'gray'}}>
+                    {eventEndTime || 'End Time *'}
+                  </Text>
+                </TouchableOpacity>
+                {showEndPicker && (
+                  <DateTimePicker
+                    value={new Date()}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    is24Hour={false}
+                    onChange={handleEndTimeChange}
+                  />
+                )}
+                {/* <TextInput
                   placeholder="Start time *"
                   value={eventStartTime}
                   onChangeText={setEventStartTime}
@@ -741,7 +827,7 @@ const CreateEvent = ({navigation, route}) => {
                   onChangeText={setEventEndTime}
                   style={[styles.input, {flex: 1}]}
                   placeholderTextColor={'gray'}
-                />
+                /> */}
               </View>
             </ScrollView>
           )}

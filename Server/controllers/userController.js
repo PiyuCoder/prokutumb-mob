@@ -925,6 +925,10 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Get the list of users who have sent a friend request to the logged-in user
+    const friendRequestSenders = user.friendRequests.map(
+      (request) => request.fromUser._id
+    );
     // Get the list of friend IDs
     const friendIds = user.friends.map((friend) => friend._id);
 
@@ -932,7 +936,7 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
     const peopleYouMayKnow = await Member.aggregate([
       {
         $match: {
-          _id: { $nin: [...friendIds, userId] }, // Exclude friends and self
+          _id: { $nin: [...friendIds, userId, ...friendRequestSenders] }, // Exclude friends and self
           interests: { $in: user.interests }, // Match based on shared interests
         },
       },
@@ -943,6 +947,7 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
           commonInterests: {
             $size: { $setIntersection: ["$interests", user.interests] },
           },
+          friendRequests: 1,
         },
       },
       { $match: { commonInterests: { $gt: 0 } } }, // Ensure at least one shared interest

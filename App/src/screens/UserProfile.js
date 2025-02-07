@@ -516,6 +516,7 @@ const UserProfile = ({route}) => {
               placeholder="Add a comment..."
               value={currentComment}
               onChangeText={setCurrentComment}
+              placeholderTextColor={'gray'}
             />
             <TouchableOpacity
               style={styles.addCommentButton}
@@ -1369,6 +1370,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 15,
     paddingStart: 20,
+    color: 'black',
   },
   addCommentButton: {
     marginLeft: 10,
