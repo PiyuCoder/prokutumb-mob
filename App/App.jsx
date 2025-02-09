@@ -52,6 +52,7 @@ import MyCommOrEvents from './src/screens/MyCommOrEvents';
 import ResultsScreen from './src/screens/ResultsScreen';
 import ResultsScreenEvent from './src/screens/ResultsScreenEvent';
 import ResultsScreenCommunity from './src/screens/ResultsScreenCommunity';
+import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -241,6 +242,11 @@ export default function App() {
             <Stack.Screen
               name="ResultsScreenEvent"
               component={ResultsScreenEvent}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="PrivacyPolicyScreen"
+              component={PrivacyPolicyScreen}
               options={{headerShown: false}}
             />
             <Stack.Screen

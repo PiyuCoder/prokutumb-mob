@@ -96,6 +96,7 @@ module.exports = (io, userSocketMap) => {
     "/people-you-may-know/:userId",
     userController.fetchPeopleYouMayKnow
   );
+  router.delete("/:userId", userController.deleteProfile);
   // router.get('/top-networkers', userController.fetchTopNetworkers)
   // router.delete("/:userId/experience/:experienceId", userController.editProfile);
 

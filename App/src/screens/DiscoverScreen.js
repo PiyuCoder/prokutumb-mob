@@ -85,8 +85,6 @@ const DiscoverScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const [people, setPeople] = useState([]);
 
-  console.log('API Keys', process.env['REACT_APP_GEOCODER_API_KEY']);
-
   // useEffect(() => {
   //   Geocoder.init('AIzaSyDeS8-47CWqq5QKl0NHnba5cU_Ft2_k8ww');
   //   fetchLocationPermission();

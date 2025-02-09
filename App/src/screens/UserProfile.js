@@ -12,6 +12,7 @@ import {
   Share,
   TextInput,
   Animated,
+  ToastAndroid,
 } from 'react-native';
 import LinearGradientR from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
@@ -80,6 +81,11 @@ const UserProfile = ({route}) => {
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (!userId) {
+        ToastAndroid.show('User not found', ToastAndroid.SHORT);
+        navigation.goBack();
+        return;
+      }
       try {
         setLoading(true);
         const res = await axiosInstance.get(
@@ -114,6 +120,9 @@ const UserProfile = ({route}) => {
               setConnectionStatus('Connect');
             }
           }
+        } else if (res.status === 400) {
+          ToastAndroid.show('User not found', ToastAndroid.SHORT);
+          navigation.goBack();
         }
       } catch (error) {
         console.log(error);

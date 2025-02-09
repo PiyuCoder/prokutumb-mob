@@ -1,7 +1,15 @@
 import React, {useState, useEffect} from 'react';
 import {useSelector} from 'react-redux';
 import {axiosInstance} from '../api/axios';
-import {Text, TouchableOpacity, View, Button, StyleSheet} from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  Button,
+  StyleSheet,
+  ScrollView,
+  ToastAndroid,
+} from 'react-native';
 import ProfilePicture from '../components/ProfilePicture';
 
 const Notifications = ({navigation}) => {
@@ -27,8 +35,8 @@ const Notifications = ({navigation}) => {
     fetchNotifications();
   }, [userId]);
 
-  const handleNotificationClick = notification => {
-    console.log('Notification clicked:', notification);
+  const handleNotificationClick = notificationId => {
+    handleMarkAsRead(notificationId);
   };
 
   const handleMarkAsRead = async notificationId => {
@@ -51,6 +59,10 @@ const Notifications = ({navigation}) => {
   const handleAccept = async notification => {
     try {
       console.log('Accepted request:', notification?._id);
+      if (!notification?.senderId) {
+        ToastAndroid.show('User not found', ToastAndroid.SHORT);
+        return;
+      }
 
       if (notification?.isCommunity) {
         const res = await axiosInstance.put(
@@ -100,7 +112,7 @@ const Notifications = ({navigation}) => {
     );
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.header}>Notifications</Text>
       {notifications?.length === 0 ? (
         <Text style={styles.noNotificationsText}>No notifications</Text>
@@ -110,10 +122,11 @@ const Notifications = ({navigation}) => {
             <TouchableOpacity
               key={notification._id}
               onPress={() =>
-                notification.type === 'join request' &&
-                navigation.navigate('UserProfile', {
-                  userId: notification.senderId._id,
-                })
+                notification.type === 'join request'
+                  ? navigation.navigate('UserProfile', {
+                      userId: notification?.senderId?._id,
+                    })
+                  : handleNotificationClick(notification?._id)
               }>
               <View
                 style={[
@@ -155,7 +168,7 @@ const Notifications = ({navigation}) => {
           ))}
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 };
 

@@ -45,6 +45,26 @@ const CreateProfile = ({navigation}) => {
             size={30}
           />
           <Text style={[styles.title, {color: 'black'}]}>Import Profile</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderWidth: 1,
+              borderColor: 'black',
+              borderRadius: 10,
+              padding: 10,
+              marginBottom: 16,
+              marginTop: 15,
+              backgroundColor: 'black',
+              alignSelf: 'center',
+              borderColor: 'gold',
+              position: 'absolute',
+              right: 20,
+              top: 10,
+            }}>
+            <Text style={{color: 'gold'}}>Launching soon!</Text>
+          </View>
           <Text
             style={{
               color: '#273C54',

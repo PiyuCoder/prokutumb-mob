@@ -9,6 +9,7 @@ const NotificationMob = require("../models/Notification");
 const Communitymob = require("../models/Community");
 const Event = require("../models/Event");
 const axios = require("axios");
+const CommPost = require("../models/CommPost");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -1020,5 +1021,55 @@ exports.updateInterests = async (req, res) => {
   } catch (error) {
     console.error("Error updating interests:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.deleteProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // 1️⃣ Check if user exists
+    const user = await Member.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 2️⃣ Delete all communities created by the user
+    await Communitymob.deleteMany({ createdBy: userId });
+
+    // 3️⃣ Remove user from other users' friend requests
+    await Member.updateMany(
+      { "friendRequests.fromUser": userId },
+      { $pull: { friendRequests: { fromUser: userId } } }
+    );
+
+    // 4️⃣ Remove user from other users' friend lists
+    await Member.updateMany(
+      { friends: { $elemMatch: { type: userId } } },
+      { $pull: { friends: { type: userId } } }
+    );
+
+    // 5️⃣ Delete all feeds posted by the user
+    await Feed.deleteMany({ postedBy: userId });
+
+    // 6️⃣ Remove user's comments from all feeds
+    await Feed.updateMany(
+      { "comments.user": userId }, // Find feeds where the user has commented
+      { $pull: { comments: { user: userId } } } // Remove comments where the user is the author
+    );
+
+    // 6️⃣ Remove user's comments from all feeds
+    await CommPost.updateMany(
+      { "comments.user": userId }, // Find feeds where the user has commented
+      { $pull: { comments: { user: userId } } } // Remove comments where the user is the author
+    );
+
+    // 7️⃣ Delete the user
+    await Member.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: "User profile deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting profile:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };

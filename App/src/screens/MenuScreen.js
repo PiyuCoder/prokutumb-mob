@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
   Share,
+  Modal,
 } from 'react-native';
 import SearchPeople from '../components/SearchPeople';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -59,6 +60,7 @@ const MenuScreen = ({navigation}) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchCommunitiesAndEvents = async () => {
@@ -132,10 +134,49 @@ const MenuScreen = ({navigation}) => {
     }
   };
 
+  const onConfirm = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.delete(`/api/user/${user?._id}`);
+      if (res?.status === 200) {
+        handleLogout();
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+      setIsModalVisible(false);
+    }
+  };
+
   return (
     <FlatList
       ListHeaderComponent={
         <View style={styles.header}>
+          <Modal transparent visible={isModalVisible} animationType="fade">
+            <View style={styles.overlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.title}>Confirm Deletion</Text>
+                <Text style={styles.message}>
+                  Are you sure you want to delete this profile?
+                </Text>
+
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => setIsModalVisible(false)}>
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={onConfirm}>
+                    <Text style={styles.deleteText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
           <View
             style={{
               flexDirection: 'row',
@@ -341,6 +382,7 @@ const MenuScreen = ({navigation}) => {
               <Text style={{color: '#99A1BE'}}>Help Center</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              onPress={() => navigation.navigate('PrivacyPolicyScreen')}
               style={[
                 styles.gridcard,
                 {marginBottom: 20, justifyContent: 'flex-start'},
@@ -355,6 +397,17 @@ const MenuScreen = ({navigation}) => {
             <MaterialCommunityIcons name="logout" size={25} color="#F72B2B" />
             <Text style={{color: '#F72B2B', fontWeight: '500'}}>Logout</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setIsModalVisible(true)}
+            style={[
+              styles.gridcard,
+              {marginHorizontal: 25, backgroundColor: '#F72B2B', marginTop: 15},
+            ]}>
+            <MaterialCommunityIcons name="delete" size={25} color="white" />
+            <Text style={{color: 'white', fontWeight: '500'}}>
+              Delete Profile
+            </Text>
+          </TouchableOpacity>
         </View>
       }
       data={[]}
@@ -367,7 +420,7 @@ const MenuScreen = ({navigation}) => {
 export default MenuScreen;
 
 const styles = StyleSheet.create({
-  header: {paddingBottom: 100},
+  header: {paddingBottom: 200},
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -461,5 +514,57 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     marginTop: 20,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: 300,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  message: {
+    fontSize: 14,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: '#ddd',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  deleteButton: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: 'red',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  cancelText: {
+    color: '#333',
+    fontSize: 16,
+  },
+  deleteText: {
+    color: 'white',
+    fontSize: 16,
   },
 });
