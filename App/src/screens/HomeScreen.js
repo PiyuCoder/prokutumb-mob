@@ -18,6 +18,7 @@ import {
   Animated,
   Dimensions,
   BackHandler,
+  Platform,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -573,7 +574,7 @@ const HomeScreen = ({navigation}) => {
               borderBottomLeftRadius: 30,
               borderBottomRightRadius: 30,
               marginBottom: 10,
-              paddingTop: Platform.OS === 'ios'?15:15,
+              paddingTop: Platform.OS === 'ios' ? 15 : 15,
             }}>
             {/* Top Section */}
             <View
@@ -836,6 +837,7 @@ const HomeScreen = ({navigation}) => {
             borderColor: '#F1F4F5',
             backgroundColor: 'white',
             flex: 1,
+            paddingVertical: Platform.OS === 'ios' ? 50 : 0,
           }}>
           <View
             style={{

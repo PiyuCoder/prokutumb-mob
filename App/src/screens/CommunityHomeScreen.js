@@ -1018,6 +1018,7 @@ const CommunityHomeScreen = ({route}) => {
             borderColor: '#F1F4F5',
             backgroundColor: 'white',
             flex: 1,
+            paddingVertical: Platform.OS === 'ios' ? 50 : 0,
           }}>
           <View
             style={{
