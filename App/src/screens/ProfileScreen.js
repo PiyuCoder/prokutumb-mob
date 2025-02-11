@@ -851,7 +851,7 @@ const ProfileScreen = () => {
                 <Text style={styles.sectionTitle}>Experience:</Text>
               </View>
 
-              {user.experience?.map((exp, index) => (
+              {user?.experience?.length ? user.experience?.map((exp, index) => (
                 <View key={index} style={styles.card}>
                   <View key={index} style={styles.experienceItem}>
                     <View
@@ -878,7 +878,7 @@ const ProfileScreen = () => {
                     </Text>
                   </View>
                 </View>
-              ))}
+              )):<Text style={{color:'gray'}}>Not added</Text>}
 
               {/* Education Section */}
               <View style={{marginVertical: 20}}>
@@ -886,7 +886,7 @@ const ProfileScreen = () => {
               </View>
 
               <View style={styles.card}>
-                {user?.education?.map((edu, index) => (
+                {user?.education?.length ? user?.education?.map((edu, index) => (
                   <View key={index} style={styles.experienceItem}>
                     <View
                       style={{
@@ -910,7 +910,7 @@ const ProfileScreen = () => {
                       {edu.degree}
                     </Text>
                   </View>
-                ))}
+                )):<Text style={{color:'gray'}}>Not added</Text>}
               </View>
               <View style={{marginVertical: 20}}>
                 <Text style={styles.sectionTitle}>Interests:</Text>
