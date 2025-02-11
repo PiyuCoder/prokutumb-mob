@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Provider} from 'react-redux';
+import {SafeAreaProvider} from "react-native-safe-area-context";
 import store, {persistor} from './src/store/store';
 import {createStackNavigator} from '@react-navigation/stack';
 // import {createDrawerNavigator} from '@react-navigation/drawer';
@@ -194,6 +195,7 @@ export default function App() {
   };
 
   return (
+    <SafeAreaProvider>
     <Provider store={store}>
       <PersistGate
         loading={<ActivityIndicator size="large" />}
@@ -384,6 +386,7 @@ export default function App() {
         </NavigationContainer>
       </PersistGate>
     </Provider>
+    </SafeAreaProvider>
   );
 }
 
