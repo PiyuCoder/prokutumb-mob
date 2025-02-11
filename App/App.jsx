@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Provider} from 'react-redux';
-import {SafeAreaProvider} from "react-native-safe-area-context";
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import store, {persistor} from './src/store/store';
 import {createStackNavigator} from '@react-navigation/stack';
 // import {createDrawerNavigator} from '@react-navigation/drawer';
@@ -195,215 +195,208 @@ export default function App() {
   };
 
   return (
-    <SafeAreaProvider>
-    <Provider store={store}>
-      <PersistGate
-        loading={<ActivityIndicator size="large" />}
-        persistor={persistor}>
-        <NavigationContainer
-          linking={linking}
-          ref={navigationRef}
-          onReady={() => setIsReady(true)} // Set isReady to true once NavigationContainer is ready
-        >
-          <Stack.Navigator initialRouteName="Splash">
-            <Stack.Screen
-              name="Splash"
-              component={SplashScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="HelpScreen"
-              component={ReportScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen name="Signup" component={SignupScreen} />
-            <Stack.Screen
-              name="Profile"
-              component={ProfileScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="UserProfile"
-              component={UserProfile}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Dashboard"
-              component={DashboardScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="ResultsScreen"
-              component={ResultsScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="ResultsScreenCommunity"
-              component={ResultsScreenCommunity}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="ResultsScreenEvent"
-              component={ResultsScreenEvent}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="PrivacyPolicyScreen"
-              component={PrivacyPolicyScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Network"
-              component={NetworkScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Post"
-              component={Post}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Message"
-              component={MessageScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Chat"
-              component={ChatScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="CallScreen"
-              component={CallScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Settings"
-              component={SettingScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="EditProfile"
-              component={EditProfile}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Connections"
-              component={ConnectionsScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Notifications"
-              component={Notifications}
-              options={{headerShown: false}}
-            />
-            {/* <Stack.Screen
+    <SafeAreaView style={styles.container}>
+      <Provider store={store}>
+        <PersistGate
+          loading={<ActivityIndicator size="large" />}
+          persistor={persistor}>
+          <NavigationContainer
+            linking={linking}
+            ref={navigationRef}
+            onReady={() => setIsReady(true)} // Set isReady to true once NavigationContainer is ready
+          >
+            <Stack.Navigator initialRouteName="Splash">
+              <Stack.Screen
+                name="Splash"
+                component={SplashScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="HelpScreen"
+                component={ReportScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Login"
+                component={LoginScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen name="Signup" component={SignupScreen} />
+              <Stack.Screen
+                name="Profile"
+                component={ProfileScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="UserProfile"
+                component={UserProfile}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Dashboard"
+                component={DashboardScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="ResultsScreen"
+                component={ResultsScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="ResultsScreenCommunity"
+                component={ResultsScreenCommunity}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="ResultsScreenEvent"
+                component={ResultsScreenEvent}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="PrivacyPolicyScreen"
+                component={PrivacyPolicyScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Network"
+                component={NetworkScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Post"
+                component={Post}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Message"
+                component={MessageScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Chat"
+                component={ChatScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="CallScreen"
+                component={CallScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Settings"
+                component={SettingScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="EditProfile"
+                component={EditProfile}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Connections"
+                component={ConnectionsScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Notifications"
+                component={Notifications}
+                options={{headerShown: false}}
+              />
+              {/* <Stack.Screen
               name="Communities"
               component={Communities}
               options={{headerShown: false}}
             /> */}
-            <Stack.Screen
-              name="CommunityHome"
-              component={CommunityHomeScreen}
-              options={{headerShown: false}}
+              <Stack.Screen
+                name="CommunityHome"
+                component={CommunityHomeScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="EventHome"
+                component={EventScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="ShareScreen"
+                component={ShareScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="TicketScreen"
+                component={Ticket}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="CreateCommunity"
+                component={CreateCommunity}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="CreateEvent"
+                component={CreateEvent}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="SuccessCreation"
+                component={SuccessCreation}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="CreateProfile"
+                component={CreateProfile}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="CreateProfileStepOne"
+                component={CreateProfileStepOne}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="CreateProfileStepTwo"
+                component={CreateProfileStepTwo}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="CreateProfileStepThree"
+                component={CreateProfileStepThree}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="CreateProfileStepFour"
+                component={CreateProfileStepFour}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="Tickets"
+                component={Tickets}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="MyCommOrEvents"
+                component={MyCommOrEvents}
+                options={{headerShown: false}}
+              />
+            </Stack.Navigator>
+            <IncomingCallModal
+              incomingCall={incomingCall}
+              onAccept={acceptCall}
+              onDecline={declineCall}
             />
-            <Stack.Screen
-              name="EventHome"
-              component={EventScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="ShareScreen"
-              component={ShareScreen}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="TicketScreen"
-              component={Ticket}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="CreateCommunity"
-              component={CreateCommunity}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="CreateEvent"
-              component={CreateEvent}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="SuccessCreation"
-              component={SuccessCreation}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="CreateProfile"
-              component={CreateProfile}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="CreateProfileStepOne"
-              component={CreateProfileStepOne}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="CreateProfileStepTwo"
-              component={CreateProfileStepTwo}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="CreateProfileStepThree"
-              component={CreateProfileStepThree}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="CreateProfileStepFour"
-              component={CreateProfileStepFour}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="Tickets"
-              component={Tickets}
-              options={{headerShown: false}}
-            />
-            <Stack.Screen
-              name="MyCommOrEvents"
-              component={MyCommOrEvents}
-              options={{headerShown: false}}
-            />
-          </Stack.Navigator>
-          <IncomingCallModal
-            incomingCall={incomingCall}
-            onAccept={acceptCall}
-            onDecline={declineCall}
-          />
-        </NavigationContainer>
-      </PersistGate>
-    </Provider>
-    </SafeAreaProvider>
+          </NavigationContainer>
+        </PersistGate>
+      </Provider>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingTop: 50,
   },
-  modalText: {
-    color: 'white',
-    fontSize: 18,
-    marginBottom: 20,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 10,
+  text: {
+    fontSize: 25,
+    fontWeight: '500',
   },
 });

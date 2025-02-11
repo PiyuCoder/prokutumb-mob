@@ -67,19 +67,6 @@ const CreateProfileStepTwo = ({navigation}) => {
   };
 
   const onSubmit = () => {
-    // Check if any field is empty
-    const hasEmptyFields = experiences.some(
-      exp => !exp.company || !exp.role || !exp.description,
-    );
-
-    if (false) {
-      Alert.alert(
-        'Missing Fields',
-        'Please fill in all required fields before proceeding.',
-      );
-      return; // Stop the function if fields are empty
-    }
-
     // Serialize experience data
     const serializedExperiences = experiences.map(exp => ({
       ...exp,

@@ -68,19 +68,6 @@ const CreateProfileStepThree = ({navigation}) => {
   };
 
   const onSubmit = () => {
-    // Check if any field is empty
-    const hasEmptyFields = educations.some(
-      edu => !edu.school || !edu.degree || !edu.fieldOfStudy,
-    );
-
-    if (false) {
-      Alert.alert(
-        'Missing Fields',
-        'Please fill in all required fields before proceeding.',
-      );
-      return; // Stop the function if fields are empty
-    }
-
     const serializedEducations = educations.map(exp => ({
       ...exp,
       startDate: exp.startDate.toISOString().split('T')[0],
