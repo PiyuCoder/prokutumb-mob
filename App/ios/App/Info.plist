@@ -53,5 +53,15 @@
 		<string>BalooTamma2-VariableFont_wght.ttf</string>
 		<string>BalooTamma2-Bold.ttf</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+    <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>com.googleusercontent.apps.615830902048-km7n9t8afc4hq5um2mm4a2dt2b1mp6ud</string>
+        </array>
+    </dict>
+</array>
+
 </dict>
 </plist>
