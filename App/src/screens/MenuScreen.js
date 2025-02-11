@@ -374,6 +374,7 @@ const MenuScreen = ({navigation}) => {
               Help & Support
             </Text>
             <TouchableOpacity
+              onPress={() => navigation.navigate('HelpScreen')}
               style={[
                 styles.gridcard,
                 {marginBottom: 10, justifyContent: 'flex-start'},

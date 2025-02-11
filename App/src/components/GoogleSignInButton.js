@@ -24,6 +24,8 @@ import {TextInput} from 'react-native-gesture-handler';
 GoogleSignin.configure({
   webClientId:
     '615830902048-716rcqk7k49g1umt7ecvt99n4dm1p3jl.apps.googleusercontent.com',
+  iosClientId:
+    '615830902048-km7n9t8afc4hq5um2mm4a2dt2b1mp6ud.apps.googleusercontent.com',
   offlineAccess: true,
   scopes: [
     'https://www.googleapis.com/auth/userinfo.profile',

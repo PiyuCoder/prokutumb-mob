@@ -53,6 +53,7 @@ import ResultsScreen from './src/screens/ResultsScreen';
 import ResultsScreenEvent from './src/screens/ResultsScreenEvent';
 import ResultsScreenCommunity from './src/screens/ResultsScreenCommunity';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
+import ReportScreen from './src/screens/ReportScreen';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -206,6 +207,11 @@ export default function App() {
             <Stack.Screen
               name="Splash"
               component={SplashScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="HelpScreen"
+              component={ReportScreen}
               options={{headerShown: false}}
             />
             <Stack.Screen
