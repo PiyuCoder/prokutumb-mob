@@ -573,7 +573,7 @@ const HomeScreen = ({navigation}) => {
               borderBottomLeftRadius: 30,
               borderBottomRightRadius: 30,
               marginBottom: 10,
-              paddingTop: 15,
+              paddingTop: Platform.OS === 'ios'?80:15,
             }}>
             {/* Top Section */}
             <View
