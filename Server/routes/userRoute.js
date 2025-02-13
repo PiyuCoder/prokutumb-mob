@@ -57,6 +57,7 @@ module.exports = (io, userSocketMap) => {
     checkRegistrationController.checkRegistrationWithCode,
     userController.googleLogin
   );
+  router.post("/apple-signin", userController.appleLogin);
   router.post(
     "/create-profile",
     upload.single("profilePicture"),

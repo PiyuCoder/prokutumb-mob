@@ -30,6 +30,22 @@ exports.googleLogin = (req, res) => {
     user,
   });
 };
+exports.appleLogin = (req, res) => {
+  try {
+    const body = req.body;
+
+    console.log("apple login body: ", body);
+
+    // Send back token and user info
+    res.status(200).json({
+      success: true,
+      message: "Login successful!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 exports.fetchUserData = async (req, res) => {
   const { userId } = req.params;

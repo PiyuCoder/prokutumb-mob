@@ -18,6 +18,7 @@ import Loader from '../components/Loader';
 import Svg, {Circle} from 'react-native-svg';
 
 import proku from '../assets/splash-logo.png';
+import AppleSignInButton from '../components/AppleSignInButton';
 
 const LoginScreen = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -77,6 +78,7 @@ const LoginScreen = ({navigation}) => {
       />
 
       <GoogleSignInButton setIsLoading={setIsLoading} />
+      <AppleSignInButton />
 
       {/* <Text className="mt-4" onPress={() => navigation.navigate('Signup')}>
         Don't have an account? Signup
