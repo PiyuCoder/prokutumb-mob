@@ -1,4 +1,6 @@
 const Member = require("../models/Member");
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
 
 // Function to generate a unique 6-character referral code
 const generateReferralCode = async () => {
@@ -111,5 +113,129 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
   } catch (error) {
     console.error("Error checking registration:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Function to verify Apple ID Token
+async function verifyAppleToken(idToken, userId) {
+  try {
+    // Fetch Apple's Public Keys
+    const applePublicKeys = await axios.get("https://appleid.apple.com/auth/keys");
+    
+    // Decode JWT Header to get `kid`
+    const decodedHeader = jwt.decode(idToken, { complete: true });
+    if (!decodedHeader) throw new Error("Invalid Token");
+
+    const { kid, alg } = decodedHeader.header;
+
+    // Find the matching Apple public key
+    const appleKey = applePublicKeys.data.keys.find((key) => key.kid === kid);
+    if (!appleKey) throw new Error("No matching Apple Public Key found");
+
+    // Convert Apple's key to PEM format
+    const applePem = `-----BEGIN PUBLIC KEY-----\n${Buffer.from(
+      appleKey.n,
+      "base64"
+    ).toString("base64")}\n-----END PUBLIC KEY-----`;
+
+    // Verify JWT Token
+    const payload = jwt.verify(idToken, applePem, { algorithms: [alg] });
+
+    console.log("Apple Token Verified:", payload);
+
+    // Check if `userId` matches `sub` in Apple Token
+    if (payload.sub !== userId) {
+      throw new Error("User ID mismatch");
+    }
+
+    return {
+      success: true,
+      userId: payload.sub,
+      email: payload.email || null, // Apple only provides email on first login
+    };
+  } catch (error) {
+    console.error("Apple Authentication Failed:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// **1. Check if User is Registered**
+exports.checkRegistrationApple = async (req, res, next) => {
+  const { token, userId } = req.body;
+
+  const appleAuth = await verifyAppleToken(token, userId);
+  if (!appleAuth.success) {
+    return res.status(401).json({ error: "Invalid Apple authentication" });
+  }
+
+  try {
+    // Check if user exists in the database
+    let user = await Member.findOne({ appleId: userId });
+
+    if (user) {
+      // ✅ User exists, generate session token
+      req.user = user;
+      next();
+    } else {
+      // ❌ User does not exist, ask for referral code
+      return res.json({
+        isRegistered: false 
+        message: "New user, referral code required",
+      });
+    }
+  } catch (error) {
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// **2. Register New User with Referral Code**
+exports.checkRegistrationWithCodeApple = async (req, res,next) => {
+  const { token, userId, code } = req.body;
+
+  const appleAuth = await verifyAppleToken(token, userId);
+  if (!appleAuth.success) {
+    return res.status(401).json({ error: "Invalid Apple authentication" });
+  }
+
+  try {
+    // Check if user already exists
+    let existingUser = await Member.findOne({ appleId: userId });
+    if (existingUser) {
+      req.user = user;
+      next();
+    }
+
+     if (!code) {
+        return res
+          .status(200)
+          .json({ success: false, message: "Invalid referral code." });
+      }
+
+    const referredBy = await Member.findOne({ referralCode: code });
+
+    if (!referredBy) {
+        return res
+          .status(200)
+          .json({ success: false, message: "Invalid referral code." });
+      }
+
+    const referralCode = await generateReferralCode();
+
+    // Create new user
+    const newUser = new Member({
+      appleId: userId,
+      name: appleAuth.name || '',
+      email: appleAuth.email || '', // Email might be null if Apple hides it
+      referralCode,
+    });
+
+    await newUser.save();
+
+    req.user = user;
+      next();
+  } catch (error) {
+    console.error("Registration Error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
