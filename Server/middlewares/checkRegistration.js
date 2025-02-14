@@ -179,7 +179,7 @@ exports.checkRegistrationApple = async (req, res, next) => {
     } else {
       // ❌ User does not exist, ask for referral code
       return res.json({
-        isRegistered: false 
+        isRegistered: false, 
         message: "New user, referral code required",
       });
     }
