@@ -2,6 +2,57 @@ const Member = require("../models/Member");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+
+const teamId = "64L4485MY4"; // Apple Developer Team ID
+const clientId = "com.prokutumb.majlis"; // Your App’s Bundle ID (iOS) or Service ID (Web)
+const keyId = "7HSYXFP5ZW"; // Found in Apple Developer Portal
+const privateKeyPath = path.join(__dirname, "AuthKey_7HSYXFP5ZW.p8"); // Path to .p8 file
+
+// Function to generate Apple Client Secret
+function generateAppleClientSecret() {
+  const privateKey = fs.readFileSync(privateKeyPath, "utf8");
+
+  return jwt.sign(
+    {
+      iss: teamId,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 15777000, // Expiry (~6 months)
+      aud: "https://appleid.apple.com",
+      sub: clientId,
+    },
+    privateKey,
+    {
+      algorithm: "ES256",
+      keyid: keyId,
+    }
+  );
+}
+
+// Function to exchange authorization code for Apple tokens
+async function exchangeAppleCodeForTokens(authCode) {
+  const clientSecret = generateAppleClientSecret();
+
+  const tokenUrl = "https://appleid.apple.com/auth/token";
+  const params = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    code: authCode,
+    grant_type: "authorization_code",
+  });
+
+  try {
+    const response = await axios.post(tokenUrl, params, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+
+    return response.data; // Contains id_token, access_token, refresh_token
+  } catch (error) {
+    console.error("Apple Token Exchange Failed:", error.response?.data || error.message);
+    throw new Error("Failed to exchange Apple code for tokens");
+  }
+}
 
 // Function to convert Apple's JWK to PEM format manually
 function convertJWKToPEM(jwk) {
@@ -134,43 +185,19 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
 // Function to verify Apple token
 async function verifyAppleToken(idToken, userId) {
   try {
-    // Fetch Apple's JWK keys
-    const { data } = await axios.get("https://appleid.apple.com/auth/keys");
+    const decoded = jwt.decode(idToken, { complete: true });
 
-    // Decode the JWT Header
-    const decodedHeader = jwt.decode(idToken, { complete: true });
-    if (!decodedHeader) throw new Error("Invalid Token");
-
-    const { kid, alg } = decodedHeader.header;
-
-    // Find the matching JWK key
-    const appleKey = data.keys.find((key) => key.kid === kid);
-    if (!appleKey) throw new Error("No matching Apple Public Key found");
-
-    // Convert JWK to PEM
-    const applePublicKey = convertJWKToPEM(appleKey);
-
-    // Verify the token using the generated PEM key
-    const payload = jwt.verify(idToken, applePublicKey, { algorithms: [alg] });
-
-    console.log("✅ Apple Token Verified:", payload);
-
-    // Ensure the userId matches Apple's `sub`
-    if (payload.sub !== userId) {
-      throw new Error("User ID mismatch");
+    if (!decoded || decoded.payload.sub !== userId) {
+      return { success: false, message: "Invalid Apple ID token" };
     }
 
-    return {
-      success: true,
-      userId: payload.sub,
-      email: payload.email || null, // Apple provides email only on first login
-      name: payload.name || null, // Only on first login
-    };
+    return { success: true, payload: decoded.payload };
   } catch (error) {
-    console.error("❌ Apple Authentication Failed:", error.message);
-    return { success: false, error: error.message };
+    console.error("Apple Token Verification Failed:", error);
+    return { success: false, message: "Token verification failed" };
   }
 }
+
 
 // **1. Check if User is Registered**
 exports.checkRegistrationApple = async (req, res, next) => {
@@ -204,53 +231,62 @@ exports.checkRegistrationApple = async (req, res, next) => {
 };
 
 // **2. Register New User with Referral Code**
-exports.checkRegistrationWithCodeApple = async (req, res,next) => {
-  const { token, userId, code } = req.body;
-
-  console.log(req.body);
-  const appleAuth = await verifyAppleToken(token, userId);
-  if (!appleAuth.success) {
-    return res.status(401).json({ error: "Invalid Apple authentication" });
-  }
+exports.checkRegistrationWithCodeApple = async (req, res, next) => {
+  const { token, userId, code, authCode } = req.body;
 
   try {
-    // Check if user already exists
-    let existingUser = await Member.findOne({ appleId: userId });
-    if (existingUser) {
-      req.user = user;
-      next();
+    let userInfo;
+
+    if (token) {
+      // Direct ID Token verification
+      userInfo = await verifyAppleToken(token, userId);
+    } else if (authCode) {
+      // Exchange auth code for tokens and verify ID token
+      const tokens = await exchangeAppleCodeForTokens(authCode);
+      userInfo = await verifyAppleToken(tokens.id_token, userId);
+    } else {
+      return res.status(400).json({ message: "Missing authentication token or auth code" });
     }
 
-     if (!code) {
-        return res
-          .status(200)
-          .json({ success: false, message: "Invalid referral code." });
-      }
+    if (!userInfo.success) {
+      return res.status(401).json({ error: "Invalid Apple authentication" });
+    }
+
+    // Extract user details
+    const email = userInfo.payload.email || null;
+    let existingUser = await Member.findOne({ appleId: userId });
+
+    if (existingUser) {
+      req.user = existingUser;
+      return next(); // Proceed to login
+    }
+
+    // If new user, referral code is mandatory
+    if (!code) {
+      return res.status(200).json({ success: false, message: "Invalid referral code." });
+    }
 
     const referredBy = await Member.findOne({ referralCode: code });
-
     if (!referredBy) {
-        return res
-          .status(200)
-          .json({ success: false, message: "Invalid referral code." });
-      }
+      return res.status(200).json({ success: false, message: "Invalid referral code." });
+    }
 
     const referralCode = await generateReferralCode();
 
-    // Create new user
+    // Create a new user
     const newUser = new Member({
       appleId: userId,
-      name: appleAuth.name || '',
-      email: appleAuth.email || '', // Email might be null if Apple hides it
+      name: userInfo.payload.name || "Apple User",
+      email,
       referralCode,
     });
 
     await newUser.save();
 
-    req.user = user;
-      next();
+    req.user = newUser;
+    next();
   } catch (error) {
-    console.error("Registration Error:", error);
+    console.error("Apple Registration Error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
