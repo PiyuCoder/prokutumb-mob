@@ -175,6 +175,7 @@ async function verifyAppleToken(idToken, userId) {
 // **1. Check if User is Registered**
 exports.checkRegistrationApple = async (req, res, next) => {
   const { token, userId } = req.body;
+  console.log(req.body);
 
   const appleAuth = await verifyAppleToken(token, userId);
   if (!appleAuth.success) {
@@ -206,6 +207,7 @@ exports.checkRegistrationApple = async (req, res, next) => {
 exports.checkRegistrationWithCodeApple = async (req, res,next) => {
   const { token, userId, code } = req.body;
 
+  console.log(req.body);
   const appleAuth = await verifyAppleToken(token, userId);
   if (!appleAuth.success) {
     return res.status(401).json({ error: "Invalid Apple authentication" });
