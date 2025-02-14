@@ -1,6 +1,32 @@
 const Member = require("../models/Member");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+
+// Function to convert JWK to PEM manually
+function convertJWKToPEM(jwk) {
+  const publicKey = {
+    kty: jwk.kty,
+    n: Buffer.from(jwk.n, "base64"),
+    e: Buffer.from(jwk.e, "base64"),
+  };
+
+  return crypto
+    .createPublicKey({
+      key: Buffer.concat([
+        Buffer.from(
+          `-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A`,
+          "utf-8"
+        ),
+        publicKey.n,
+        Buffer.from("AQAB", "utf-8"),
+        Buffer.from("\n-----END PUBLIC KEY-----", "utf-8"),
+      ]),
+      format: "pem",
+      type: "spki",
+    })
+    .export({ type: "spki", format: "pem" });
+}
 
 // Function to generate a unique 6-character referral code
 const generateReferralCode = async () => {
@@ -116,34 +142,32 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
   }
 };
 
-// Function to verify Apple ID Token
+// Function to verify Apple token
 async function verifyAppleToken(idToken, userId) {
   try {
-    // Fetch Apple's Public Keys
-    const applePublicKeys = await axios.get("https://appleid.apple.com/auth/keys");
-    
-    // Decode JWT Header to get `kid`
+    // Fetch Apple's public keys
+    const appleKeysUrl = "https://appleid.apple.com/auth/keys";
+    const { data } = await axios.get(appleKeysUrl);
+
+    // Decode JWT Header
     const decodedHeader = jwt.decode(idToken, { complete: true });
     if (!decodedHeader) throw new Error("Invalid Token");
 
     const { kid, alg } = decodedHeader.header;
 
-    // Find the matching Apple public key
-    const appleKey = applePublicKeys.data.keys.find((key) => key.kid === kid);
+    // Find the correct JWK
+    const appleKey = data.keys.find((key) => key.kid === kid);
     if (!appleKey) throw new Error("No matching Apple Public Key found");
 
-    // Convert Apple's key to PEM format
-    const applePem = `-----BEGIN PUBLIC KEY-----\n${Buffer.from(
-      appleKey.n,
-      "base64"
-    ).toString("base64")}\n-----END PUBLIC KEY-----`;
+    // Convert JWK to PEM
+    const applePublicKey = convertJWKToPEM(appleKey);
 
-    // Verify JWT Token
-    const payload = jwt.verify(idToken, applePem, { algorithms: [alg] });
+    // Verify JWT using built-in crypto
+    const payload = jwt.verify(idToken, applePublicKey, { algorithms: [alg] });
 
-    console.log("Apple Token Verified:", payload);
+    console.log("✅ Apple Token Verified:", payload);
 
-    // Check if `userId` matches `sub` in Apple Token
+    // Ensure userId matches Apple's `sub`
     if (payload.sub !== userId) {
       throw new Error("User ID mismatch");
     }
@@ -151,10 +175,11 @@ async function verifyAppleToken(idToken, userId) {
     return {
       success: true,
       userId: payload.sub,
-      email: payload.email || null, // Apple only provides email on first login
+      email: payload.email || null, // Apple provides email only on first login
+      name: payload.name || null, // Only on first login
     };
   } catch (error) {
-    console.error("Apple Authentication Failed:", error.message);
+    console.error("❌ Apple Authentication Failed:", error.message);
     return { success: false, error: error.message };
   }
 }
