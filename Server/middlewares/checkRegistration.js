@@ -232,7 +232,9 @@ exports.checkRegistrationApple = async (req, res, next) => {
 
 // **2. Register New User with Referral Code**
 exports.checkRegistrationWithCodeApple = async (req, res, next) => {
-  const { token, userId, code, authCode } = req.body;
+  const { token, userId, authCode } = req.body;
+
+  const code = "CODE123";
 
   try {
     let userInfo;
