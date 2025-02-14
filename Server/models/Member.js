@@ -38,6 +38,9 @@ const memberSchema = new mongoose.Schema({
   googleId: {
     type: String,
   },
+  appleId: {
+    type: String,
+  },
   linkedinProfile: {
     url: {
       type: String,
