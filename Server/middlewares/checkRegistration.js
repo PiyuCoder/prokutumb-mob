@@ -3,29 +3,18 @@ const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
-// Function to convert JWK to PEM manually
+// Function to convert Apple's JWK to PEM format manually
 function convertJWKToPEM(jwk) {
-  const publicKey = {
-    kty: jwk.kty,
-    n: Buffer.from(jwk.n, "base64"),
-    e: Buffer.from(jwk.e, "base64"),
-  };
+  const base64UrlToBase64 = (base64url) =>
+    base64url.replace(/-/g, "+").replace(/_/g, "/");
 
-  return crypto
-    .createPublicKey({
-      key: Buffer.concat([
-        Buffer.from(
-          `-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A`,
-          "utf-8"
-        ),
-        publicKey.n,
-        Buffer.from("AQAB", "utf-8"),
-        Buffer.from("\n-----END PUBLIC KEY-----", "utf-8"),
-      ]),
-      format: "pem",
-      type: "spki",
-    })
-    .export({ type: "spki", format: "pem" });
+  const n = Buffer.from(base64UrlToBase64(jwk.n), "base64").toString("base64");
+  const e = Buffer.from(base64UrlToBase64(jwk.e), "base64").toString("base64");
+
+  return `-----BEGIN PUBLIC KEY-----\n${Buffer.from(
+    `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A${n}AQAB`,
+    "base64"
+  ).toString("utf-8")}\n-----END PUBLIC KEY-----`;
 }
 
 // Function to generate a unique 6-character referral code
@@ -145,29 +134,28 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
 // Function to verify Apple token
 async function verifyAppleToken(idToken, userId) {
   try {
-    // Fetch Apple's public keys
-    const appleKeysUrl = "https://appleid.apple.com/auth/keys";
-    const { data } = await axios.get(appleKeysUrl);
+    // Fetch Apple's JWK keys
+    const { data } = await axios.get("https://appleid.apple.com/auth/keys");
 
-    // Decode JWT Header
+    // Decode the JWT Header
     const decodedHeader = jwt.decode(idToken, { complete: true });
     if (!decodedHeader) throw new Error("Invalid Token");
 
     const { kid, alg } = decodedHeader.header;
 
-    // Find the correct JWK
+    // Find the matching JWK key
     const appleKey = data.keys.find((key) => key.kid === kid);
     if (!appleKey) throw new Error("No matching Apple Public Key found");
 
     // Convert JWK to PEM
     const applePublicKey = convertJWKToPEM(appleKey);
 
-    // Verify JWT using built-in crypto
+    // Verify the token using the generated PEM key
     const payload = jwt.verify(idToken, applePublicKey, { algorithms: [alg] });
 
     console.log("✅ Apple Token Verified:", payload);
 
-    // Ensure userId matches Apple's `sub`
+    // Ensure the userId matches Apple's `sub`
     if (payload.sub !== userId) {
       throw new Error("User ID mismatch");
     }
