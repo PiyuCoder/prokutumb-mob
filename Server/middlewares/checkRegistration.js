@@ -49,7 +49,10 @@ async function exchangeAppleCodeForTokens(authCode) {
 
     return response.data; // Contains id_token, access_token, refresh_token
   } catch (error) {
-    console.error("Apple Token Exchange Failed:", error.response?.data || error.message);
+    console.error(
+      "Apple Token Exchange Failed:",
+      error.response?.data || error.message
+    );
     throw new Error("Failed to exchange Apple code for tokens");
   }
 }
@@ -198,7 +201,6 @@ async function verifyAppleToken(idToken, userId) {
   }
 }
 
-
 // **1. Check if User is Registered**
 exports.checkRegistrationApple = async (req, res, next) => {
   const { token, userId } = req.body;
@@ -220,7 +222,7 @@ exports.checkRegistrationApple = async (req, res, next) => {
     } else {
       // ❌ User does not exist, ask for referral code
       return res.json({
-        isRegistered: false, 
+        isRegistered: false,
         message: "New user, referral code required",
       });
     }
@@ -247,8 +249,12 @@ exports.checkRegistrationWithCodeApple = async (req, res, next) => {
       const tokens = await exchangeAppleCodeForTokens(authCode);
       userInfo = await verifyAppleToken(tokens.id_token, userId);
     } else {
-      return res.status(400).json({ message: "Missing authentication token or auth code" });
+      return res
+        .status(400)
+        .json({ message: "Missing authentication token or auth code" });
     }
+
+    console.log("userInfo: ", userInfo);
 
     if (!userInfo.success) {
       return res.status(401).json({ error: "Invalid Apple authentication" });
@@ -265,12 +271,16 @@ exports.checkRegistrationWithCodeApple = async (req, res, next) => {
 
     // If new user, referral code is mandatory
     if (!code) {
-      return res.status(200).json({ success: false, message: "Invalid referral code." });
+      return res
+        .status(200)
+        .json({ success: false, message: "Invalid referral code." });
     }
 
     const referredBy = await Member.findOne({ referralCode: code });
     if (!referredBy) {
-      return res.status(200).json({ success: false, message: "Invalid referral code." });
+      return res
+        .status(200)
+        .json({ success: false, message: "Invalid referral code." });
     }
 
     const referralCode = await generateReferralCode();
