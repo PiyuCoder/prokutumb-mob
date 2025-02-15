@@ -241,7 +241,7 @@ exports.checkRegistrationWithCodeApple = async (req, res, next) => {
   try {
     let userInfo;
 
-    if (token) {
+    if (!token) {
       // Direct ID Token verification
       userInfo = await verifyAppleToken(token, userId);
     } else if (authCode) {
