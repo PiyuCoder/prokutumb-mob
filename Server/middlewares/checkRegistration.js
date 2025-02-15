@@ -234,20 +234,16 @@ exports.checkRegistrationApple = async (req, res, next) => {
 
 // **2. Register New User with Referral Code**
 exports.checkRegistrationWithCodeApple = async (req, res, next) => {
-  const { token, userId, authCode } = req.body;
+  const { token, userId, fullName, email } = req.body;
 
   const code = "CODE123";
 
   try {
     let userInfo;
 
-    if (!token) {
+    if (token) {
       // Direct ID Token verification
       userInfo = await verifyAppleToken(token, userId);
-    } else if (authCode) {
-      // Exchange auth code for tokens and verify ID token
-      const tokens = await exchangeAppleCodeForTokens(authCode);
-      userInfo = await verifyAppleToken(tokens.id_token, userId);
     } else {
       return res
         .status(400)
@@ -261,7 +257,7 @@ exports.checkRegistrationWithCodeApple = async (req, res, next) => {
     }
 
     // Extract user details
-    const email = userInfo.payload.email || null;
+    const userEmail = email || userInfo.payload.email || null;
     let existingUser = await Member.findOne({ appleId: userId });
 
     if (existingUser) {
@@ -288,8 +284,8 @@ exports.checkRegistrationWithCodeApple = async (req, res, next) => {
     // Create a new user
     const newUser = new Member({
       appleId: userId,
-      name: userInfo.payload.name || "Apple User",
-      email,
+      name: fullName || userInfo.payload.name || "Apple User",
+      userEmail,
       referralCode,
     });
 
