@@ -285,7 +285,7 @@ exports.checkRegistrationWithCodeApple = async (req, res, next) => {
     const newUser = new Member({
       appleId: userId,
       name: fullName || userInfo.payload.name || "Apple User",
-      userEmail,
+      email: userEmail,
       referralCode,
     });
 
