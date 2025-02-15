@@ -33,20 +33,19 @@ exports.googleLogin = (req, res) => {
 exports.appleLogin = (req, res) => {
   try {
     const user = req.user;
-const token = jwt.sign(
-    { userId: user._id, email: user.email },
-    process.env.JWT_SECRET, // Replace with your secret key
-    { expiresIn: "1h" }
-  );
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET, // Replace with your secret key
+      { expiresIn: "1h" }
+    );
 
-  // Send back token and user info
-  res.status(200).json({
-    success: true,
-    message: "Apple Login successful!",
-    token: token,
-    user,
-  });
-
+    // Send back token and user info
+    res.status(200).json({
+      success: true,
+      message: "Apple Login successful!",
+      token: token,
+      user,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });
@@ -291,6 +290,18 @@ exports.createProfile = async (req, res) => {
       socialLinks,
       location,
     } = req.body;
+
+    console.log({
+      userId,
+      name,
+      interests,
+      about,
+      skills,
+      experience,
+      education,
+      socialLinks,
+      location,
+    });
 
     let profilePicture;
     if (req.file) {
