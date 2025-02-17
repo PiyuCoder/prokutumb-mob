@@ -236,6 +236,8 @@ exports.checkRegistrationApple = async (req, res, next) => {
 exports.checkRegistrationWithCodeApple = async (req, res, next) => {
   const { token, userId, fullName, email } = req.body;
 
+  console.log("Full name: ", fullName);
+
   const code = "CODE123";
 
   try {
