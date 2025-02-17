@@ -259,7 +259,7 @@ exports.checkRegistrationWithCodeApple = async (req, res, next) => {
     }
 
     // Extract user details
-    const userEmail = email || userInfo.payload.email || null;
+    const userEmail = email || userInfo.payload.email || "";
     let existingUser = await Member.findOne({ appleId: userId });
 
     if (existingUser) {
