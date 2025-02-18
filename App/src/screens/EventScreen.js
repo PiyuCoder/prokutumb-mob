@@ -45,6 +45,11 @@ const EventScreen = ({navigation, route}) => {
   );
 
   const [score, setScore] = useState(0);
+  const [imageSource, setImageSource] = useState(
+    event?.profilePicture
+      ? {uri: event?.profilePicture}
+      : require('../assets/default-ep.png'),
+  );
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -120,11 +125,11 @@ const EventScreen = ({navigation, route}) => {
       </View>
 
       <ImageBackground
-        source={{
-          uri: event?.profilePicture,
-        }}
+        source={imageSource}
+        defaultSource={require('../assets/default-ep.png')}
         style={styles.eventProfilePicture}
         imageStyle={styles.profilePictureImage}
+        onError={() => setImageSource(require('../assets/default-ep.png'))}
       />
       <View
         style={{

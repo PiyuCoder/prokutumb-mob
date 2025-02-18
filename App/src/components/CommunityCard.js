@@ -23,6 +23,11 @@ const CommunityCard = ({
   isTrending,
 }) => {
   const [isActionModalVisible, setActionModalVisible] = useState(false);
+  const [imageSource, setImageSource] = useState(
+    community?.profilePicture
+      ? {uri: community.profilePicture}
+      : require('../assets/default-cp.png'),
+  );
   const {user} = useSelector(state => state.auth);
   const navigation = useNavigation();
   return (
@@ -31,13 +36,11 @@ const CommunityCard = ({
       style={[styles.cardWrapper, {height, width}]}>
       <View style={!isTrending ? styles.userCard : styles.trendingUserCard}>
         <Image
-          source={{
-            uri:
-              community?.profilePicture ||
-              'https://cdn.pixabay.com/photo/2016/11/23/15/48/audience-1853662_640.jpg',
-          }}
+          source={imageSource}
+          defaultSource={require('../assets/default-cp.png')}
           style={[styles.profilePicture, {height: picHeight}]}
           imageStyle={styles.profilePictureImage}
+          onError={() => setImageSource(require('../assets/default-cp.png'))}
         />
         <View style={isTrending ? styles.trendingOverlay : {padding: 6}}>
           <View>

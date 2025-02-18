@@ -87,6 +87,11 @@ const CommunityHomeScreen = ({route}) => {
   const arrowPosition = useRef(new Animated.Value(0)).current;
   const [isTagsModalVisible, setIsTagsModalVisible] = useState(false);
   const [tags, setTags] = useState([]);
+  const [imageSource, setImageSource] = useState(
+    community?.profilePicture
+      ? {uri: community?.profilePicture}
+      : require('../assets/default-cp.png'),
+  );
 
   const [showBackButton, setShowBackButton] = useState(true);
 
@@ -579,9 +584,13 @@ const CommunityHomeScreen = ({route}) => {
         </View>
       )}
       <ImageBackground
-        source={{uri: community?.profilePicture || ''}}
+        source={imageSource}
+        defaultSource={require('../assets/default-cp.png')}
         style={styles.communityProfilePicture}
-        imageStyle={styles.profilePictureImage}></ImageBackground>
+        imageStyle={styles.profilePictureImage}
+        onError={() =>
+          setImageSource(require('../assets/default-cp.png'))
+        }></ImageBackground>
 
       <ScrollView
         refreshControl={

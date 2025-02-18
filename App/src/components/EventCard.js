@@ -22,6 +22,11 @@ const EventCard = ({
   isTrending,
 }) => {
   const [isActionModalVisible, setActionModalVisible] = useState(false);
+  const [imageSource, setImageSource] = useState(
+    event?.profilePicture
+      ? {uri: event?.profilePicture}
+      : require('../assets/default-ep.png'),
+  );
   const navigation = useNavigation();
   console.log(event);
   return (
@@ -30,13 +35,11 @@ const EventCard = ({
       style={[styles.cardWrapper, {height, width}]}>
       <View style={!isTrending ? styles.userCard : styles.trendingUserCard}>
         <ImageBackground
-          source={{
-            uri:
-              // 'https://cdn.pixabay.com/photo/2016/11/23/15/48/audience-1853662_640.jpg' ||
-              event.profilePicture,
-          }}
+          source={imageSource}
+          defaultSource={require('../assets/default-ep.png')}
           style={[styles.profilePicture, {height: picHeight}]}
           imageStyle={styles.profilePictureImage}
+          onError={() => setImageSource(require('../assets/default-ep.png'))}
         />
         <View
           // className=" blur-3xl backdrop-blur-3xl bg-[#2d264bc4]"
