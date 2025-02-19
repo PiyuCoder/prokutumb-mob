@@ -143,18 +143,33 @@ const NetworkScreen = ({navigation, route}) => {
   };
 
   function filterValidResponses(data, queryType) {
-    return data.filter(response => {
-      const parts = response.split(' ');
-      if (parts.length <= 2 || !['1', '2', '3'].includes(parts[1]))
-        return false;
+    const uniqueResponses = new Set();
 
-      // Apply additional filtering based on queryType
-      if (queryType === 'profile' && ['2', '3'].includes(parts[1]))
-        return false;
-      if (queryType === 'community' && ['1', '2'].includes(parts[1]))
-        return false;
-      if (queryType === 'event' && ['1', '3'].includes(parts[1])) return false;
+    return data.filter(({output, _id, type}) => {
+      if (!output || type === undefined) return false;
+      type = type.toString(); // Ensure type is a string
 
+      if (!['1', '2', '3', '4'].includes(type)) return false;
+
+      // Apply queryType filtering
+      if (queryType === 'profile' && ['2', '3'].includes(type)) return false;
+      if (queryType === 'community' && ['1', '2'].includes(type)) return false;
+      if (queryType === 'event' && ['1', '3'].includes(type)) return false;
+
+      // Handle type 4 (_id is empty)
+      if (type === '4' && (_id || '').trim() === '') {
+        let normalizedResponse = output.replace(/\bnan\b/g, '').trim();
+        if (uniqueResponses.has(normalizedResponse)) return false;
+        uniqueResponses.add(normalizedResponse);
+        return true;
+      }
+
+      // Normal case for types 1, 2, 3
+      let normalizedResponse = output.replace(/\bnan\b/g, '').trim();
+      if (uniqueResponses.has(normalizedResponse) && uniqueResponses.size > 0) {
+        return false;
+      }
+      uniqueResponses.add(normalizedResponse);
       return true;
     });
   }
@@ -162,12 +177,12 @@ const NetworkScreen = ({navigation, route}) => {
   const sendMessage = async query => {
     const currentTime = new Date().toISOString();
 
-    // Add user query to local state with a loading state for AI response
+    // Add user query with a loading state for AI response
     setMessages(prev => [
       ...prev,
       {
         query,
-        response: [] /* Placeholder for AI response */,
+        response: [], // Placeholder for AI response
         createdAt: currentTime,
         loading: true,
       },
@@ -182,26 +197,39 @@ const NetworkScreen = ({navigation, route}) => {
       });
 
       const data = res.data; // Get response data directly
-      console.log('Data: ', data);
+      console.log('AI Response Data: ', data);
 
       const validResponses = filterValidResponses(data.response, queryType);
 
-      // console.log('parsedResponse', parsedResponse);
       setMessages(prev => {
-        // Update the latest message with the actual AI response
+        // Update the last message with the AI response
         const updatedMessages = [...prev];
         const lastMessageIndex = updatedMessages.length - 1;
+
         updatedMessages[lastMessageIndex] = {
           query: data.query,
-          response: validResponses || [],
+          response: validResponses.length
+            ? validResponses
+            : ['No valid responses found.'],
           createdAt: data.createdAt || currentTime,
         };
 
-        // console.log('updatedMessages: ', updatedMessages[lastMessageIndex]);
         return updatedMessages;
       });
     } catch (error) {
       console.error('Error sending message:', error);
+      setMessages(prev => {
+        const updatedMessages = [...prev];
+        const lastMessageIndex = updatedMessages.length - 1;
+
+        updatedMessages[lastMessageIndex] = {
+          query,
+          response: [],
+          createdAt: currentTime,
+        };
+
+        return updatedMessages;
+      });
     }
 
     setMessage('');
@@ -290,17 +318,19 @@ const NetworkScreen = ({navigation, route}) => {
                 {formatTime(msg.createdAt)}
               </Text>
               <TouchableOpacity
-                disabled={!msg?.response?.length}
+                disabled={
+                  !msg?.response?.length || msg.response[0]?.type === 4 // Disable if response is empty or type is 4
+                }
                 onPress={() => {
-                  if (!msg?.response?.length) return;
+                  if (!msg?.response?.length || msg.response[0]?.type === 4)
+                    return; // Prevent navigation if type is 4
 
-                  // Extract the category (1, 2, or 3) from the first valid response
-                  const firstResponse = msg.response[0]?.split(' ')[1];
+                  const firstResponseType = msg.response[0]?.type?.toString(); // Ensure type is a string
 
                   let screenName = 'ResultsScreen'; // Default to profile
-                  if (firstResponse === '3') {
+                  if (firstResponseType === '3') {
                     screenName = 'ResultsScreenCommunity';
-                  } else if (firstResponse === '2') {
+                  } else if (firstResponseType === '2') {
                     screenName = 'ResultsScreenEvent';
                   }
 
@@ -310,13 +340,16 @@ const NetworkScreen = ({navigation, route}) => {
                   {msg?.loading
                     ? '....'
                     : msg?.response?.length
-                    ? `You have ${msg?.response?.length || 0} results.`
+                    ? msg.response[0]?.type === 4 // If type is 4, show the first response's output
+                      ? msg.response[0].output
+                      : `You have ${msg?.response?.length || 0} results.`
                     : 'Sorry! There were no relevant responses for your query.'}
-                  {msg?.response?.length > 0 && (
+                  {msg?.response?.length > 0 && msg.response[0]?.type !== 4 && (
                     <Text style={{color: 'blue'}}> Click to view</Text>
                   )}
                 </Text>
               </TouchableOpacity>
+
               <Text style={styles.timeText}>{formatTime(msg.createdAt)}</Text>
             </View>
           ))}

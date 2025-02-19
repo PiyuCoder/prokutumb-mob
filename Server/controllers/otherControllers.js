@@ -133,27 +133,23 @@ async function detectIntentText(query) {
 }
 
 function filterValidResponses(data, queryType) {
-  const uniqueResponses = new Set();
+  const uniqueIds = new Set(); // Track unique _id values
 
-  return data.filter((response) => {
-    const parts = response.split(" ");
-    if (parts.length <= 2 || !["1", "2", "3"].includes(parts[1])) return false;
+  return data.filter(({ output, _id, type }) => {
+    if (type === undefined) return false; // Ensure valid type exists
+    type = type.toString(); // Convert to string for comparison
 
-    // Apply additional filtering based on queryType
-    if (queryType === "profile" && ["2", "3"].includes(parts[1])) return false;
-    if (queryType === "community" && ["1", "2"].includes(parts[1]))
-      return false;
-    if (queryType === "event" && ["1", "2"].includes(parts[1])) return false;
+    if (!["1", "2", "3", "4"].includes(type)) return false;
 
-    // Normalize response by removing the ID and trimming "nan" or extra spaces
-    let normalizedResponse = parts
-      .slice(1)
-      .join(" ")
-      .replace(/\bnan\b/g, "")
-      .trim();
+    // Apply queryType filtering
+    if (queryType === "profile" && ["2", "3"].includes(type)) return false;
+    if (queryType === "community" && ["1", "2"].includes(type)) return false;
+    if (queryType === "event" && ["1", "3"].includes(type)) return false;
 
-    if (uniqueResponses.has(normalizedResponse)) return false;
-    uniqueResponses.add(normalizedResponse);
+    // **Ensure uniqueness based on `_id`** (Keep all "nan" results too)
+    if (_id && uniqueIds.has(_id)) return false;
+    uniqueIds.add(_id);
+
     return true;
   });
 }
@@ -163,76 +159,167 @@ exports.prokuInteraction = async (req, res) => {
 
   console.log("queryType:", queryType);
 
-  const user = await Member.findById(userId);
-
-  let updatedQuery;
-
-  if (queryType === "profile") {
-    const interestsString = user.interests?.join(", ") || "";
-    const skillsString = user.skills.join(", ") || "";
-
-    // Modify the query by appending interests and skills
-    updatedQuery = `${query} based on interests: ${interestsString} and skills: ${skillsString}`;
-  } else if (queryType === "community") {
-    const community = await Communitymob.findById(id);
-    if (community)
-      updatedQuery = `A community focused on ${community.communityType} in ${community.location}. ${community.description}, ${query} `;
-    else updatedQuery = `A community ${query}`;
-  } else {
-    const event = await Event.findById(id);
-    if (event)
-      updatedQuery = `A brief overview of the ${event.name} on ${
-        event.name
-      } event. A detailed description of what attendees can expect at ${
-        event.name
-      } on ${event.name}. ${
-        event.eventType === "Virtual" ? "Webinar" : "Concert"
-      } ${event.address} Can you suggest ${event.name}in ${
-        event.address
-      }?, ${query}`;
-    else updatedQuery = `event ${query}`;
-  }
-
   try {
-    // Make a request to the new AI API
-    const apiResponse = await axios.post(
-      "http://34.150.183.91:8000/generate",
-      {
-        input_text: updatedQuery, // Sending user's query
-        num_responses: 5, // Number of responses required
-      },
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-
-    // Extract response from AI API
-    let responseText = apiResponse.data.responses;
-
-    if (!Array.isArray(responseText)) {
-      responseText = [responseText]; // Convert to array if it's a string
-    }
-
-    console.log(responseText);
-
-    responseText = filterValidResponses(responseText, queryType);
-
-    // Save user query and AI response to the database
-    const member = await Member.findById(userId);
-    if (!member) {
+    const user = await Member.findById(userId);
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const interaction = {
+    let updatedQuery;
+
+    const ensureQuestionMark = (text) =>
+      text.trim().endsWith("?") ? text : text + "?";
+
+    const formattedQuery = ensureQuestionMark(query);
+
+    if (queryType === "profile") {
+      const interestsString = user.interests?.join(", ") || "";
+      const skillsString = user.skills?.join(", ") || "";
+      const location = user.location || "";
+      const educationString =
+        user.education
+          ?.map(
+            (edu) => `${edu.degree} in ${edu.fieldOfStudy} from ${edu.school}`
+          )
+          .join(", ") || "";
+      const experienceString =
+        user.experience
+          ?.map((exp) => `${exp.role} at ${exp.company}`)
+          .join(", ") || "";
+
+      updatedQuery = {
+        question: formattedQuery,
+        labelinfo:
+          `${interestsString} ${skillsString} ${location} ${educationString} ${experienceString}`.trim(),
+      };
+    } else if (queryType === "community") {
+      const community = await Communitymob.findById(id);
+      updatedQuery = community
+        ? {
+            question: formattedQuery,
+            labelinfo: `A community focused on ${community.communityType} in ${community.location}. ${community.description}`,
+          }
+        : { question: query, labelinfo: `A community ${query}` };
+    } else {
+      const event = await Event.findById(id);
+      updatedQuery = event
+        ? {
+            question: formattedQuery,
+            labelinfo: `${event.name} ${event.address} ${event.eventType}`,
+          }
+        : { question: formattedQuery, labelinfo: `event ${query}` };
+    }
+
+    console.log("Populated query: ", updatedQuery);
+
+    // Call AI API
+    const apiResponse = await axios.post(
+      "http://34.150.183.91:5000/query",
+      updatedQuery,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("AI API Response:", apiResponse.data);
+
+    let responseText = apiResponse.data.response || [];
+
+    if (!Array.isArray(responseText)) {
+      responseText = [responseText]; // Ensure it's an array
+    }
+
+    // Filter valid responses based on new response format
+    responseText = filterValidResponses(responseText, queryType);
+
+    // **Fetch user details for responses with `type: 1`**
+    const userIds = responseText
+      .filter((resp) => resp.type === 1)
+      .map((resp) => resp._id);
+
+    const users = await Member.find({ _id: { $in: userIds } });
+
+    // **Fetch community details for responses with `type: 3`**
+    const communityIds = responseText
+      .filter((resp) => resp.type === 3)
+      .map((resp) => resp._id);
+
+    const communities = await Communitymob.find({ _id: { $in: communityIds } });
+
+    // **Fetch event details for responses with `type: 2`**
+    const eventIds = responseText
+      .filter((resp) => resp.type === 2)
+      .map((resp) => resp._id);
+
+    console.log("eventIds: ", eventIds);
+
+    const events = await Event.find({ _id: { $in: eventIds } });
+
+    console.log("events: ", events);
+
+    // Map fetched details to their respective responses
+    const userMap = new Map(users.map((user) => [user._id.toString(), user]));
+    const communityMap = new Map(
+      communities.map((comm) => [comm._id.toString(), comm])
+    );
+    const eventMap = new Map(events.map((evt) => [evt._id.toString(), evt]));
+
+    console.log("eventMap: ", eventMap);
+    responseText = responseText.map((resp) => {
+      if (resp.type === 1) {
+        const userDetails = userMap.get(resp._id);
+        if (userDetails) {
+          return {
+            ...resp,
+            userDetails: {
+              name: userDetails.name,
+              profilePicture: userDetails.profilePicture || "",
+              location: userDetails.location || "",
+            },
+          };
+        }
+      } else if (resp.type === 3) {
+        const communityDetails = communityMap.get(resp._id);
+        if (communityDetails) {
+          return {
+            ...resp,
+            communityDetails: {
+              name: communityDetails.name,
+              location: communityDetails.location || "",
+              communityType: communityDetails.communityType || "",
+            },
+          };
+        }
+      } else if (resp.type === 2) {
+        const eventDetails = eventMap.get(resp._id);
+        console.log(eventDetails);
+        if (eventDetails) {
+          return {
+            ...resp,
+            eventDetails: {
+              name: eventDetails.name,
+              address: eventDetails.address || "",
+              eventType: eventDetails.eventType || "",
+              date: eventDetails.date || "",
+            },
+          };
+        }
+      }
+      return resp;
+    });
+
+    // Save interaction to the database
+    user.chatbotInteractions.push({
       query,
       response: responseText,
       createdAt: new Date(),
-    };
+    });
 
-    member.chatbotInteractions.push(interaction);
-    await member.save();
+    await user.save();
 
-    // Send both user query and AI response to the frontend
+    // Return response to frontend
     res.status(200).json({ query, response: responseText });
   } catch (error) {
     console.error("Error handling interaction:", error);

@@ -9,34 +9,17 @@ import {
 import React, {useEffect, useState} from 'react';
 import ProfilePicture from './ProfilePicture';
 import {useNavigation} from '@react-navigation/native';
-import ConnectButtonWithModal from './ConnectButtonWithModal';
 import {useSelector} from 'react-redux';
 
-const RenderCommunityCard = ({item, results, index}) => {
+const RenderCommunityCard = ({item, results}) => {
   const navigation = useNavigation();
   const {user} = useSelector(state => state.auth);
-  const [resultItem, setResultItem] = useState({});
 
-  useEffect(() => {
-    if (results) {
-      const itemArr = item?.split(' ');
-      const resultItem = {
-        _id: itemArr[0],
-        type: `${itemArr[2]}`,
-        name: `${itemArr[2]}`,
-        location: itemArr[4],
-        profilePicture:
-          'https://www.shutterstock.com/image-vector/default-avatar-profile-icon-social-600nw-1677509740.jpg',
-      };
-      setResultItem(resultItem);
-    }
-  }, [item, results]);
   return (
     <TouchableOpacity
-      disabled={results}
       onPress={() =>
-        navigation.navigate('UserProfile', {
-          userId: results ? resultItem?._id : item._id,
+        navigation.navigate('CommunityHome', {
+          communityId: item?._id,
         })
       }
       style={styles.cardWrapper}>
@@ -44,7 +27,7 @@ const RenderCommunityCard = ({item, results, index}) => {
       <View style={styles.userCard}>
         {/* Profile Picture */}
         <ProfilePicture
-          profilePictureUri={resultItem.profilePicture}
+          profilePictureUri={item?.communityDetails?.profilePicture}
           height={60}
           width={60}
           borderRadius={30}
@@ -53,14 +36,20 @@ const RenderCommunityCard = ({item, results, index}) => {
 
         {/* User Info */}
         <View>
-          <Text style={styles.userName}>
-            {results ? `Community ${index + 1}` : 'Community'}
+          <Text
+            numberOfLines={1} // Limits the text to one line
+            ellipsizeMode="tail"
+            style={styles.userName}>
+            {results ? item?.communityDetails?.name : 'Community'}
           </Text>
           <Text style={styles.mutual}>
-            {results ? resultItem?.type : 'Unknown'}
+            {results ? item?.communityDetails?.communityType : 'Unknown'}
           </Text>
-          <Text style={styles.mutual}>
-            {results ? resultItem?.location : 'Unknown'}
+          <Text
+            numberOfLines={1} // Limits the text to one line
+            ellipsizeMode="tail"
+            style={styles.mutual}>
+            {results ? item?.communityDetails?.location : 'Unknown'}
           </Text>
         </View>
 
@@ -78,16 +67,15 @@ const RenderCommunityCard = ({item, results, index}) => {
           <Text style={styles.connectBtnText}>Connect</Text>
         </TouchableOpacity> */}
         {/* <ConnectButtonWithModal /> */}
-        <TouchableOpacity
-          disabled={results}
+        {/* <TouchableOpacity
           style={styles.connectBtn}
           onPress={() =>
-            navigation.navigate('UserProfile', {
-              userId: item._id,
+            navigation.navigate('CommunityHome', {
+              communityId: item?._id,
             })
           }>
           <Text style={styles.connectBtnText}>Join</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </TouchableOpacity>
   );
@@ -121,6 +109,7 @@ const styles = StyleSheet.create({
   userCard: {
     alignItems: 'center',
     padding: 10,
+    paddingTop: 20,
   },
   userName: {
     color: '#19295C',

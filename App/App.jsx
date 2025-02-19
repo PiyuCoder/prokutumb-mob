@@ -196,7 +196,7 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={Platform.OS === 'ios' ? styles.container : {}}>
+    <SafeAreaProvider style={Platform.OS === 'ios' ? styles.container : {}}>
       <Provider store={store}>
         <PersistGate
           loading={<ActivityIndicator size="large" />}
@@ -206,7 +206,7 @@ export default function App() {
             ref={navigationRef}
             onReady={() => setIsReady(true)} // Set isReady to true once NavigationContainer is ready
           >
-            <Stack.Navigator initialRouteName="Splash">
+            <Stack.Navigator initialRouteName="Dashboard">
               <Stack.Screen
                 name="Splash"
                 component={SplashScreen}
@@ -387,7 +387,7 @@ export default function App() {
           </NavigationContainer>
         </PersistGate>
       </Provider>
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
