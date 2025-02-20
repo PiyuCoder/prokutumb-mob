@@ -24,7 +24,60 @@ import Feather from 'react-native-vector-icons/Feather';
 import {launchImageLibrary} from 'react-native-image-picker';
 
 const interestsList = ['Networking', 'Business', 'Technology', 'Marketing'];
-const skillsList = ['JavaScript', 'React', 'Node.js', 'Python', 'Java'];
+const skillsList = [
+  'JavaScript',
+  'React',
+  'Node.js',
+  'Python',
+  'Java',
+
+  // Core Business & Professional Skills
+  'Leadership & Management',
+  'Business Strategy',
+  'Marketing & Sales',
+  'Finance & Investment',
+  'Data Analytics & AI',
+  'Operations & Supply Chain',
+  'Project Management',
+  'Consulting',
+  'Human Resources & Talent Management',
+  'Public Speaking & Communication',
+  'Negotiation & Conflict Resolution',
+
+  // Industry-Specific Skills
+  'Technology & Software Development',
+  'Product Management',
+  'UX/UI Design',
+  'Cybersecurity',
+  'Blockchain & Web3',
+  'Healthcare & Biotech',
+  'Legal & Compliance',
+  'Real Estate & Property Management',
+  'Retail & E-commerce',
+  'Media & Entertainment',
+
+  // Startup & Entrepreneurship
+  'Fundraising & Venture Capital',
+  'Startup Growth & Scaling',
+  'Business Development',
+  'Angel Investing',
+  'Networking & Partnerships',
+  'Bootstrapping',
+
+  // Personal Development & Thought Leadership
+  'Writing & Blogging',
+  'Podcasting',
+  'Personal Branding',
+  'Mentorship & Coaching',
+  'Public Relations & Media',
+
+  // Emerging Trends & Interests
+  'Sustainability & ESG',
+  'AI & Automation',
+  'Future of Work',
+  'Diversity & Inclusion',
+  'Remote Work & Digital Nomadism',
+];
 
 const CreateProfileStepOne = ({navigation}) => {
   const {name, about, interests, location, skills, profilePicture} =
