@@ -310,17 +310,20 @@ exports.prokuInteraction = async (req, res) => {
       return resp;
     });
 
+    const limitedResponse =
+      responseText.length > 10 ? responseText.slice(0, 10) : responseText;
+
     // Save interaction to the database
     user.chatbotInteractions.push({
       query,
-      response: responseText,
+      response: limitedResponse,
       createdAt: new Date(),
     });
 
     await user.save();
 
     // Return response to frontend
-    res.status(200).json({ query, response: responseText });
+    res.status(200).json({ query, response: limitedResponse });
   } catch (error) {
     console.error("Error handling interaction:", error);
     res.status(500).json({ error: "Failed to handle interaction" });

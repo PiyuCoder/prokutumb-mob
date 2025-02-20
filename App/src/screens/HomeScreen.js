@@ -95,7 +95,7 @@ const HomeScreen = ({navigation}) => {
     }
   };
   useEffect(() => {
-    dispatch(fetchUserData('67b0882bd798eefabc12108e'));
+    dispatch(fetchUserData(user?._id));
   }, [user?._id]);
 
   useEffect(() => {

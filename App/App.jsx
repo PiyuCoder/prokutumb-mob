@@ -206,7 +206,7 @@ export default function App() {
             ref={navigationRef}
             onReady={() => setIsReady(true)} // Set isReady to true once NavigationContainer is ready
           >
-            <Stack.Navigator initialRouteName="Dashboard">
+            <Stack.Navigator initialRouteName="Splash">
               <Stack.Screen
                 name="Splash"
                 component={SplashScreen}
