@@ -286,7 +286,7 @@ const ProfileScreen = () => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb-mob.onrender.com/posts/${post._id}`;
+      const postUrl = `https://34.131.64.147/posts/${post._id}`;
       const result = await Share.share({
         message: `Check out this post: ${postUrl}`,
       });
@@ -851,34 +851,45 @@ const ProfileScreen = () => {
                 <Text style={styles.sectionTitle}>Experience:</Text>
               </View>
 
-              {user?.experience?.length ? user.experience?.map((exp, index) => (
-                <View key={index} style={styles.card}>
-                  <View key={index} style={styles.experienceItem}>
-                    <View
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}>
-                      <Text
-                        style={[styles.experienceCompany, {color: '#2D3F7B'}]}>
-                        {exp.company}
-                      </Text>
+              {user?.experience?.length ? (
+                user.experience?.map((exp, index) => (
+                  <View key={index} style={styles.card}>
+                    <View key={index} style={styles.experienceItem}>
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}>
+                        <Text
+                          style={[
+                            styles.experienceCompany,
+                            {color: '#2D3F7B'},
+                          ]}>
+                          {exp.company}
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.experienceDuration,
+                            {color: '#2D3F7B'},
+                          ]}>
+                          {formatDate(exp.startDate)}-
+                          {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                        </Text>
+                      </View>
 
                       <Text
-                        style={[styles.experienceDuration, {color: '#2D3F7B'}]}>
-                        {formatDate(exp.startDate)}-
-                        {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                        style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
+                        {exp.role}
                       </Text>
                     </View>
-
-                    <Text style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
-                      {exp.role}
-                    </Text>
                   </View>
-                </View>
-              )):<Text style={{color:'gray'}}>Not added</Text>}
+                ))
+              ) : (
+                <Text style={{color: 'gray'}}>Not added</Text>
+              )}
 
               {/* Education Section */}
               <View style={{marginVertical: 20}}>
@@ -886,31 +897,42 @@ const ProfileScreen = () => {
               </View>
 
               <View style={styles.card}>
-                {user?.education?.length ? user?.education?.map((edu, index) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <View
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}>
-                      <Text
-                        style={[styles.experienceCompany, {color: '#2D3F7B'}]}>
-                        {edu.school}
-                      </Text>
+                {user?.education?.length ? (
+                  user?.education?.map((edu, index) => (
+                    <View key={index} style={styles.experienceItem}>
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}>
+                        <Text
+                          style={[
+                            styles.experienceCompany,
+                            {color: '#2D3F7B'},
+                          ]}>
+                          {edu.school}
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.experienceDuration,
+                            {color: '#2D3F7B'},
+                          ]}>
+                          {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
+                        </Text>
+                      </View>
 
                       <Text
-                        style={[styles.experienceDuration, {color: '#2D3F7B'}]}>
-                        {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
+                        style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
+                        {edu.degree}
                       </Text>
                     </View>
-
-                    <Text style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
-                      {edu.degree}
-                    </Text>
-                  </View>
-                )):<Text style={{color:'gray'}}>Not added</Text>}
+                  ))
+                ) : (
+                  <Text style={{color: 'gray'}}>Not added</Text>
+                )}
               </View>
               <View style={{marginVertical: 20}}>
                 <Text style={styles.sectionTitle}>Interests:</Text>

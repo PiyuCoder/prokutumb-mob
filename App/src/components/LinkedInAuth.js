@@ -10,7 +10,7 @@ import {
 
 const clientId = '86dvpoievc6jdx'; // Your LinkedIn app client ID
 const clientSecret = 'WPL_AP1.ItYT2qO32AOtxQV8.KPUExQ=='; // Your LinkedIn app client secret
-const redirectUri = 'https://prokutumb-mob.onrender.com/auth/callback'; // Your redirect URI
+const redirectUri = 'https://34.131.64.147/auth/callback'; // Your redirect URI
 const scope = 'openid profile email'; // Scopes as per documentation
 const state = Math.random().toString(36).substring(2, 15); // Generate random state
 

@@ -265,7 +265,7 @@ const ShareScreen = ({navigation}) => {
             }}>
             <QRCode
               // value={`prokutumb://profile/${user?._id}`}
-              value={`https://prokutumb-mob.onrender.com/redirect.html?userId=${user?._id}`}
+              value={`https://34.131.64.147/redirect.html?userId=${user?._id}`}
               size={180}
               color="black"
               backgroundColor="transparent"

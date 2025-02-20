@@ -287,7 +287,7 @@ const UserProfile = ({route}) => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb-mob.onrender.com/posts/${post._id}`;
+      const postUrl = `https://34.131.64.147/posts/${post._id}`;
       const result = await Share.share({
         message: `Check out this post: ${postUrl}`,
       });

@@ -1,7 +1,7 @@
 import io from 'socket.io-client';
 
-// const SERVER_URL = 'http://10.0.2.2:3001'; // Or use 'https://prokutumb-mob.onrender.com' for deployed
-const SERVER_URL = 'https://prokutumb-mob.onrender.com'; // Or use 'https://prokutumb-mob.onrender.com' for deployed
+// const SERVER_URL = 'http://10.0.2.2:3001'; // Or use 'https://34.131.64.147' for deployed
+const SERVER_URL = 'https://34.131.64.147'; // Or use 'https://34.131.64.147' for deployed
 
 const socket = io(SERVER_URL, {
   autoConnect: true,
