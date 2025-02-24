@@ -143,33 +143,42 @@ const NetworkScreen = ({navigation, route}) => {
   };
 
   function filterValidResponses(data, queryType) {
-    const uniqueResponses = new Set();
+    const uniqueIds = new Set(); // Track unique _id values
 
     return data.filter(({output, _id, type}) => {
-      if (!output || type === undefined) return false;
-      type = type.toString(); // Ensure type is a string
-
-      if (!['1', '2', '3', '4'].includes(type)) return false;
-
-      // Apply queryType filtering
-      if (queryType === 'profile' && ['2', '3'].includes(type)) return false;
-      if (queryType === 'community' && ['1', '2'].includes(type)) return false;
-      if (queryType === 'event' && ['1', '3'].includes(type)) return false;
-
-      // Handle type 4 (_id is empty)
-      if (type === '4' && (_id || '').trim() === '') {
-        let normalizedResponse = output.replace(/\bnan\b/g, '').trim();
-        if (uniqueResponses.has(normalizedResponse)) return false;
-        uniqueResponses.add(normalizedResponse);
-        return true;
-      }
-
-      // Normal case for types 1, 2, 3
-      let normalizedResponse = output.replace(/\bnan\b/g, '').trim();
-      if (uniqueResponses.has(normalizedResponse) && uniqueResponses.size > 0) {
+      if (type === undefined) {
+        console.log(
+          `❌ Skipping response due to missing type: ${JSON.stringify({
+            _id,
+            output,
+          })}`,
+        );
         return false;
       }
-      uniqueResponses.add(normalizedResponse);
+
+      type = type.toString();
+
+      if (!['1', '2', '3', '4'].includes(type)) {
+        console.log(
+          `❌ Skipping response due to invalid type: ${JSON.stringify({
+            _id,
+            type,
+            output,
+          })}`,
+        );
+        return false;
+      }
+
+      // **Ensure uniqueness based on `_id`**
+      if (_id && uniqueIds.has(_id)) {
+        console.log(`❌ Skipping duplicate: ${_id}`);
+        return false;
+      }
+      uniqueIds.add(_id);
+
+      console.log(
+        `✅ Keeping response: ${JSON.stringify({_id, type, output})}`,
+      );
       return true;
     });
   }
@@ -208,9 +217,7 @@ const NetworkScreen = ({navigation, route}) => {
 
         updatedMessages[lastMessageIndex] = {
           query: data.query,
-          response: validResponses.length
-            ? validResponses
-            : ['No valid responses found.'],
+          response: validResponses.length ? validResponses : [],
           createdAt: data.createdAt || currentTime,
         };
 
@@ -357,31 +364,37 @@ const NetworkScreen = ({navigation, route}) => {
       </ScrollView>
 
       {isKeyboardVisible && (
-        <View
-          style={[
-            styles.inputContainer,
-            {marginBottom: isKeyboardVisible ? 20 : 140},
-          ]}>
-          <TextInput
-            autoFocus
-            style={styles.textInput}
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Type your message"
-            onSubmitEditing={() => {
-              sendMessage(message);
-              Keyboard.dismiss();
-            }}
-          />
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={() => {
-              sendMessage(message);
-              Keyboard.dismiss();
-            }}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{flex: 1}}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={{flex: 1}}>
+              {/* Your main content here */}
+
+              <View style={[styles.inputContainer]}>
+                <TextInput
+                  autoFocus
+                  style={styles.textInput}
+                  value={message}
+                  onChangeText={setMessage}
+                  placeholder="Type your message"
+                  onSubmitEditing={() => {
+                    sendMessage(message);
+                    Keyboard.dismiss();
+                  }}
+                />
+                <TouchableOpacity
+                  style={styles.sendButton}
+                  onPress={() => {
+                    sendMessage(message);
+                    Keyboard.dismiss();
+                  }}>
+                  <Text style={styles.sendButtonText}>Send</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       )}
 
       {!isKeyboardVisible && (
@@ -427,10 +440,6 @@ const NetworkScreen = ({navigation, route}) => {
               onPressIn={startVoiceRecognition} // Start recording on press
               onPressOut={stopVoiceRecognition}
               style={styles.micButton}>
-              {/* <Image
-              source={require('../assets/icons/mic.png')}
-              style={styles.icon}
-            /> */}
               <Icon name="mic-outline" size={30} color="white" />
             </TouchableOpacity>
           </View>

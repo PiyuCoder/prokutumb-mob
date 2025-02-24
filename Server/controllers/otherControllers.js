@@ -136,20 +136,39 @@ function filterValidResponses(data, queryType) {
   const uniqueIds = new Set(); // Track unique _id values
 
   return data.filter(({ output, _id, type }) => {
-    if (type === undefined) return false; // Ensure valid type exists
-    type = type.toString(); // Convert to string for comparison
+    if (type === undefined) {
+      console.log(
+        `❌ Skipping response due to missing type: ${JSON.stringify({
+          _id,
+          output,
+        })}`
+      );
+      return false;
+    }
 
-    if (!["1", "2", "3", "4"].includes(type)) return false;
+    type = type.toString();
 
-    // Apply queryType filtering
-    if (queryType === "profile" && ["2", "3"].includes(type)) return false;
-    if (queryType === "community" && ["1", "2"].includes(type)) return false;
-    if (queryType === "event" && ["1", "3"].includes(type)) return false;
+    if (!["1", "2", "3", "4"].includes(type)) {
+      console.log(
+        `❌ Skipping response due to invalid type: ${JSON.stringify({
+          _id,
+          type,
+          output,
+        })}`
+      );
+      return false;
+    }
 
-    // **Ensure uniqueness based on `_id`** (Keep all "nan" results too)
-    if (_id && uniqueIds.has(_id)) return false;
+    // **Ensure uniqueness based on `_id`**
+    if (_id && uniqueIds.has(_id)) {
+      console.log(`❌ Skipping duplicate: ${_id}`);
+      return false;
+    }
     uniqueIds.add(_id);
 
+    console.log(
+      `✅ Keeping response: ${JSON.stringify({ _id, type, output })}`
+    );
     return true;
   });
 }
@@ -225,41 +244,45 @@ exports.prokuInteraction = async (req, res) => {
 
     console.log("AI API Response:", apiResponse.data);
 
+    // Ensure responseText is an array
     let responseText = apiResponse.data.response || [];
-
     if (!Array.isArray(responseText)) {
-      responseText = [responseText]; // Ensure it's an array
+      responseText = [responseText];
     }
 
-    // Filter valid responses based on new response format
+    // Filter valid responses
     responseText = filterValidResponses(responseText, queryType);
 
-    // **Fetch user details for responses with `type: 1`**
-    const userIds = responseText
-      .filter((resp) => resp.type === 1)
-      .map((resp) => resp._id);
+    // Function to clean and validate IDs
+    const cleanIds = (ids) =>
+      ids
+        .map((id) => id.trim()) // Remove spaces
+        .filter((id) => /^[a-f\d]{24}$/i.test(id)) // Only valid 24-character hex IDs
+        .map((id) => new mongoose.Types.ObjectId(id)); // Convert to ObjectId
 
+    // **Fetch user details for `type: 1`**
+    const userIds = cleanIds(
+      responseText.filter((resp) => resp.type === 1).map((resp) => resp._id)
+    );
     const users = await Member.find({ _id: { $in: userIds } });
 
-    // **Fetch community details for responses with `type: 3`**
-    const communityIds = responseText
-      .filter((resp) => resp.type === 3)
-      .map((resp) => resp._id);
-
+    // **Fetch community details for `type: 3`**
+    const communityIds = cleanIds(
+      responseText.filter((resp) => resp.type === 3).map((resp) => resp._id)
+    );
     const communities = await Communitymob.find({ _id: { $in: communityIds } });
 
-    // **Fetch event details for responses with `type: 2`**
-    const eventIds = responseText
-      .filter((resp) => resp.type === 2)
-      .map((resp) => resp._id);
-
-    console.log("eventIds: ", eventIds);
+    // **Fetch event details for `type: 2`**
+    const eventIds = cleanIds(
+      responseText.filter((resp) => resp.type === 2).map((resp) => resp._id)
+    );
+    console.log("Cleaned Event IDs:", eventIds);
 
     const events = await Event.find({ _id: { $in: eventIds } });
-
-    console.log("events: ", events);
+    console.log("Fetched Events:", events);
 
     // Map fetched details to their respective responses
+
     const userMap = new Map(users.map((user) => [user._id.toString(), user]));
     const communityMap = new Map(
       communities.map((comm) => [comm._id.toString(), comm])
