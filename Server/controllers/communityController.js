@@ -61,7 +61,7 @@ exports.fetchCommunity = async (req, res) => {
     console.log("checking values: ", profile, event_features);
     // Send request to AI similarity API
     const apiResponse = await axios.post(
-      "http://34.150.183.91:8080/similarity",
+      "https://majlisserver.com/app2/similarity",
       {
         type: "event", // Assuming this defines the type of similarity check
         profile, // User profile details
@@ -449,7 +449,7 @@ exports.fetchAnEvent = async (req, res) => {
     console.log("checking values: ", profile, event_features);
     // Send request to AI similarity API
     const apiResponse = await axios.post(
-      "http://34.150.183.91:8080/similarity",
+      "https://majlisserver.com/app2/similarity",
       {
         type: "event", // Assuming this defines the type of similarity check
         profile, // User profile details

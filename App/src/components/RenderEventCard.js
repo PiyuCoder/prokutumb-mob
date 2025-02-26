@@ -29,7 +29,7 @@ const RenderEventCard = ({item, results}) => {
       <View style={styles.userCard}>
         {/* Profile Picture */}
         <ProfilePicture
-          profilePictureUri={item?.profilePicture}
+          profilePictureUri={item?.eventDetails?.profilePicture}
           height={60}
           width={60}
           borderRadius={30}
@@ -38,11 +38,17 @@ const RenderEventCard = ({item, results}) => {
 
         {/* User Info */}
         <View>
-          <Text style={styles.userName}>
-            {results ? item?.name : item?.name}
+          <Text
+            numberOfLines={1} // Limits the text to one line
+            ellipsizeMode="tail"
+            style={styles.userName}>
+            {item?.eventDetails?.name}
           </Text>
-          <Text style={styles.mutual}>
-            {results ? item?.location : 'Unknown'}
+          <Text
+            numberOfLines={1} // Limits the text to one line
+            ellipsizeMode="tail"
+            style={styles.mutual}>
+            {item?.eventDetails?.eventType} event
           </Text>
         </View>
 

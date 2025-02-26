@@ -15,9 +15,10 @@ import {setExperience} from '../../store/slices/profileSlice';
 import {useDispatch, useSelector} from 'react-redux';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const CreateProfileStepTwo = ({navigation}) => {
+const CreateProfileStepTwo = ({navigation, route}) => {
   const {experience} = useSelector(state => state.profile);
   const dispatch = useDispatch();
+  const isEditing = route.params?.isEditing || false;
   const [experiences, setExperiences] = useState(
     !experience?.length
       ? [
@@ -75,7 +76,7 @@ const CreateProfileStepTwo = ({navigation}) => {
     }));
 
     dispatch(setExperience(serializedExperiences)); // Dispatch the serialized data
-    navigation.navigate('CreateProfileStepThree');
+    navigation.navigate('CreateProfileStepThree', {isEditing});
   };
 
   return (
@@ -94,7 +95,9 @@ const CreateProfileStepTwo = ({navigation}) => {
           borderBottomRightRadius: 20,
           paddingTop: 40,
         }}>
-        <Text style={styles.title}>Create Profile</Text>
+        <Text style={styles.title}>
+          {isEditing ? 'Edit' : 'Create'} Profile
+        </Text>
       </View>
       <View style={{padding: 20}}>
         <Text

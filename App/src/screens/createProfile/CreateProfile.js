@@ -76,7 +76,9 @@ const CreateProfile = ({navigation}) => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => navigation.navigate('CreateProfileStepOne')}
+          onPress={() =>
+            navigation.navigate('CreateProfileStepOne', {isEditing: false})
+          }
           style={{
             backgroundColor: '#D4E7DB',
             alignItems: 'center',

@@ -56,6 +56,7 @@ import ResultsScreenEvent from './src/screens/ResultsScreenEvent';
 import ResultsScreenCommunity from './src/screens/ResultsScreenCommunity';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import ReportScreen from './src/screens/ReportScreen';
+import GetReferral from './src/screens/GetReferral';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -206,7 +207,7 @@ export default function App() {
             ref={navigationRef}
             onReady={() => setIsReady(true)} // Set isReady to true once NavigationContainer is ready
           >
-            <Stack.Navigator initialRouteName="Splash">
+            <Stack.Navigator initialRouteName="Dashboard">
               <Stack.Screen
                 name="Splash"
                 component={SplashScreen}
@@ -226,6 +227,11 @@ export default function App() {
               <Stack.Screen
                 name="Profile"
                 component={ProfileScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="GetReferral"
+                component={GetReferral}
                 options={{headerShown: false}}
               />
               <Stack.Screen

@@ -30,7 +30,7 @@ const ResultsScreenCommunity = ({route, navigation}) => {
           borderBottomRightRadius: 20,
           paddingTop: 40,
         }}>
-        <Text style={styles.title}>Search Results</Text>
+        <Text style={styles.title}>Search Results (Communities)</Text>
       </View>
 
       <View style={styles.cardsContainer}>

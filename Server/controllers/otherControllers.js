@@ -7,6 +7,7 @@ const Notification = require("../models/Notification");
 const Communitymob = require("../models/Community");
 const Event = require("../models/Event");
 const axios = require("axios");
+const WaitingList = require("../models/Waiting");
 
 const updateUserLocation = async (userId, latitude, longitude) => {
   try {
@@ -173,6 +174,43 @@ function filterValidResponses(data, queryType) {
   });
 }
 
+async function getSimilarityScore(user, currentUser) {
+  try {
+    // Create strings for AI API
+    const profile2 = `${user.bio} located in ${
+      user.location
+    } whose interests are ${user.interests.join(
+      ", "
+    )} and have skills like ${user.skills.join(", ")}`;
+    const profile1 = `${currentUser.bio} located in ${
+      currentUser.location
+    } whose interests are ${currentUser.interests.join(
+      ", "
+    )} and have skills like ${currentUser.skills.join(", ")}`;
+
+    console.log("Profile 1:", profile1);
+    console.log("Profile 2:", profile2);
+
+    // Send request to AI similarity API
+    const apiResponse = await axios.post(
+      "https://majlisserver.com/app2/similarity",
+      {
+        type: "profile", // Assuming this defines the type of similarity check
+        profile1, // User profile details
+        profile2, // Current user profile details
+      }
+    );
+
+    console.log("API Response:", apiResponse.data);
+
+    // Extract AI similarity response
+    return apiResponse.data.similarity_score || 0;
+  } catch (error) {
+    console.error("Error fetching similarity score:", error);
+    return 0; // Return a default value in case of error
+  }
+}
+
 exports.prokuInteraction = async (req, res) => {
   const { userId, query, queryType, id } = req.body;
 
@@ -233,7 +271,7 @@ exports.prokuInteraction = async (req, res) => {
 
     // Call AI API
     const apiResponse = await axios.post(
-      "http://34.150.183.91:5000/query",
+      "https://majlisserver.com/app1/query",
       updatedQuery,
       {
         headers: {
@@ -290,48 +328,55 @@ exports.prokuInteraction = async (req, res) => {
     const eventMap = new Map(events.map((evt) => [evt._id.toString(), evt]));
 
     console.log("eventMap: ", eventMap);
-    responseText = responseText.map((resp) => {
-      if (resp.type === 1) {
-        const userDetails = userMap.get(resp._id);
-        if (userDetails) {
-          return {
-            ...resp,
-            userDetails: {
-              name: userDetails.name,
-              profilePicture: userDetails.profilePicture || "",
-              location: userDetails.location || "",
-            },
-          };
+    responseText = await Promise.all(
+      responseText.map(async (resp) => {
+        if (resp.type === 1) {
+          const userDetails = userMap.get(resp._id);
+          if (userDetails) {
+            const similarityScore = await getSimilarityScore(userDetails, user);
+            console.log("Similarity Score tests:", similarityScore);
+            return {
+              ...resp,
+              userDetails: {
+                name: userDetails.name,
+                profilePicture: userDetails.profilePicture || "",
+                location: userDetails.location || "",
+                similarityScore,
+              },
+            };
+          }
+        } else if (resp.type === 3) {
+          const communityDetails = communityMap.get(resp._id);
+          if (communityDetails) {
+            return {
+              ...resp,
+              communityDetails: {
+                name: communityDetails.name,
+                location: communityDetails.location || "",
+                communityType: communityDetails.communityType || "",
+                profilePicture: communityDetails.profilePicture || "",
+              },
+            };
+          }
+        } else if (resp.type === 2) {
+          const eventDetails = eventMap.get(resp._id);
+          console.log(eventDetails);
+          if (eventDetails) {
+            return {
+              ...resp,
+              eventDetails: {
+                name: eventDetails.name,
+                address: eventDetails.address || "",
+                eventType: eventDetails.eventType || "",
+                date: eventDetails.date || "",
+                profilePicture: eventDetails.profilePicture || "",
+              },
+            };
+          }
         }
-      } else if (resp.type === 3) {
-        const communityDetails = communityMap.get(resp._id);
-        if (communityDetails) {
-          return {
-            ...resp,
-            communityDetails: {
-              name: communityDetails.name,
-              location: communityDetails.location || "",
-              communityType: communityDetails.communityType || "",
-            },
-          };
-        }
-      } else if (resp.type === 2) {
-        const eventDetails = eventMap.get(resp._id);
-        console.log(eventDetails);
-        if (eventDetails) {
-          return {
-            ...resp,
-            eventDetails: {
-              name: eventDetails.name,
-              address: eventDetails.address || "",
-              eventType: eventDetails.eventType || "",
-              date: eventDetails.date || "",
-            },
-          };
-        }
-      }
-      return resp;
-    });
+        return resp;
+      })
+    );
 
     const limitedResponse =
       responseText.length > 10 ? responseText.slice(0, 10) : responseText;
@@ -517,5 +562,33 @@ exports.markAsRead = async (req, res) => {
     res
       .status(500)
       .json({ message: "Server error while marking notification as read." });
+  }
+};
+
+exports.addToWaitingList = async (req, res) => {
+  try {
+    const { email, name, phone } = req.body;
+
+    // Check if the email is already in the waiting list
+    const existingEntry = await WaitingList.findOne({
+      email: email.toLowerCase(),
+    });
+    if (existingEntry) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Email already in the list" });
+    }
+
+    const entry = new WaitingList({
+      email: email.toLowerCase(),
+      name,
+      phone,
+    });
+
+    await entry.save();
+    res.status(201).json({ success: true, message: "Added to waiting list" });
+  } catch (error) {
+    console.error("Error adding to waiting list:", error);
+    res.status(500).json({ message: "Failed to add to waiting list" });
   }
 };

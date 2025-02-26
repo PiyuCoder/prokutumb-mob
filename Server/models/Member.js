@@ -155,6 +155,10 @@ const memberSchema = new mongoose.Schema({
   referralCode: {
     type: String,
   },
+  referralCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 memberSchema.index({ liveLocation: "2dsphere" });

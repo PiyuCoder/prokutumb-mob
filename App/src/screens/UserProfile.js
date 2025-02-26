@@ -66,6 +66,11 @@ const UserProfile = ({route}) => {
   const [communityCount, setCommunityCount] = useState(0);
   const [score, setScore] = useState(0);
   const [socialScore, setSocialScore] = useState(0);
+  const [imageSource, setImageSource] = useState(
+    user?.profilePicture
+      ? {uri: user?.profilePicture}
+      : require('../assets/default-pp.png'),
+  );
 
   // Hide the status bar when the screen is rendered
   useEffect(() => {
@@ -287,7 +292,7 @@ const UserProfile = ({route}) => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb-mob.onrender.com/posts/${post._id}`;
+      const postUrl = `https://prokutumb.com/posts/${post._id}`;
       const result = await Share.share({
         message: `Check out this post: ${postUrl}`,
       });
@@ -564,9 +569,12 @@ const UserProfile = ({route}) => {
         </View>
       )}
       <ImageBackground
-        source={{uri: user?.profilePicture || ''}}
+        source={imageSource}
+        defaultSource={require('../assets/default-pp.png')}
         style={styles.userProfilePicture}
-        imageStyle={styles.profilePictureImage}></ImageBackground>
+        imageStyle={styles.profilePictureImage}
+        onError={() => setImageSource(require('../assets/default-pp.png'))}
+      />
 
       <ScrollView
         onScroll={handleScroll}

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   StatusBar,
   ImageBackground,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch} from 'react-redux';
@@ -78,7 +79,7 @@ const LoginScreen = ({navigation}) => {
       />
 
       <GoogleSignInButton setIsLoading={setIsLoading} />
-      <AppleSignInButton />
+      {Platform.OS === 'ios' && <AppleSignInButton />}
 
       {/* <Text className="mt-4" onPress={() => navigation.navigate('Signup')}>
         Don't have an account? Signup

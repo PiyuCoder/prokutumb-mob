@@ -25,9 +25,10 @@ const platformsList = [
   // Add more platforms as needed
 ];
 
-const CreateProfileStepFour = ({navigation}) => {
+const CreateProfileStepFour = ({navigation, route}) => {
   const profileData = useSelector(state => state.profile);
   const [loading, setLoading] = useState(false);
+  const isEditing = route.params?.isEditing || false;
   const [socialLinkes, setSocialLinkes] = useState(
     !profileData?.socialLinks?.length
       ? [
@@ -123,7 +124,9 @@ const CreateProfileStepFour = ({navigation}) => {
           borderBottomRightRadius: 20,
           paddingTop: 40,
         }}>
-        <Text style={styles.title}>Create Profile</Text>
+        <Text style={styles.title}>
+          {isEditing ? 'Edit' : 'Create'} Profile
+        </Text>
       </View>
       <View style={{padding: 20}}>
         <Text

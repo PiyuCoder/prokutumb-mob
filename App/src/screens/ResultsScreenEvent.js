@@ -30,7 +30,7 @@ const ResultsScreenEvent = ({route, navigation}) => {
           borderBottomRightRadius: 20,
           paddingTop: 40,
         }}>
-        <Text style={styles.title}>Search Results</Text>
+        <Text style={styles.title}>Search Results (Events)</Text>
       </View>
 
       <View style={styles.cardsContainer}>

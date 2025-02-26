@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
   Modal,
+  Alert,
 } from 'react-native';
 import {
   GoogleSignin,
@@ -37,7 +38,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
   const [error, setError] = useState(null);
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const [openReferralInput, setOpenReferralInput] = useState(false);
+  const [openReferralInput, setOpenReferralInput] = useState(true);
   const [referralCode, setReferralCode] = useState('');
 
   const handleGoogleLogin = async () => {
@@ -108,6 +109,14 @@ const GoogleSignInButton = ({setIsLoading}) => {
       dispatch(registration({token: accessToken, code: referralCode})).then(
         async action => {
           if (registration.fulfilled.match(action)) {
+            if (action.payload?.limitReached) {
+              Alert.alert(
+                'Referral Code Expired',
+                'Please enter a valid referral code',
+              );
+              setIsLoading(false);
+              return;
+            }
             const {token, user} = action.payload; // Assuming payload contains token and user
 
             // Store token and user in AsyncStorage
@@ -170,9 +179,9 @@ const GoogleSignInButton = ({setIsLoading}) => {
           <Text
             style={{
               color: 'black',
-              fontWeight: '600',
-              fontSize: 24,
-              marginBottom: 15,
+              fontWeight: '700',
+              fontSize: 35,
+              marginBottom: 25,
             }}>
             Enter Referral Code
           </Text>
@@ -185,7 +194,13 @@ const GoogleSignInButton = ({setIsLoading}) => {
           />
 
           <TouchableOpacity onPress={handleRegister} style={styles.button}>
-            <Text style={styles.buttonText}>Register</Text>
+            <Text style={styles.buttonText}>Submit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('GetReferral')}>
+            <Text
+              style={{color: '#289BF6', textAlign: 'center', marginTop: 20}}>
+              How to get the code?
+            </Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -233,7 +248,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: 'white', // Change as needed
     paddingHorizontal: 20,
@@ -247,7 +262,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 15,
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 30,
     color: 'black',
   },
   button: {

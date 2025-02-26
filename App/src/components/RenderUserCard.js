@@ -20,6 +20,12 @@ const RenderUserCard = ({item, results}) => {
     return Math.floor(Math.random() * (100 - 50 + 1)) + 50;
   }
 
+  console.log(item);
+
+  if (user?._id === item._id) {
+    return null;
+  }
+
   return (
     <TouchableOpacity
       onPress={() =>
@@ -30,7 +36,10 @@ const RenderUserCard = ({item, results}) => {
       style={styles.cardWrapper}>
       {/* Match Text */}
       <View style={styles.matchTextWrapper}>
-        <Text style={styles.matchText}>{getRandomScore()}% Match</Text>
+        <Text style={styles.matchText}>
+          {results ? item?.userDetails?.similarityScore : item?.similarityScore}
+          % Match
+        </Text>
       </View>
 
       {/* User Card */}

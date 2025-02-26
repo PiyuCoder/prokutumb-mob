@@ -161,6 +161,16 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
           .status(200)
           .json({ success: false, message: "Invalid referral code." });
       }
+
+      if (referredBy.referralCount >= 6) {
+        return res
+          .status(200)
+          .json({
+            success: false,
+            limitReached: true,
+            message: "Referral limit reached.",
+          });
+      }
       const referralCode = await generateReferralCode();
       // Register the new user
       const newUser = new Member({
@@ -173,6 +183,8 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
 
       // Save the new user in the database
       user = await newUser.save();
+      referredBy.referralCount += 1;
+      await referredBy.save();
 
       // Now that the user is registered, log them in by continuing
       req.user = user;

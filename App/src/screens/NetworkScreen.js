@@ -364,37 +364,27 @@ const NetworkScreen = ({navigation, route}) => {
       </ScrollView>
 
       {isKeyboardVisible && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{flex: 1}}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={{flex: 1}}>
-              {/* Your main content here */}
-
-              <View style={[styles.inputContainer]}>
-                <TextInput
-                  autoFocus
-                  style={styles.textInput}
-                  value={message}
-                  onChangeText={setMessage}
-                  placeholder="Type your message"
-                  onSubmitEditing={() => {
-                    sendMessage(message);
-                    Keyboard.dismiss();
-                  }}
-                />
-                <TouchableOpacity
-                  style={styles.sendButton}
-                  onPress={() => {
-                    sendMessage(message);
-                    Keyboard.dismiss();
-                  }}>
-                  <Text style={styles.sendButtonText}>Send</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+        <View style={[styles.inputContainer]}>
+          <TextInput
+            autoFocus
+            style={styles.textInput}
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Type your message"
+            onSubmitEditing={() => {
+              sendMessage(message);
+              Keyboard.dismiss();
+            }}
+          />
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={() => {
+              sendMessage(message);
+              Keyboard.dismiss();
+            }}>
+            <Text style={styles.sendButtonText}>Send</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {!isKeyboardVisible && (

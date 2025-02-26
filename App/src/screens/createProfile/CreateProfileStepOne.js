@@ -79,12 +79,13 @@ const skillsList = [
   'Remote Work & Digital Nomadism',
 ];
 
-const CreateProfileStepOne = ({navigation}) => {
+const CreateProfileStepOne = ({navigation, route}) => {
   const {name, about, interests, location, skills, profilePicture} =
     useSelector(state => state.profile);
   const dispatch = useDispatch();
   const [isInterestsModalVisible, setIsInterestsModalVisible] = useState(false);
   const [isSkillsModalVisible, setIsSkillsModalVisible] = useState(false);
+  const isEditing = route?.params?.isEditing || false;
 
   const handleSelectInterests = selectedInterests => {
     dispatch(setInterests(selectedInterests));
@@ -120,7 +121,7 @@ const CreateProfileStepOne = ({navigation}) => {
       profilePicture &&
       location
     ) {
-      navigation.navigate('CreateProfileStepTwo');
+      navigation.navigate('CreateProfileStepTwo', {isEditing});
     } else {
       Alert.alert(
         'Missing Fields',
@@ -144,7 +145,9 @@ const CreateProfileStepOne = ({navigation}) => {
           borderBottomRightRadius: 20,
           paddingTop: 40,
         }}>
-        <Text style={styles.title}>Create Profile</Text>
+        <Text style={styles.title}>
+          {isEditing ? 'Edit' : 'Create'} Profile
+        </Text>
       </View>
       <View style={{padding: 20}}>
         <Text

@@ -117,6 +117,44 @@ function getRandomScore() {
   return Math.floor(Math.random() * (100 - 50 + 1)) + 50;
 }
 
+async function getSimilarityScore(user, currentUser) {
+  try {
+    console.log(user.name, currentUser.name);
+    // Create strings for AI API
+    const profile2 = `${user.bio} located in ${
+      user.location
+    } whose interests are ${
+      user.interests?.join(", ") || ""
+    } and have skills like ${user.skills?.join(", ") || ""}`;
+    const profile1 = `${currentUser.bio} located in ${
+      currentUser.location
+    } whose interests are ${
+      currentUser.interests?.join(", ") || ""
+    } and have skills like ${currentUser.skills?.join(", ") || ""}`;
+
+    console.log("Profile 1:", profile1);
+    console.log("Profile 2:", profile2);
+
+    // Send request to AI similarity API
+    const apiResponse = await axios.post(
+      "https://majlisserver.com/app2/similarity",
+      {
+        type: "profile", // Assuming this defines the type of similarity check
+        profile1, // User profile details
+        profile2, // Current user profile details
+      }
+    );
+
+    console.log("API Response:", apiResponse.data);
+
+    // Extract AI similarity response
+    return apiResponse.data.similarity_score || 0;
+  } catch (error) {
+    console.error("Error fetching similarity score:", error);
+    return 0; // Return a default value in case of error
+  }
+}
+
 exports.fetchUser = async (req, res) => {
   try {
     const { userId, currentUserId } = req.params;
@@ -160,34 +198,8 @@ exports.fetchUser = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean(); // Convert MongoDB documents to plain JavaScript objects
 
-    // Create strings for AI API
-    const profile2 = `${user.bio} located in ${
-      user.location
-    } whose interests are ${user.interests.join(
-      ", "
-    )} and have skills like ${user.skills.join(", ")}`;
-    const profile1 = `${currentUser.bio} located in ${
-      currentUser.location
-    } whose interests are ${currentUser.interests.join(
-      ", "
-    )} and have skills like ${currentUser.skills.join(", ")}`;
-
-    console.log("Profile : ", profile1, profile2);
-
-    // Send request to AI similarity API
-    const apiResponse = await axios.post(
-      "http://34.150.183.91:8080/similarity",
-      {
-        type: "profile", // Assuming this defines the type of similarity check
-        profile1, // User profile details
-        profile2, // Event details
-      }
-    );
-
-    console.log(apiResponse.data.similarity_score);
-
     // Extract AI similarity response
-    const similarityScore = apiResponse.data.similarity_score || 0;
+    const similarityScore = await getSimilarityScore(user, currentUser);
 
     // Combine counts for total communities associated with the user
     const totalCommunities = createdCommunitiesCount + memberCommunitiesCount;
@@ -954,6 +966,7 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.params.userId);
     const user = await Member.findById(userId).populate("friends", "_id");
+    console.log("testing: ", userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -967,7 +980,7 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
     const friendIds = user.friends.map((friend) => friend._id);
 
     // Find people with shared interests, excluding friends
-    const peopleYouMayKnow = await Member.aggregate([
+    let peopleYouMayKnow = await Member.aggregate([
       {
         $match: {
           _id: { $nin: [...friendIds, userId, ...friendRequestSenders] }, // Exclude friends and self
@@ -982,12 +995,24 @@ exports.fetchPeopleYouMayKnow = async (req, res) => {
             $size: { $setIntersection: ["$interests", user.interests] },
           },
           friendRequests: 1,
+          location: 1,
+          skills: 1,
+          interests: 1,
+          bio: 1,
         },
       },
       { $match: { commonInterests: { $gt: 0 } } }, // Ensure at least one shared interest
       { $sort: { commonInterests: -1 } }, // Sort by highest shared interests
       { $limit: 10 }, // Limit results to 10 users
     ]);
+
+    // Compute similarity scores for each suggested user
+    peopleYouMayKnow = await Promise.all(
+      peopleYouMayKnow.map(async (person) => {
+        const similarityScore = await getSimilarityScore(person, user);
+        return { ...person, similarityScore };
+      })
+    );
 
     res.json(peopleYouMayKnow);
   } catch (error) {
