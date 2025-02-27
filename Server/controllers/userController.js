@@ -10,6 +10,7 @@ const Communitymob = require("../models/Community");
 const Event = require("../models/Event");
 const axios = require("axios");
 const CommPost = require("../models/CommPost");
+const bcrypt = require("bcryptjs");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -48,6 +49,126 @@ exports.appleLogin = (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const generateReferralCode = async () => {
+  let code;
+  let exists = true;
+
+  while (exists) {
+    code = Math.random().toString(36).substring(2, 8).toUpperCase(); // Example: "A1B2C3"
+    exists = await Member.findOne({ referralCode: code }); // Ensure uniqueness
+  }
+
+  return code;
+};
+
+exports.signup = async (req, res) => {
+  try {
+    const { email, name, password, code } = req.body;
+    if (!email || !name || !password) {
+      return res.status(200).json({
+        success: false,
+        message: "Please provide all required fields",
+      });
+    }
+
+    const existingUser = await Member.findOne({ email });
+    if (existingUser) {
+      return res.status(200).json({
+        success: false,
+        isRegistered: false,
+        message: "User already exists",
+      });
+    }
+
+    if (!code) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Invalid referral code." });
+    }
+    const referredBy = await Member.findOne({ referralCode: code });
+    if (!referredBy) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Invalid referral code." });
+    }
+
+    if (referredBy.referralCount >= 6) {
+      return res.status(200).json({
+        success: false,
+        limitReached: true,
+        message: "Referral limit reached.",
+      });
+    }
+
+    const referralCode = await generateReferralCode();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Register the new user
+    const newUser = new Member({
+      name,
+      email,
+      password: hashedPassword,
+      referralCode,
+    });
+
+    // Save the new user in the database
+    user = await newUser.save();
+    referredBy.referralCount += 1;
+    await referredBy.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User registered successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(200).json({
+        success: false,
+        message: "Please provide all required fields",
+      });
+    }
+
+    const user = await Member.findOne({ email });
+    if (!user) {
+      return res.status(200).json({
+        success: false,
+        message: "Email not registered. Please signup.",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Invalid email or password" });
+    }
+
+    // Generate a token for the user
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET, // Replace with your secret key
+      { expiresIn: "1h" }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful!",
+      token: token,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };

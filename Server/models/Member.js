@@ -5,6 +5,9 @@ const memberSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  password: {
+    type: String,
+  },
   email: {
     type: String,
     unique: true,

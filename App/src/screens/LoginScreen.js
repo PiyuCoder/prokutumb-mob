@@ -9,6 +9,7 @@ import {
   StatusBar,
   ImageBackground,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch} from 'react-redux';
@@ -80,6 +81,11 @@ const LoginScreen = ({navigation}) => {
 
       <GoogleSignInButton setIsLoading={setIsLoading} />
       {Platform.OS === 'ios' && <AppleSignInButton />}
+      <TouchableOpacity
+        style={styles.loginButton}
+        onPress={() => navigation.navigate('EmailLogin')}>
+        <Text style={styles.loginButtonText}>Login with Email</Text>
+      </TouchableOpacity>
 
       {/* <Text className="mt-4" onPress={() => navigation.navigate('Signup')}>
         Don't have an account? Signup
@@ -100,6 +106,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#22172A',
     textAlign: 'center',
+  },
+  loginButton: {
+    marginTop: 20,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 58,
+    borderWidth: 2,
+    borderColor: '#fff',
+    alignItems: 'center',
+    backgroundColor: '#A274FF',
+    width: 250,
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

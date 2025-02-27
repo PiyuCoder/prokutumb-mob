@@ -121,6 +121,22 @@ exports.checkRegistration = async (req, res, next) => {
   }
 };
 
+exports.checkEmailRegistration = async (req, res, next) => {
+  const { email } = req.body;
+
+  try {
+    let user = await Member.findOne({ email });
+    if (user) {
+      return res.status(200).json({ isRegistered: true });
+    } else {
+      return res.status(200).json({ isRegistered: false });
+    }
+  } catch (error) {
+    console.error("Error checking registration:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.checkRegistrationWithCode = async (req, res, next) => {
   const { token, code } = req.body;
 
@@ -163,13 +179,11 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
       }
 
       if (referredBy.referralCount >= 6) {
-        return res
-          .status(200)
-          .json({
-            success: false,
-            limitReached: true,
-            message: "Referral limit reached.",
-          });
+        return res.status(200).json({
+          success: false,
+          limitReached: true,
+          message: "Referral limit reached.",
+        });
       }
       const referralCode = await generateReferralCode();
       // Register the new user

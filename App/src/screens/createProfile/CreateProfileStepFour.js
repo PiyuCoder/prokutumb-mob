@@ -68,14 +68,14 @@ const CreateProfileStepFour = ({navigation, route}) => {
       link => link.url === '@' || !link.url,
     );
 
-    if (hasEmptyFields) {
-      setLoading(false);
-      Alert.alert(
-        'Missing Fields',
-        'Please fill in all required fields before proceeding.',
-      );
-      return; // Stop the function if fields are empty
-    }
+    // if (hasEmptyFields) {
+    //   setLoading(false);
+    //   Alert.alert(
+    //     'Missing Fields',
+    //     'Please fill in all required fields before proceeding.',
+    //   );
+    //   return; // Stop the function if fields are empty
+    // }
 
     const formData = new FormData();
     formData.append('name', profileData.name);
