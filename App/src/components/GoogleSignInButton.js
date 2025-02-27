@@ -38,7 +38,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
   const [error, setError] = useState(null);
   const dispatch = useDispatch();
   const navigation = useNavigation();
-  const [openReferralInput, setOpenReferralInput] = useState(true);
+  const [openReferralInput, setOpenReferralInput] = useState(false);
   const [referralCode, setReferralCode] = useState('');
 
   const handleGoogleLogin = async () => {
