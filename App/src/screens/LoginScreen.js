@@ -80,7 +80,7 @@ const LoginScreen = ({navigation}) => {
       />
 
       <GoogleSignInButton setIsLoading={setIsLoading} />
-      {Platform.OS === 'ios' && <AppleSignInButton />}
+      {Platform.OS === 'ios' && <AppleSignInButton setIsLoading={setIsLoading}/>}
       <TouchableOpacity
         style={styles.loginButton}
         onPress={() => navigation.navigate('EmailLogin')}>
