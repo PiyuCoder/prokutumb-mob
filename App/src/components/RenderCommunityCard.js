@@ -20,6 +20,7 @@ const RenderCommunityCard = ({item, results}) => {
       onPress={() =>
         navigation.navigate('CommunityHome', {
           communityId: item?._id,
+          whyConnect: results ? item?.output : null,
         })
       }
       style={styles.cardWrapper}>

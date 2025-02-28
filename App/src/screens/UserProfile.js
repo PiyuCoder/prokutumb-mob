@@ -44,6 +44,7 @@ import {populateProfile} from '../store/slices/profileSlice';
 
 const UserProfile = ({route}) => {
   const {userId} = route.params;
+  const whyConnect = route.params?.whyConnect || null;
   const currentUser = useSelector(state => state.auth?.user);
   const [user, setUser] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -83,6 +84,14 @@ const UserProfile = ({route}) => {
   }, []);
 
   useEffect(() => {
+    if (user?.profilePicture) {
+      setImageSource({uri: user?.profilePicture});
+    } else {
+      setImageSource(require('../assets/default-pp.png'));
+    }
+  }, [user?.profilePicture]);
+
+  useEffect(() => {
     const fetchUser = async () => {
       if (!userId) {
         ToastAndroid.show('User not found', ToastAndroid.SHORT);
@@ -96,8 +105,8 @@ const UserProfile = ({route}) => {
         );
 
         if (res.data.success) {
-          console.log('Fetched user: ', res.data.user);
-          setUser(res.data.user);
+          // console.log('Fetched user: ', res.data.user);
+          setUser(res?.data?.user);
 
           setUserPosts(res.data.posts);
           setCommunityCount(res?.data?.communities?.total);
@@ -892,58 +901,62 @@ const UserProfile = ({route}) => {
                 <Icons name="location" size={20} color="white" />
                 <Text style={{color: 'white'}}>{user?.location}</Text>
               </View>
-              {user?.socialLinks?.map((link, index) => (
-                <View key={index} style={styles.linkContainer}>
-                  <Entypo
-                    name={`${link.logo}`}
-                    size={20}
-                    color={`${link.color}`}
-                  />
-                  <Text style={styles.platformName}>{link.platform}:</Text>
-                  <Text style={styles.platformName}>{link?.url}</Text>
-                </View>
-              ))}
+              {user?.socialLinks
+                ?.filter(link => link?.url?.length > 1) // Ensure only valid items are mapped
+                ?.map((link, index) => (
+                  <View key={index} style={styles.linkContainer}>
+                    <Entypo name={link.logo} size={20} color={link.color} />
+                    <Text style={styles.platformName}>{link.platform}:</Text>
+                    <Text style={styles.platformName}>{link.url}</Text>
+                  </View>
+                ))}
+
               {/* Experience Section */}
               <View style={{marginVertical: 20}}>
                 <Text style={styles.sectionTitle}>Experience:</Text>
               </View>
 
-              {user?.experience?.length ? (
-                user.experience?.map((exp, index) => (
-                  <View key={index} style={styles.card}>
-                    <View key={index} style={styles.experienceItem}>
-                      <View
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}>
-                        <Text
-                          style={[
-                            styles.experienceCompany,
-                            {color: '#2D3F7B'},
-                          ]}>
-                          {exp.company}
-                        </Text>
+              {user?.experience?.length > 0 &&
+              user?.experience.some(exp => exp.company) ? (
+                user.experience
+                  .filter(exp => exp.company) // Ensure only valid values are mapped
+                  .map((exp, index) => (
+                    <View key={index} style={styles.card}>
+                      <View style={styles.experienceItem}>
+                        <View
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}>
+                          <Text
+                            style={[
+                              styles.experienceCompany,
+                              {color: '#2D3F7B'},
+                            ]}>
+                            {exp.company}
+                          </Text>
+
+                          <Text
+                            style={[
+                              styles.experienceDuration,
+                              {color: '#2D3F7B'},
+                            ]}>
+                            {formatDate(exp.startDate)}-
+                            {exp.isPresent
+                              ? 'Present'
+                              : formatDate(exp.endDate)}
+                          </Text>
+                        </View>
 
                         <Text
-                          style={[
-                            styles.experienceDuration,
-                            {color: '#2D3F7B'},
-                          ]}>
-                          {formatDate(exp.startDate)}-
-                          {exp.isPresent ? 'Present' : formatDate(exp.endDate)}
+                          style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
+                          {exp.role}
                         </Text>
                       </View>
-
-                      <Text
-                        style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
-                        {exp.role}
-                      </Text>
                     </View>
-                  </View>
-                ))
+                  ))
               ) : (
                 <Text style={{color: 'gray'}}>Not added</Text>
               )}
@@ -954,43 +967,48 @@ const UserProfile = ({route}) => {
               </View>
 
               <View style={styles.card}>
-                {user?.education?.length ? (
-                  user?.education?.map((edu, index) => (
-                    <View key={index} style={styles.experienceItem}>
-                      <View
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}>
-                        <Text
-                          style={[
-                            styles.experienceCompany,
-                            {color: '#2D3F7B'},
-                          ]}>
-                          {edu.school}
-                        </Text>
+                {user?.education?.length > 0 &&
+                user?.education.some(edu => edu.school) ? (
+                  user.education
+                    .filter(edu => edu.school) // Ensure only valid values are mapped
+                    .map((edu, index) => (
+                      <View key={index} style={styles.experienceItem}>
+                        <View
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}>
+                          <Text
+                            style={[
+                              styles.experienceCompany,
+                              {color: '#2D3F7B'},
+                            ]}>
+                            {edu.school}
+                          </Text>
+
+                          <Text
+                            style={[
+                              styles.experienceDuration,
+                              {color: '#2D3F7B'},
+                            ]}>
+                            {formatDate(edu.startDate)}-
+                            {formatDate(edu.endDate)}
+                          </Text>
+                        </View>
 
                         <Text
-                          style={[
-                            styles.experienceDuration,
-                            {color: '#2D3F7B'},
-                          ]}>
-                          {formatDate(edu.startDate)}-{formatDate(edu.endDate)}
+                          style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
+                          {edu.degree}
                         </Text>
                       </View>
-
-                      <Text
-                        style={[styles.experienceTitle, {color: '#2D3F7B'}]}>
-                        {edu.degree}
-                      </Text>
-                    </View>
-                  ))
+                    ))
                 ) : (
                   <Text style={{color: 'gray'}}>Not added</Text>
                 )}
               </View>
+
               <View style={{marginVertical: 20}}>
                 <Text style={styles.sectionTitle}>Interests:</Text>
               </View>
@@ -1138,6 +1156,7 @@ const UserProfile = ({route}) => {
                       </Text>
                     </View>
                   </View>
+
                   <View
                     style={{
                       flexDirection: 'row',
@@ -1175,7 +1194,28 @@ const UserProfile = ({route}) => {
                   alignItems: 'flex-start',
                   justifyContent: 'space-between',
                 }}>
-                {/* <Text style={styles.title}>Something</Text> */}
+                {whyConnect && (
+                  <View style={[styles.card, {width: '100%', marginTop: 30}]}>
+                    <Text
+                      style={[
+                        styles.title,
+                        {textAlign: 'center', color: '#A274FF', marginTop: 5},
+                      ]}>
+                      Why to connect?
+                    </Text>
+
+                    <View>
+                      <Text
+                        style={{
+                          color: 'gray',
+                          fontSize: 18,
+                          textAlign: 'center',
+                        }}>
+                        {whyConnect}
+                      </Text>
+                    </View>
+                  </View>
+                )}
 
                 {/* {community.createdBy?._id === user?._id && (
                   <TouchableOpacity

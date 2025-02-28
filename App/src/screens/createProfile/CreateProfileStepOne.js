@@ -99,9 +99,7 @@ const CreateProfileStepOne = ({navigation, route}) => {
     try {
       const result = await launchImageLibrary({
         mediaType: 'photo',
-        maxWidth: 300,
-        maxHeight: 300,
-        quality: 0.7,
+        quality: 1,
       });
 
       if (!result.didCancel && result.assets?.length > 0) {
@@ -113,14 +111,7 @@ const CreateProfileStepOne = ({navigation, route}) => {
   };
 
   const onSubmit = () => {
-    if (
-      name &&
-      about &&
-      interests?.length &&
-      skills?.length &&
-      profilePicture &&
-      location
-    ) {
+    if (name && about && interests?.length && skills?.length && location) {
       navigation.navigate('CreateProfileStepTwo', {isEditing});
     } else {
       Alert.alert(

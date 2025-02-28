@@ -20,7 +20,7 @@ const RenderUserCard = ({item, results}) => {
     return Math.floor(Math.random() * (100 - 50 + 1)) + 50;
   }
 
-  console.log(item);
+  // console.log(item);
 
   if (user?._id === item._id) {
     return null;
@@ -31,6 +31,7 @@ const RenderUserCard = ({item, results}) => {
       onPress={() =>
         navigation.navigate('UserProfile', {
           userId: item._id,
+          whyConnect: results ? item?.output : null,
         })
       }
       style={styles.cardWrapper}>

@@ -28,7 +28,6 @@ const EventCard = ({
       : require('../assets/default-ep.png'),
   );
   const navigation = useNavigation();
-  console.log(event);
   return (
     <TouchableOpacity
       onPress={onPress}

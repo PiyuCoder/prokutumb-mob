@@ -55,12 +55,9 @@ const tagList = ['Networking', 'Business', 'Technology', 'Marketing'];
 
 const CommunityHomeScreen = ({route}) => {
   const {communityId} = route.params;
+  const whyConnect = route.params?.whyConnect || null;
   const [isFeedView, setIsFeedView] = useState(true);
-  const [community, setCommunity] = useState({
-    name: 'Loading...',
-    profilePicture: 'https://via.placeholder.com/150',
-    description: 'Community for the cool developers',
-  });
+  const [community, setCommunity] = useState({});
   const [events, setEvents] = useState([]);
   const {user} = useSelector(state => state.auth);
   const {posts} = useSelector(state => state.commposts);
@@ -89,7 +86,7 @@ const CommunityHomeScreen = ({route}) => {
   const [tags, setTags] = useState([]);
   const [imageSource, setImageSource] = useState(
     community?.profilePicture
-      ? {uri: community?.profilePicture}
+      ? {uri: community.profilePicture}
       : require('../assets/default-cp.png'),
   );
 
@@ -104,6 +101,14 @@ const CommunityHomeScreen = ({route}) => {
 
   const [score, setScore] = useState(0);
   const [socialScore, setSocialScore] = useState(0);
+
+  useEffect(() => {
+    if (community?.profilePicture) {
+      setImageSource({uri: community.profilePicture});
+    } else {
+      setImageSource(require('../assets/default-cp.png'));
+    }
+  }, [community?.profilePicture]);
 
   const moveArrow = xPosition => {
     Animated.spring(arrowPosition, {
@@ -962,6 +967,28 @@ const CommunityHomeScreen = ({route}) => {
                   </View>
                 </View>
               </TouchableOpacity>
+              {whyConnect && whyConnect !== 'nan' && (
+                <View style={[styles.card, {width: '100%', marginTop: 30}]}>
+                  <Text
+                    style={[
+                      styles.title,
+                      {textAlign: 'center', color: '#A274FF', marginTop: 5},
+                    ]}>
+                    Why to connect?
+                  </Text>
+
+                  <View>
+                    <Text
+                      style={{
+                        color: 'gray',
+                        fontSize: 18,
+                        textAlign: 'center',
+                      }}>
+                      {whyConnect}
+                    </Text>
+                  </View>
+                </View>
+              )}
               <View
                 style={{
                   display: 'flex',
@@ -1228,6 +1255,13 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'left',
     marginTop: 60,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    overflow: 'hidden',
   },
   postActions: {
     flexDirection: 'row',
