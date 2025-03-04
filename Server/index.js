@@ -78,11 +78,37 @@ app.use("/api/communities", communityRouter);
 app.get("/posts/:id", async (req, res) => {
   const { id } = req.params;
   const post = await Feed.findById(id);
-  if (post) {
-    // res.json(post); // API response for post data
-    res.redirect(`prokutumb://post/${post.id}`);
 
-    // Or render an HTML page for web apps
+  if (post) {
+    const appLink = `prokutumb://post/${post.id}`;
+    const playStoreLink = `https://play.google.com/store/apps/details?id=com.majlis.network`;
+    const appStoreLink = `https://apps.apple.com/in/app/majlis-networking/id6741841380`;
+
+    // Detect user platform
+    const userAgent = req.headers["user-agent"] || "";
+    const isAndroid = /android/i.test(userAgent);
+    const isIOS = /iphone|ipad|ipod/i.test(userAgent);
+
+    let storeLink = playStoreLink; // Default to Play Store
+    if (isIOS) {
+      storeLink = appStoreLink;
+    }
+
+    res.send(`
+      <html>
+      <head>
+        <meta http-equiv="refresh" content="0;url=${appLink}" />
+        <script>
+          setTimeout(function() {
+            window.location.href = "${storeLink}";
+          }, 3000); // Wait 3 sec before redirecting to App Store or Play Store
+        </script>
+      </head>
+      <body>
+        <p>Redirecting... If nothing happens, <a href="${storeLink}">click here</a> to download the app.</p>
+      </body>
+      </html>
+    `);
   } else {
     res.status(404).send("Post not found");
   }

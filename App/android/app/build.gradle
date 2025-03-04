@@ -79,9 +79,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.prokutumb"
+    namespace "com.majlis.network"
     defaultConfig {
-        applicationId "com.prokutumb"
+        applicationId "com.majlis.network"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2

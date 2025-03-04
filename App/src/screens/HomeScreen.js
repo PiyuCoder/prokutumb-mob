@@ -213,7 +213,8 @@ const HomeScreen = ({navigation}) => {
     try {
       const postUrl = `https://prokutumb.com/posts/${post._id}`;
       const result = await Share.share({
-        message: `Check out this post: ${postUrl}`,
+        subject: 'Check out this post!',
+        message: ` <a href="${postUrl}">Click here</a> to view.`,
       });
 
       if (result.action === Share.sharedAction) {

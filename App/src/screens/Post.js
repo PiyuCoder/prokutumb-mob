@@ -71,7 +71,7 @@ const Post = ({navigation}) => {
 
   const sharePost = async () => {
     try {
-      const postUrl = `http://10.0.2.2:3001/posts/${postId}`;
+      const postUrl = `https://prokutumb.com/posts/${postId}`;
       const result = await Share.share({
         message: `Check out this post: ${postUrl}`,
       });

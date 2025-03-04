@@ -1,4 +1,4 @@
-package com.prokutumb
+package com.majlis.network
 
 import android.app.Application
 import com.facebook.react.PackageList
