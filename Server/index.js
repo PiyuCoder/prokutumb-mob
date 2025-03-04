@@ -89,19 +89,31 @@ app.get("/posts/:id", async (req, res) => {
     const isAndroid = /android/i.test(userAgent);
     const isIOS = /iphone|ipad|ipod/i.test(userAgent);
 
-    let storeLink = playStoreLink; // Default to Play Store
-    if (isIOS) {
-      storeLink = appStoreLink;
-    }
+    let storeLink = isIOS ? appStoreLink : playStoreLink;
 
     res.send(`
       <html>
       <head>
-        <meta http-equiv="refresh" content="0;url=${appLink}" />
         <script>
-          setTimeout(function() {
-            window.location.href = "${storeLink}";
-          }, 3000); // Wait 3 sec before redirecting to App Store or Play Store
+          function openApp() {
+            var now = new Date().getTime();
+            var delay = 2000;
+
+            // Try to open the app
+            window.location.href = "${appLink}";
+
+            setTimeout(function() {
+              var hidden = document.hidden || document.webkitHidden;
+              if (!hidden) {
+                // If the user is still on the page after 2 seconds, they probably don't have the app
+                window.location.href = "${storeLink}";
+              }
+            }, delay);
+          }
+
+          window.onload = function() {
+            openApp();
+          };
         </script>
       </head>
       <body>
