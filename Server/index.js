@@ -98,17 +98,25 @@ app.get("/posts/:id", async (req, res) => {
           function openApp() {
             var now = new Date().getTime();
             var delay = 2000;
+            var fallbackTimeout;
 
-            // Try to open the app
-            window.location.href = "${appLink}";
+            // Try to open the app using iframe (better for Android)
+            var iframe = document.createElement("iframe");
+            iframe.style.display = "none";
+            iframe.src = "${appLink}";
+            document.body.appendChild(iframe);
 
-            setTimeout(function() {
-              var hidden = document.hidden || document.webkitHidden;
-              if (!hidden) {
-                // If the user is still on the page after 2 seconds, they probably don't have the app
-                window.location.href = "${storeLink}";
-              }
+            // Fallback after 2 seconds if app doesn't open
+            fallbackTimeout = setTimeout(function() {
+              window.location.href = "${storeLink}";
             }, delay);
+
+            // Detect if the user leaves the page (app opened successfully)
+            document.addEventListener("visibilitychange", function() {
+              if (document.hidden) {
+                clearTimeout(fallbackTimeout);
+              }
+            });
           }
 
           window.onload = function() {
