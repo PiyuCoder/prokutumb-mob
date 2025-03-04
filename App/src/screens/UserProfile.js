@@ -304,7 +304,8 @@ const UserProfile = ({route}) => {
       const postUrl = `https://prokutumb.com/posts/${post._id}`;
       const result = await Share.share({
         subject: 'Check out this post!',
-        message: ` <a href="${postUrl}">Click here</a> to view.`,
+        message: `Check out this post on Majlis: ${postUrl}`,
+        url: postUrl,
       });
 
       if (result.action === Share.sharedAction) {

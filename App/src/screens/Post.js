@@ -73,7 +73,9 @@ const Post = ({navigation}) => {
     try {
       const postUrl = `https://prokutumb.com/posts/${postId}`;
       const result = await Share.share({
-        message: `Check out this post: ${postUrl}`,
+        subject: 'Check out this post!',
+        message: `Check out this post on Majlis: ${postUrl}`,
+        url: postUrl,
       });
 
       if (result.action === Share.sharedAction) {

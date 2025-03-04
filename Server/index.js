@@ -84,44 +84,47 @@ app.get("/posts/:id", async (req, res) => {
     const playStoreLink = `https://play.google.com/store/apps/details?id=com.majlis.network`;
     const appStoreLink = `https://apps.apple.com/in/app/majlis-networking/id6741841380`;
 
-    // Detect user platform
     const userAgent = req.headers["user-agent"] || "";
     const isAndroid = /android/i.test(userAgent);
     const isIOS = /iphone|ipad|ipod/i.test(userAgent);
 
-    let storeLink = isIOS ? appStoreLink : playStoreLink;
+    const storeLink = isIOS ? appStoreLink : playStoreLink;
+    const androidIntent = `intent://post/${post.id}#Intent;scheme=prokutumb;package=com.majlis.network;end;`;
 
     res.send(`
       <html>
       <head>
         <script>
           function openApp() {
-            var now = new Date().getTime();
-            var delay = 2000;
-            var fallbackTimeout;
+            var startTime = Date.now();
+            var fallbackTimeout = 2000; // 2 seconds
 
-            // Try to open the app using iframe (better for Android)
-            var iframe = document.createElement("iframe");
-            iframe.style.display = "none";
-            iframe.src = "${appLink}";
-            document.body.appendChild(iframe);
+            function fallback() {
+              var elapsed = Date.now() - startTime;
+              if (elapsed < fallbackTimeout + 100) {
+                window.location.href = "${storeLink}";
+              }
+            }
 
-            // Fallback after 2 seconds if app doesn't open
-            fallbackTimeout = setTimeout(function() {
-              window.location.href = "${storeLink}";
-            }, delay);
+            // Open the app using deep linking
+            if (${isIOS}) {
+              window.location.href = "${appLink}";
+            } else if (${isAndroid}) {
+              window.location.href = "${androidIntent}";
+            }
 
-            // Detect if the user leaves the page (app opened successfully)
+            // Start fallback timer
+            setTimeout(fallback, fallbackTimeout);
+
+            // Cancel fallback if user leaves the page (app opened successfully)
             document.addEventListener("visibilitychange", function() {
               if (document.hidden) {
-                clearTimeout(fallbackTimeout);
+                clearTimeout(fallback);
               }
             });
           }
 
-          window.onload = function() {
-            openApp();
-          };
+          window.onload = openApp;
         </script>
       </head>
       <body>
