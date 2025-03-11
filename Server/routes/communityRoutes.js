@@ -78,6 +78,7 @@ module.exports = (io, userSocketMap) => {
   router.put("/accept/:communityId", communityController.acceptRequest);
   router.put("/share/:postId", communityController.incerementPostShare);
   router.post("/comment/:postId", communityController.addComment);
+  router.get("/tickets/:userId", communityController.fetchTickets);
   router.get("/:userId", communityController.fetchCommunities);
   router.get("/:communityId/:userId", communityController.fetchCommunity);
   router.post(
@@ -90,7 +91,6 @@ module.exports = (io, userSocketMap) => {
     upload.single("profilePicture"),
     communityController.createDraftCommunity
   );
-  router.get("/tickets/:userId", communityController.fetchTickets);
 
   return router;
 };

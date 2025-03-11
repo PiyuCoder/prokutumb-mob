@@ -578,6 +578,8 @@ exports.fetchTickets = async (req, res) => {
   try {
     const { userId } = req.params;
 
+    console.log("fetching tickets:", userId);
+
     const tickets = await Ticket.find({ buyer: userId })
       .populate("event")
       .populate("buyer", "name")
