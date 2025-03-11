@@ -51,7 +51,7 @@ const CommunityCard = ({
                 styles.userName,
                 {color: isTrending ? 'white' : 'black'},
               ]}>
-              {community.name}
+              {community?.name}
             </Text>
             <View
               style={{
@@ -95,7 +95,7 @@ const CommunityCard = ({
                   onPress={() => {
                     setActionModalVisible(false);
                     navigation.navigate('CommunityHome', {
-                      communityId: community._id,
+                      communityId: community?._id,
                     });
                   }}>
                   <Text style={styles.dropdownItemText}>View</Text>
@@ -114,27 +114,28 @@ const CommunityCard = ({
                 fontWeight: '400',
                 fontSize: 12,
               }}>
-              {community.members.length + 1} Members
+              {community.members?.length + 1} Members
             </Text>
           </View>
-          {community?.createdBy?._id !== user?._id &&
-            !community?.members?.includes(user?._id) && (
-              <TouchableOpacity
-                onPress={onPress}
-                style={[
-                  styles.Btn,
-                  {
-                    padding: isTrending ? 9 : 4,
-                    alignSelf: isTrending ? 'auto' : 'center',
-                  },
-                ]}>
-                <Text style={[styles.BtnText]}>
-                  {community?.joinRequests?.some(req => req._id == user?._id)
-                    ? 'Requested'
-                    : 'Join'}
-                </Text>
-              </TouchableOpacity>
-            )}
+          {community?.createdBy?._id !== user?._id
+            ? !community?.members?.includes(user?._id) && (
+                <TouchableOpacity
+                  onPress={onPress}
+                  style={[
+                    styles.Btn,
+                    {
+                      padding: isTrending ? 9 : 4,
+                      alignSelf: isTrending ? 'auto' : 'center',
+                    },
+                  ]}>
+                  <Text style={[styles.BtnText]}>
+                    {community?.joinRequests?.some(req => req._id == user?._id)
+                      ? 'Requested'
+                      : 'Join'}
+                  </Text>
+                </TouchableOpacity>
+              )
+            : null}
           <View
             style={{
               flexDirection: 'row',

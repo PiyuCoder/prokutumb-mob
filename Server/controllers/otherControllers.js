@@ -8,6 +8,7 @@ const Communitymob = require("../models/Community");
 const Event = require("../models/Event");
 const axios = require("axios");
 const WaitingList = require("../models/Waiting");
+const ReferralSettings = require("../models/ReferralSettings");
 
 const updateUserLocation = async (userId, latitude, longitude) => {
   try {
@@ -590,5 +591,29 @@ exports.addToWaitingList = async (req, res) => {
   } catch (error) {
     console.error("Error adding to waiting list:", error);
     res.status(500).json({ message: "Failed to add to waiting list" });
+  }
+};
+
+exports.updateReferralLimit = async (req, res) => {
+  const { newLimit } = req.body;
+  if (!newLimit || newLimit < 1) {
+    return res.status(400).json({ success: false, message: "Invalid limit" });
+  }
+
+  try {
+    let settings = await ReferralSettings.findOne();
+    if (!settings) {
+      settings = new ReferralSettings({ referralLimit: newLimit });
+    } else {
+      settings.referralLimit = newLimit;
+    }
+    await settings.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Referral limit updated to ${newLimit}`,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };

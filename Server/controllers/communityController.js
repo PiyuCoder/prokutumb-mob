@@ -12,10 +12,80 @@ const axios = require("axios");
 
 exports.fetchCommunities = async (req, res) => {
   try {
-    const communities = await Communitymob.find({ isDraft: false })
+    const userId = req.params.userId;
+
+    // Fetch all communities (excluding drafts)
+    const allCommunities = await Communitymob.find({ isDraft: false })
       .populate("createdBy", "name")
-      .sort({ createdAt: -1 }); // Populates creator details if needed
-    res.status(200).json({ success: true, data: communities });
+      .sort({ createdAt: -1 });
+
+    // Fetch "Communities You May Like" (Popular Communities)
+    const popularCommunities = await Communitymob.find({ isDraft: false })
+      .sort({ memberCount: -1 }) // Sort by most members
+      .limit(10);
+
+    // Fetch "Communities for You" (Based on User Interests)
+    const user = await Member.findById(userId).select("interests");
+    const communitiesForYou = await Communitymob.find({
+      isDraft: false,
+      category: { $in: user.interests }, // Match user's interests
+    })
+      .populate("createdBy", "name")
+      .limit(10);
+
+    const trendingCommunities = await CommPost.aggregate([
+      {
+        $group: {
+          _id: "$community",
+          postCount: { $sum: 1 }, // Count posts per community
+        },
+      },
+      { $sort: { postCount: -1 } }, // Sort by highest post count
+      { $limit: 10 }, // Get top 10 trending communities
+      {
+        $lookup: {
+          from: "communitymobs", // Collection storing communities
+          localField: "_id",
+          foreignField: "_id",
+          as: "communityDetails",
+        },
+      },
+      { $unwind: "$communityDetails" }, // Convert array into object
+      {
+        $lookup: {
+          from: "members", // Collection storing user data
+          localField: "communityDetails.createdBy",
+          foreignField: "_id",
+          as: "createdByDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$createdByDetails",
+          preserveNullAndEmptyArrays: true, // Keep null values if creator info is missing
+        },
+      },
+      {
+        $project: {
+          _id: "$communityDetails._id",
+          name: "$communityDetails.name",
+          postCount: 1,
+          members: "$communityDetails.members",
+          createdBy: {
+            _id: "$createdByDetails._id",
+            name: "$createdByDetails.name",
+          },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      allCommunities,
+      communitiesYouMayLike: popularCommunities,
+      communitiesForYou,
+      trendingCommunities,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -522,13 +592,92 @@ exports.fetchTickets = async (req, res) => {
 // Fetch all events
 exports.fetchAllEvents = async (req, res) => {
   try {
-    const events = await Event.find()
-      .populate("createdBy", "name profilePicture")
-      .populate("members", "name profilePicture")
+    const { userId } = req.params;
+
+    const allEvents = await Event.find();
+
+    // Fetch user interests and location
+    const user = await Member.findById(userId).select("interests location");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // "For You" Events - Events where the user is already a member
+    const forYouEvents = await Event.find({
+      members: userId, // User is in the members array
+    })
+      .populate("createdBy", "name")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, data: events });
+    // "You May Like" Events - Based on user interests or location
+    const youMayLikeEvents = await Event.find({
+      $or: [
+        { interests: { $in: user.interests } }, // Match user interests
+        { location: user.location }, // Match user location
+      ],
+      members: { $ne: userId }, // Exclude events the user is already a member of
+    })
+      .populate("createdBy", "name")
+      .sort({ membersCount: -1 }); // Sort by most members
+
+    // "Trending" Events - Based on the highest number of members
+    const trendingEvents = await Event.aggregate([
+      {
+        $project: {
+          name: 1,
+          membersCount: { $size: "$members" }, // Count members array length
+          address: 1,
+          startDate: 1,
+          endDate: 1,
+          startTime: 1,
+          endTime: 1,
+          createdBy: 1, // Keep reference for lookup
+        },
+      },
+      {
+        $lookup: {
+          from: "members",
+          localField: "createdBy",
+          foreignField: "_id",
+          as: "createdByDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$createdByDetails",
+          preserveNullAndEmptyArrays: true, // In case there's no creator info
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          membersCount: 1,
+          address: 1,
+          startDate: 1,
+          endDate: 1,
+          startTime: 1,
+          endTime: 1,
+          createdBy: {
+            _id: "$createdByDetails._id",
+            name: "$createdByDetails.name",
+          },
+        },
+      },
+      { $sort: { membersCount: -1 } }, // Sort by highest member count
+      { $limit: 5 }, // Get top 5 trending events
+    ]);
+
+    res.status(200).json({
+      success: true,
+      allEvents,
+      forYou: forYouEvents,
+      youMayLike: youMayLikeEvents,
+      trending: trendingEvents,
+    });
   } catch (error) {
+    console.error("Error fetching events:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch events",

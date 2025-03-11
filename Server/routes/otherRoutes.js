@@ -11,5 +11,6 @@ router.get("/recentPosts", otherController.getRecentPosts);
 router.get("/notifications/:userId", otherController.getNotifications);
 router.post("/notifications/mark-as-read", otherController.markAsRead);
 router.post("/waiting-list", otherController.addToWaitingList);
+router.post("/update-referral-limit", otherController.updateReferralLimit);
 
 module.exports = router;
