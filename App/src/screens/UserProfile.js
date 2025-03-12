@@ -909,7 +909,12 @@ const UserProfile = ({route}) => {
                   <View key={index} style={styles.linkContainer}>
                     <Entypo name={link.logo} size={20} color={link.color} />
                     <Text style={styles.platformName}>{link.platform}:</Text>
-                    <Text style={styles.platformName}>{link.url}</Text>
+                    <Text
+                      style={[styles.platformName, {flexShrink: 1}]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {link.url}
+                    </Text>
                   </View>
                 ))}
 
