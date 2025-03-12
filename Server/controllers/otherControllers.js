@@ -7,6 +7,7 @@ const Notification = require("../models/Notification");
 const Communitymob = require("../models/Community");
 const Event = require("../models/Event");
 const axios = require("axios");
+const WaitingList = require("../models/Waiting");
 
 const updateUserLocation = async (userId, latitude, longitude) => {
   try {
@@ -133,29 +134,81 @@ async function detectIntentText(query) {
 }
 
 function filterValidResponses(data, queryType) {
-  const uniqueResponses = new Set();
+  const uniqueIds = new Set(); // Track unique _id values
 
-  return data.filter((response) => {
-    const parts = response.split(" ");
-    if (parts.length <= 2 || !["1", "2", "3"].includes(parts[1])) return false;
-
-    // Apply additional filtering based on queryType
-    if (queryType === "profile" && ["2", "3"].includes(parts[1])) return false;
-    if (queryType === "community" && ["1", "2"].includes(parts[1]))
+  return data.filter(({ output, _id, type }) => {
+    if (type === undefined) {
+      console.log(
+        `❌ Skipping response due to missing type: ${JSON.stringify({
+          _id,
+          output,
+        })}`
+      );
       return false;
-    if (queryType === "event" && ["1", "2"].includes(parts[1])) return false;
+    }
 
-    // Normalize response by removing the ID and trimming "nan" or extra spaces
-    let normalizedResponse = parts
-      .slice(1)
-      .join(" ")
-      .replace(/\bnan\b/g, "")
-      .trim();
+    type = type.toString();
 
-    if (uniqueResponses.has(normalizedResponse)) return false;
-    uniqueResponses.add(normalizedResponse);
+    if (!["1", "2", "3", "4"].includes(type)) {
+      console.log(
+        `❌ Skipping response due to invalid type: ${JSON.stringify({
+          _id,
+          type,
+          output,
+        })}`
+      );
+      return false;
+    }
+
+    // **Ensure uniqueness based on `_id`**
+    if (_id && uniqueIds.has(_id)) {
+      console.log(`❌ Skipping duplicate: ${_id}`);
+      return false;
+    }
+    uniqueIds.add(_id);
+
+    console.log(
+      `✅ Keeping response: ${JSON.stringify({ _id, type, output })}`
+    );
     return true;
   });
+}
+
+async function getSimilarityScore(user, currentUser) {
+  try {
+    // Create strings for AI API
+    const profile2 = `${user.bio} located in ${
+      user.location
+    } whose interests are ${user.interests.join(
+      ", "
+    )} and have skills like ${user.skills.join(", ")}`;
+    const profile1 = `${currentUser.bio} located in ${
+      currentUser.location
+    } whose interests are ${currentUser.interests.join(
+      ", "
+    )} and have skills like ${currentUser.skills.join(", ")}`;
+
+    console.log("Profile 1:", profile1);
+    console.log("Profile 2:", profile2);
+
+    // Send request to AI similarity API
+    const apiResponse = await axios.post(
+      "https://majlisserver.com/app2/similarity",
+      {
+        type: "profile", // Assuming this defines the type of similarity check
+        profile1, // User profile details
+        profile2, // Current user profile details
+      }
+    );
+
+    console.log("API Response:", apiResponse.data);
+
+    // Extract AI similarity response
+    return apiResponse.data.similarity_score || 0;
+  } catch (error) {
+    console.error("Error fetching similarity score:", error);
+    return 0; // Return a default value in case of error
+  }
 }
 
 exports.prokuInteraction = async (req, res) => {
@@ -163,77 +216,182 @@ exports.prokuInteraction = async (req, res) => {
 
   console.log("queryType:", queryType);
 
-  const user = await Member.findById(userId);
-
-  let updatedQuery;
-
-  if (queryType === "profile") {
-    const interestsString = user.interests?.join(", ") || "";
-    const skillsString = user.skills.join(", ") || "";
-
-    // Modify the query by appending interests and skills
-    updatedQuery = `${query} based on interests: ${interestsString} and skills: ${skillsString}`;
-  } else if (queryType === "community") {
-    const community = await Communitymob.findById(id);
-    if (community)
-      updatedQuery = `A community focused on ${community.communityType} in ${community.location}. ${community.description}, ${query} `;
-    else updatedQuery = `A community ${query}`;
-  } else {
-    const event = await Event.findById(id);
-    if (event)
-      updatedQuery = `A brief overview of the ${event.name} on ${
-        event.name
-      } event. A detailed description of what attendees can expect at ${
-        event.name
-      } on ${event.name}. ${
-        event.eventType === "Virtual" ? "Webinar" : "Concert"
-      } ${event.address} Can you suggest ${event.name}in ${
-        event.address
-      }?, ${query}`;
-    else updatedQuery = `event ${query}`;
-  }
-
   try {
-    // Make a request to the new AI API
-    const apiResponse = await axios.post(
-      "http://34.150.183.91:8000/generate",
-      {
-        input_text: updatedQuery, // Sending user's query
-        num_responses: 5, // Number of responses required
-      },
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-
-    // Extract response from AI API
-    let responseText = apiResponse.data.responses;
-
-    if (!Array.isArray(responseText)) {
-      responseText = [responseText]; // Convert to array if it's a string
-    }
-
-    console.log(responseText);
-
-    responseText = filterValidResponses(responseText, queryType);
-
-    // Save user query and AI response to the database
-    const member = await Member.findById(userId);
-    if (!member) {
+    const user = await Member.findById(userId);
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const interaction = {
+    let updatedQuery;
+
+    const ensureQuestionMark = (text) =>
+      text.trim().endsWith("?") ? text : text + "?";
+
+    const formattedQuery = ensureQuestionMark(query);
+
+    if (queryType === "profile") {
+      const interestsString = user.interests?.join(", ") || "";
+      const skillsString = user.skills?.join(", ") || "";
+      const location = user.location || "";
+      const educationString =
+        user.education
+          ?.map(
+            (edu) => `${edu.degree} in ${edu.fieldOfStudy} from ${edu.school}`
+          )
+          .join(", ") || "";
+      const experienceString =
+        user.experience
+          ?.map((exp) => `${exp.role} at ${exp.company}`)
+          .join(", ") || "";
+
+      updatedQuery = {
+        question: formattedQuery,
+        labelinfo:
+          `${interestsString} ${skillsString} ${location} ${educationString} ${experienceString}`.trim(),
+      };
+    } else if (queryType === "community") {
+      const community = await Communitymob.findById(id);
+      updatedQuery = community
+        ? {
+            question: formattedQuery,
+            labelinfo: `A community focused on ${community.communityType} in ${community.location}. ${community.description}`,
+          }
+        : { question: query, labelinfo: `A community ${query}` };
+    } else {
+      const event = await Event.findById(id);
+      updatedQuery = event
+        ? {
+            question: formattedQuery,
+            labelinfo: `${event.name} ${event.address} ${event.eventType}`,
+          }
+        : { question: formattedQuery, labelinfo: `event ${query}` };
+    }
+
+    console.log("Populated query: ", updatedQuery);
+
+    // Call AI API
+    const apiResponse = await axios.post(
+      "https://majlisserver.com/app1/query",
+      updatedQuery,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("AI API Response:", apiResponse.data);
+
+    // Ensure responseText is an array
+    let responseText = apiResponse.data.response || [];
+    if (!Array.isArray(responseText)) {
+      responseText = [responseText];
+    }
+
+    // Filter valid responses
+    responseText = filterValidResponses(responseText, queryType);
+
+    // Function to clean and validate IDs
+    const cleanIds = (ids) =>
+      ids
+        .map((id) => id.trim()) // Remove spaces
+        .filter((id) => /^[a-f\d]{24}$/i.test(id)) // Only valid 24-character hex IDs
+        .map((id) => new mongoose.Types.ObjectId(id)); // Convert to ObjectId
+
+    // **Fetch user details for `type: 1`**
+    const userIds = cleanIds(
+      responseText.filter((resp) => resp.type === 1).map((resp) => resp._id)
+    );
+    const users = await Member.find({ _id: { $in: userIds } });
+
+    // **Fetch community details for `type: 3`**
+    const communityIds = cleanIds(
+      responseText.filter((resp) => resp.type === 3).map((resp) => resp._id)
+    );
+    const communities = await Communitymob.find({ _id: { $in: communityIds } });
+
+    // **Fetch event details for `type: 2`**
+    const eventIds = cleanIds(
+      responseText.filter((resp) => resp.type === 2).map((resp) => resp._id)
+    );
+    console.log("Cleaned Event IDs:", eventIds);
+
+    const events = await Event.find({ _id: { $in: eventIds } });
+    console.log("Fetched Events:", events);
+
+    // Map fetched details to their respective responses
+
+    const userMap = new Map(users.map((user) => [user._id.toString(), user]));
+    const communityMap = new Map(
+      communities.map((comm) => [comm._id.toString(), comm])
+    );
+    const eventMap = new Map(events.map((evt) => [evt._id.toString(), evt]));
+
+    console.log("eventMap: ", eventMap);
+    responseText = await Promise.all(
+      responseText.map(async (resp) => {
+        if (resp.type === 1) {
+          const userDetails = userMap.get(resp._id);
+          if (userDetails) {
+            const similarityScore = await getSimilarityScore(userDetails, user);
+            console.log("Similarity Score tests:", similarityScore);
+            return {
+              ...resp,
+              userDetails: {
+                name: userDetails.name,
+                profilePicture: userDetails.profilePicture || "",
+                location: userDetails.location || "",
+                similarityScore,
+              },
+            };
+          }
+        } else if (resp.type === 3) {
+          const communityDetails = communityMap.get(resp._id);
+          if (communityDetails) {
+            return {
+              ...resp,
+              communityDetails: {
+                name: communityDetails.name,
+                location: communityDetails.location || "",
+                communityType: communityDetails.communityType || "",
+                profilePicture: communityDetails.profilePicture || "",
+              },
+            };
+          }
+        } else if (resp.type === 2) {
+          const eventDetails = eventMap.get(resp._id);
+          console.log(eventDetails);
+          if (eventDetails) {
+            return {
+              ...resp,
+              eventDetails: {
+                name: eventDetails.name,
+                address: eventDetails.address || "",
+                eventType: eventDetails.eventType || "",
+                date: eventDetails.date || "",
+                profilePicture: eventDetails.profilePicture || "",
+              },
+            };
+          }
+        }
+        return resp;
+      })
+    );
+
+    const limitedResponse =
+      responseText.length > 10 ? responseText.slice(0, 10) : responseText;
+
+    // Save interaction to the database
+    user.chatbotInteractions.push({
       query,
-      response: responseText,
+      response: limitedResponse,
       createdAt: new Date(),
-    };
+    });
 
-    member.chatbotInteractions.push(interaction);
-    await member.save();
+    await user.save();
 
-    // Send both user query and AI response to the frontend
-    res.status(200).json({ query, response: responseText });
+    // Return response to frontend
+    res.status(200).json({ query, response: limitedResponse });
   } catch (error) {
     console.error("Error handling interaction:", error);
     res.status(500).json({ error: "Failed to handle interaction" });
@@ -404,5 +562,33 @@ exports.markAsRead = async (req, res) => {
     res
       .status(500)
       .json({ message: "Server error while marking notification as read." });
+  }
+};
+
+exports.addToWaitingList = async (req, res) => {
+  try {
+    const { email, name, phone } = req.body;
+
+    // Check if the email is already in the waiting list
+    const existingEntry = await WaitingList.findOne({
+      email: email.toLowerCase(),
+    });
+    if (existingEntry) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Email already in the list" });
+    }
+
+    const entry = new WaitingList({
+      email: email.toLowerCase(),
+      name,
+      phone,
+    });
+
+    await entry.save();
+    res.status(201).json({ success: true, message: "Added to waiting list" });
+  } catch (error) {
+    console.error("Error adding to waiting list:", error);
+    res.status(500).json({ message: "Failed to add to waiting list" });
   }
 };

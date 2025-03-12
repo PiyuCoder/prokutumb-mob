@@ -24,14 +24,68 @@ import Feather from 'react-native-vector-icons/Feather';
 import {launchImageLibrary} from 'react-native-image-picker';
 
 const interestsList = ['Networking', 'Business', 'Technology', 'Marketing'];
-const skillsList = ['JavaScript', 'React', 'Node.js', 'Python', 'Java'];
+const skillsList = [
+  'JavaScript',
+  'React',
+  'Node.js',
+  'Python',
+  'Java',
 
-const CreateProfileStepOne = ({navigation}) => {
+  // Core Business & Professional Skills
+  'Leadership & Management',
+  'Business Strategy',
+  'Marketing & Sales',
+  'Finance & Investment',
+  'Data Analytics & AI',
+  'Operations & Supply Chain',
+  'Project Management',
+  'Consulting',
+  'Human Resources & Talent Management',
+  'Public Speaking & Communication',
+  'Negotiation & Conflict Resolution',
+
+  // Industry-Specific Skills
+  'Technology & Software Development',
+  'Product Management',
+  'UX/UI Design',
+  'Cybersecurity',
+  'Blockchain & Web3',
+  'Healthcare & Biotech',
+  'Legal & Compliance',
+  'Real Estate & Property Management',
+  'Retail & E-commerce',
+  'Media & Entertainment',
+
+  // Startup & Entrepreneurship
+  'Fundraising & Venture Capital',
+  'Startup Growth & Scaling',
+  'Business Development',
+  'Angel Investing',
+  'Networking & Partnerships',
+  'Bootstrapping',
+
+  // Personal Development & Thought Leadership
+  'Writing & Blogging',
+  'Podcasting',
+  'Personal Branding',
+  'Mentorship & Coaching',
+  'Public Relations & Media',
+
+  // Emerging Trends & Interests
+  'Sustainability & ESG',
+  'AI & Automation',
+  'Future of Work',
+  'Diversity & Inclusion',
+  'Remote Work & Digital Nomadism',
+];
+
+const CreateProfileStepOne = ({navigation, route}) => {
   const {name, about, interests, location, skills, profilePicture} =
     useSelector(state => state.profile);
   const dispatch = useDispatch();
   const [isInterestsModalVisible, setIsInterestsModalVisible] = useState(false);
   const [isSkillsModalVisible, setIsSkillsModalVisible] = useState(false);
+  const isEditing = route?.params?.isEditing || false;
 
   const handleSelectInterests = selectedInterests => {
     dispatch(setInterests(selectedInterests));
@@ -45,9 +99,7 @@ const CreateProfileStepOne = ({navigation}) => {
     try {
       const result = await launchImageLibrary({
         mediaType: 'photo',
-        maxWidth: 300,
-        maxHeight: 300,
-        quality: 0.7,
+        quality: 1,
       });
 
       if (!result.didCancel && result.assets?.length > 0) {
@@ -59,15 +111,8 @@ const CreateProfileStepOne = ({navigation}) => {
   };
 
   const onSubmit = () => {
-    if (
-      name &&
-      about &&
-      interests?.length &&
-      skills?.length &&
-      profilePicture &&
-      location
-    ) {
-      navigation.navigate('CreateProfileStepTwo');
+    if (name && about && interests?.length && skills?.length && location) {
+      navigation.navigate('CreateProfileStepTwo', {isEditing});
     } else {
       Alert.alert(
         'Missing Fields',
@@ -91,7 +136,9 @@ const CreateProfileStepOne = ({navigation}) => {
           borderBottomRightRadius: 20,
           paddingTop: 40,
         }}>
-        <Text style={styles.title}>Create Profile</Text>
+        <Text style={styles.title}>
+          {isEditing ? 'Edit' : 'Create'} Profile
+        </Text>
       </View>
       <View style={{padding: 20}}>
         <Text

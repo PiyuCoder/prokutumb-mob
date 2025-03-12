@@ -22,29 +22,30 @@ import Loader from '../components/Loader';
 
 const EventScreen = ({navigation, route}) => {
   const {eventId} = route.params;
-  console.log(eventId);
+  const whyConnect = route.params?.whyConnect || null;
   const {user} = useSelector(state => state.auth);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
-  const [event, setEvent] = useState({
-    _id: '',
-    name: '',
-    profilePicture: '',
-    date: '',
-    time: '',
-    location: '',
-    address: '',
-    followers: 100,
-    createdBy: {name: ''},
-    tags: '',
-    description: '',
-  });
+  const [event, setEvent] = useState({});
 
   const [isFollowing, setIsFollowing] = useState(
     user?.following?.includes(event?.createdBy?._id) || false,
   );
 
   const [score, setScore] = useState(0);
+  const [imageSource, setImageSource] = useState(
+    event?.profilePicture
+      ? {uri: event?.profilePicture}
+      : require('../assets/default-cp.png'),
+  );
+
+  useEffect(() => {
+    if (event?.profilePicture) {
+      setImageSource({uri: event?.profilePicture});
+    } else {
+      setImageSource(require('../assets/default-cp.png'));
+    }
+  }, [event?.profilePicture]);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -120,11 +121,11 @@ const EventScreen = ({navigation, route}) => {
       </View>
 
       <ImageBackground
-        source={{
-          uri: event?.profilePicture,
-        }}
+        source={imageSource}
+        defaultSource={require('../assets/default-cp.png')}
         style={styles.eventProfilePicture}
         imageStyle={styles.profilePictureImage}
+        onError={() => setImageSource(require('../assets/default-cp.png'))}
       />
       <View
         style={{
@@ -228,6 +229,28 @@ const EventScreen = ({navigation, route}) => {
           Click to know more
         </Text>
       </TouchableOpacity>
+      {whyConnect && (
+        <View style={[styles.card, {width: '100%', marginTop: 30}]}>
+          <Text
+            style={[
+              styles.title,
+              {textAlign: 'center', color: '#A274FF', marginTop: 5},
+            ]}>
+            Why to connect?
+          </Text>
+
+          <View>
+            <Text
+              style={{
+                color: 'gray',
+                fontSize: 18,
+                textAlign: 'center',
+              }}>
+              {whyConnect}
+            </Text>
+          </View>
+        </View>
+      )}
       <View style={{marginTop: 20, paddingHorizontal: 20}}>
         <Text
           style={{
@@ -285,14 +308,20 @@ const EventScreen = ({navigation, route}) => {
           <TouchableOpacity
             disabled={event?.createdBy?._id === user?._id}
             onPress={bookSeat}
-            style={{
-              backgroundColor: '#761CBC',
-              padding: 10,
-              borderRadius: 40,
-              paddingHorizontal: 25,
-              alignItems: 'center',
-            }}>
-            <Text style={[styles.BtnText, {letterSpacing: 1}]}>Buy Ticket</Text>
+            style={
+              event?.createdBy?._id === user?._id
+                ? {display: 'none'}
+                : {
+                    backgroundColor: '#761CBC',
+                    padding: 10,
+                    borderRadius: 40,
+                    paddingHorizontal: 25,
+                    alignItems: 'center',
+                  }
+            }>
+            <Text style={[styles.BtnText, {letterSpacing: 1}]}>
+              {event?.createdBy?._id === user?._id ? 'Preview' : 'Buy Ticket'}
+            </Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -334,6 +363,13 @@ const styles = StyleSheet.create({
   profilePicture: {
     width: '100%',
     height: '100%',
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    overflow: 'hidden',
   },
   headerBtn: {
     padding: 5,

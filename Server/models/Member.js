@@ -8,7 +8,7 @@ const memberSchema = new mongoose.Schema({
   email: {
     type: String,
     unique: true,
-    required: true,
+    // required: true,
   },
   dob: {
     type: Date,
@@ -36,6 +36,9 @@ const memberSchema = new mongoose.Schema({
     type: String,
   },
   googleId: {
+    type: String,
+  },
+  appleId: {
     type: String,
   },
   linkedinProfile: {
@@ -151,6 +154,10 @@ const memberSchema = new mongoose.Schema({
   ],
   referralCode: {
     type: String,
+  },
+  referralCount: {
+    type: Number,
+    default: 0,
   },
 });
 

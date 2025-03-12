@@ -21,8 +21,8 @@ import Feather from 'react-native-vector-icons/Feather';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useSelector} from 'react-redux';
-import ProfilePicture from '../components/ProfilePicture';
 import {Picker} from '@react-native-picker/picker';
+import TimezoneDropdown from '../components/TimezoneDropdown';
 
 const CreateCommunity = ({navigation}) => {
   const {user} = useSelector(state => state.auth);
@@ -85,9 +85,7 @@ const CreateCommunity = ({navigation}) => {
     try {
       const result = await launchImageLibrary({
         mediaType: 'photo',
-        maxWidth: 300,
-        maxHeight: 300,
-        quality: 0.7,
+        quality: 1,
       });
 
       if (!result.didCancel && result.assets?.length > 0) {
@@ -100,7 +98,7 @@ const CreateCommunity = ({navigation}) => {
 
   const handleCreateCommunity = async () => {
     if (activeTab === 'Basic') {
-      if (!communityName || !profilePic || !description) {
+      if (!communityName || !description) {
         Alert.alert(
           'Missing Fields',
           'Please fill in all required fields before proceeding.',
@@ -127,7 +125,6 @@ const CreateCommunity = ({navigation}) => {
     }
     if (
       communityName &&
-      profilePic &&
       description &&
       communityType &&
       communityLocation &&
@@ -497,13 +494,14 @@ const CreateCommunity = ({navigation}) => {
                 style={styles.input}
                 placeholderTextColor={'gray'}
               />
-              <TextInput
+              {/* <TextInput
                 placeholder="Timezone *"
                 value={timezone}
                 onChangeText={setTimezone}
                 style={styles.input}
                 placeholderTextColor={'gray'}
-              />
+              /> */}
+              <TimezoneDropdown setTimezone={setTimezone} timezone={timezone} />
               <View style={{height: 100}} />
             </View>
           )}

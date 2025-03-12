@@ -157,7 +157,7 @@ const HomeScreen = ({navigation}) => {
 
       setIsFetching(false);
     }
-  }, [posts, user]);
+  }, [posts, user?._id]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -211,7 +211,7 @@ const HomeScreen = ({navigation}) => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb-mob.onrender.com/posts/${post._id}`;
+      const postUrl = `https://prokutumb.com/posts/${post._id}`;
       const result = await Share.share({
         message: `Check out this post: ${postUrl}`,
       });

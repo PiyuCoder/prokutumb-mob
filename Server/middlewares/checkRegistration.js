@@ -1,4 +1,75 @@
 const Member = require("../models/Member");
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+
+const teamId = "64L4485MY4"; // Apple Developer Team ID
+const clientId = "com.prokutumb.majlis"; // Your App’s Bundle ID (iOS) or Service ID (Web)
+const keyId = "7HSYXFP5ZW"; // Found in Apple Developer Portal
+const privateKeyPath = path.join(__dirname, "AuthKey_7HSYXFP5ZW.p8"); // Path to .p8 file
+
+// Function to generate Apple Client Secret
+function generateAppleClientSecret() {
+  const privateKey = fs.readFileSync(privateKeyPath, "utf8");
+
+  return jwt.sign(
+    {
+      iss: teamId,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 15777000, // Expiry (~6 months)
+      aud: "https://appleid.apple.com",
+      sub: clientId,
+    },
+    privateKey,
+    {
+      algorithm: "ES256",
+      keyid: keyId,
+    }
+  );
+}
+
+// Function to exchange authorization code for Apple tokens
+async function exchangeAppleCodeForTokens(authCode) {
+  const clientSecret = generateAppleClientSecret();
+
+  const tokenUrl = "https://appleid.apple.com/auth/token";
+  const params = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    code: authCode,
+    grant_type: "authorization_code",
+  });
+
+  try {
+    const response = await axios.post(tokenUrl, params, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+
+    return response.data; // Contains id_token, access_token, refresh_token
+  } catch (error) {
+    console.error(
+      "Apple Token Exchange Failed:",
+      error.response?.data || error.message
+    );
+    throw new Error("Failed to exchange Apple code for tokens");
+  }
+}
+
+// Function to convert Apple's JWK to PEM format manually
+function convertJWKToPEM(jwk) {
+  const base64UrlToBase64 = (base64url) =>
+    base64url.replace(/-/g, "+").replace(/_/g, "/");
+
+  const n = Buffer.from(base64UrlToBase64(jwk.n), "base64").toString("base64");
+  const e = Buffer.from(base64UrlToBase64(jwk.e), "base64").toString("base64");
+
+  return `-----BEGIN PUBLIC KEY-----\n${Buffer.from(
+    `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A${n}AQAB`,
+    "base64"
+  ).toString("utf-8")}\n-----END PUBLIC KEY-----`;
+}
 
 // Function to generate a unique 6-character referral code
 const generateReferralCode = async () => {
@@ -90,6 +161,16 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
           .status(200)
           .json({ success: false, message: "Invalid referral code." });
       }
+
+      if (referredBy.referralCount >= 6) {
+        return res
+          .status(200)
+          .json({
+            success: false,
+            limitReached: true,
+            message: "Referral limit reached.",
+          });
+      }
       const referralCode = await generateReferralCode();
       // Register the new user
       const newUser = new Member({
@@ -102,6 +183,8 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
 
       // Save the new user in the database
       user = await newUser.save();
+      referredBy.referralCount += 1;
+      await referredBy.save();
 
       // Now that the user is registered, log them in by continuing
       req.user = user;
@@ -111,5 +194,121 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
   } catch (error) {
     console.error("Error checking registration:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Function to verify Apple token
+async function verifyAppleToken(idToken, userId) {
+  try {
+    const decoded = jwt.decode(idToken, { complete: true });
+
+    if (!decoded || decoded.payload.sub !== userId) {
+      return { success: false, message: "Invalid Apple ID token" };
+    }
+
+    return { success: true, payload: decoded.payload };
+  } catch (error) {
+    console.error("Apple Token Verification Failed:", error);
+    return { success: false, message: "Token verification failed" };
+  }
+}
+
+// **1. Check if User is Registered**
+exports.checkRegistrationApple = async (req, res, next) => {
+  const { token, userId } = req.body;
+  console.log(req.body);
+
+  const appleAuth = await verifyAppleToken(token, userId);
+  if (!appleAuth.success) {
+    return res.status(401).json({ error: "Invalid Apple authentication" });
+  }
+
+  try {
+    // Check if user exists in the database
+    let user = await Member.findOne({ appleId: userId });
+
+    if (user) {
+      // ✅ User exists, generate session token
+      req.user = user;
+      next();
+    } else {
+      // ❌ User does not exist, ask for referral code
+      return res.json({
+        isRegistered: false,
+        message: "New user, referral code required",
+      });
+    }
+  } catch (error) {
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// **2. Register New User with Referral Code**
+exports.checkRegistrationWithCodeApple = async (req, res, next) => {
+  const { token, userId, fullName, email } = req.body;
+
+  console.log("Full name: ", fullName);
+
+  const code = "CODE123";
+
+  try {
+    let userInfo;
+
+    if (token) {
+      // Direct ID Token verification
+      userInfo = await verifyAppleToken(token, userId);
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Missing authentication token or auth code" });
+    }
+
+    console.log("userInfo: ", userInfo);
+
+    if (!userInfo.success) {
+      return res.status(401).json({ error: "Invalid Apple authentication" });
+    }
+
+    // Extract user details
+    const userEmail = email || userInfo.payload.email || "";
+    let existingUser = await Member.findOne({ appleId: userId });
+
+    if (existingUser) {
+      req.user = existingUser;
+      return next(); // Proceed to login
+    }
+
+    // If new user, referral code is mandatory
+    if (!code) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Invalid referral code." });
+    }
+
+    const referredBy = await Member.findOne({ referralCode: code });
+    if (!referredBy) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Invalid referral code." });
+    }
+
+    const referralCode = await generateReferralCode();
+
+    // Create a new user
+    const newUser = new Member({
+      appleId: userId,
+      name: fullName || userInfo.payload.name || "Apple User",
+      email: userEmail,
+      referralCode,
+    });
+
+    await newUser.save();
+
+    req.user = newUser;
+    next();
+  } catch (error) {
+    console.error("Apple Registration Error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

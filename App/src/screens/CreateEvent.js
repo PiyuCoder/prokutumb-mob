@@ -27,6 +27,7 @@ import {format} from 'date-fns';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import Loader from '../components/Loader';
+import TimezoneDropdown from '../components/TimezoneDropdown';
 
 const CreateEvent = ({navigation, route}) => {
   const {user} = useSelector(state => state.auth);
@@ -46,7 +47,9 @@ const CreateEvent = ({navigation, route}) => {
     route.params?.communityId ? myCommunities[0]?._id : '',
   );
   const [category, setCategory] = useState('');
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState(
+    eventType === 'Virtual' ? 'Virtual' : '',
+  );
   const [tags, setTags] = useState('');
   const [activeTab, setActiveTab] = useState('EventType');
   const [step, setStep] = useState(1);
@@ -96,6 +99,11 @@ const CreateEvent = ({navigation, route}) => {
     }
   };
 
+  useEffect(() => {
+    if (eventType === 'Virtual') {
+      setAddress('Virtual');
+    }
+  }, [eventType]);
   const handleEndTimeChange = (event, selectedTime) => {
     setShowEndPicker(false);
     if (selectedTime) {
@@ -178,9 +186,9 @@ const CreateEvent = ({navigation, route}) => {
     try {
       const result = await launchImageLibrary({
         mediaType: 'photo',
-        maxWidth: 300,
-        maxHeight: 300,
-        quality: 0.7,
+        // maxWidth: 300,
+        // maxHeight: 300,
+        quality: 1,
       });
 
       if (!result.didCancel && result.assets?.length > 0) {
@@ -208,7 +216,7 @@ const CreateEvent = ({navigation, route}) => {
 
   const handleCreateEvent = async () => {
     if (activeTab === 'Basic') {
-      if (!eventName || !profilePic || !description || !communityId) {
+      if (!eventName || !description || !communityId) {
         Alert.alert(
           'Missing Fields',
           'Please fill in all required fields before proceeding.',
@@ -241,7 +249,6 @@ const CreateEvent = ({navigation, route}) => {
     }
     if (
       eventName &&
-      profilePic &&
       description &&
       eventType &&
       eventStartDate &&
@@ -266,11 +273,13 @@ const CreateEvent = ({navigation, route}) => {
         formData.append('timezone', timezone);
         formData.append('category', category);
 
-        formData.append('profilePicture', {
-          uri: profilePic,
-          type: 'image/jpeg',
-          name: 'profile.jpg',
-        });
+        if (profilePic) {
+          formData.append('profilePicture', {
+            uri: profilePic,
+            type: 'image/jpeg',
+            name: 'profile.jpg',
+          });
+        }
 
         formData.append('createdBy', user?._id); // Ensure user object is passed correctly
         const res = await axiosInstanceForm.post(
@@ -310,7 +319,6 @@ const CreateEvent = ({navigation, route}) => {
   const handleCreateDraftEvent = async () => {
     if (
       eventName &&
-      profilePic &&
       description &&
       eventType &&
       eventStartDate &&
@@ -765,13 +773,14 @@ const CreateEvent = ({navigation, route}) => {
                   marginTop: 10,
                 }}
               />
-              <TextInput
+              {/* <TextInput
                 placeholder="Select Timezone *"
                 value={timezone} // Display formatted string
                 style={styles.input}
                 placeholderTextColor="gray"
                 onChangeText={setTimezone}
-              />
+              /> */}
+              <TimezoneDropdown timezone={timezone} setTimezone={setTimezone} />
               <View
                 style={{
                   flexDirection: 'row',

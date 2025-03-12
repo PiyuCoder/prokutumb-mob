@@ -15,7 +15,10 @@ const storage = multer.diskStorage({
   },
 });
 
-const uploadPictures = multer({ storage: storage }).fields([
+const uploadPictures = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).fields([
   { name: "profilePicture", maxCount: 1 },
   { name: "coverPicture", maxCount: 1 },
 ]);
@@ -45,6 +48,7 @@ const upload = multer({
       cb(new Error("Only images are allowed!"));
     }
   },
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 module.exports = (io, userSocketMap) => {
@@ -53,9 +57,18 @@ module.exports = (io, userSocketMap) => {
     checkRegistrationController.checkRegistration
   );
   router.post(
+    "/check-apple-registration",
+    checkRegistrationController.checkRegistrationApple
+  );
+  router.post(
     "/google-signin",
     checkRegistrationController.checkRegistrationWithCode,
     userController.googleLogin
+  );
+  router.post(
+    "/apple-signin",
+    checkRegistrationController.checkRegistrationWithCodeApple,
+    userController.appleLogin
   );
   router.post(
     "/create-profile",

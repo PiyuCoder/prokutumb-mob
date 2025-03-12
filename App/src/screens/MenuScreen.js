@@ -23,6 +23,7 @@ import {logout} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {disconnectSocket} from '../socket';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import appleAuth from '@invertase/react-native-apple-authentication';
 
 const features = [
   {
@@ -90,6 +91,9 @@ const MenuScreen = ({navigation}) => {
     AsyncStorage.removeItem('user');
     disconnectSocket();
     navigation.replace('Login');
+//      await appleAuth.performRequest({
+//            requestedOperation: appleAuth.Operation.LOGOUT, // Try to revoke Apple session
+//          });
   };
 
   if (loading) return <Loader isLoading={loading} />;

@@ -190,6 +190,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
     padding: 4,
+    paddingTop: 50
   },
   searchContainer: {
     flexDirection: 'row',

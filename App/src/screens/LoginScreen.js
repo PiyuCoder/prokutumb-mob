@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   StatusBar,
   ImageBackground,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useDispatch} from 'react-redux';
@@ -18,6 +19,7 @@ import Loader from '../components/Loader';
 import Svg, {Circle} from 'react-native-svg';
 
 import proku from '../assets/splash-logo.png';
+import AppleSignInButton from '../components/AppleSignInButton';
 
 const LoginScreen = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -77,7 +79,8 @@ const LoginScreen = ({navigation}) => {
       />
 
       <GoogleSignInButton setIsLoading={setIsLoading} />
-
+         
+          {Platform.OS === 'ios' && <AppleSignInButton setIsLoading={setIsLoading}/>}
       {/* <Text className="mt-4" onPress={() => navigation.navigate('Signup')}>
         Don't have an account? Signup
       </Text> */}

@@ -15,33 +15,32 @@ import {useSelector} from 'react-redux';
 const RenderUserCard = ({item, results}) => {
   const navigation = useNavigation();
   const {user} = useSelector(state => state.auth);
-  const [resultItem, setResultItem] = useState({});
 
-  useEffect(() => {
-    if (results) {
-      const itemArr = item?.split(' ');
-      const resultItem = {
-        _id: itemArr[0],
-        type: itemArr[1],
-        name: `${itemArr[2]} ${itemArr[3]}`,
-        match: itemArr[4],
-      };
-      setResultItem(resultItem);
-    }
-  }, [item, results]);
+  function getRandomScore() {
+    return Math.floor(Math.random() * (100 - 50 + 1)) + 50;
+  }
+
+  console.log(item);
+
+  if (user?._id === item._id) {
+    return null;
+  }
+
   return (
     <TouchableOpacity
-      disabled={results}
       onPress={() =>
         navigation.navigate('UserProfile', {
-          userId: results ? resultItem?._id : item._id,
+          userId: item._id,
+            whyConnect: results ? item?.output : null,
+
         })
       }
       style={styles.cardWrapper}>
       {/* Match Text */}
       <View style={styles.matchTextWrapper}>
         <Text style={styles.matchText}>
-          {results ? resultItem?.match : '100'}% Match
+          {results ? item?.userDetails?.similarityScore : item?.similarityScore}
+          % Match
         </Text>
       </View>
 
@@ -49,7 +48,9 @@ const RenderUserCard = ({item, results}) => {
       <View style={styles.userCard}>
         {/* Profile Picture */}
         <ProfilePicture
-          profilePictureUri={item.profilePicture}
+          profilePictureUri={
+            results ? item.userDetails?.profilePicture : item?.profilePicture
+          }
           height={60}
           width={60}
           borderRadius={30}
@@ -59,10 +60,12 @@ const RenderUserCard = ({item, results}) => {
         {/* User Info */}
         <View>
           <Text style={styles.userName}>
-            {results ? resultItem?.name : item?.name}
+            {results ? item?.userDetails?.name : item?.name || 'Name'}
           </Text>
           <Text style={styles.mutual}>
-            {results ? 'Unknown' : item?.location}
+            {results
+              ? item?.userDetails?.location
+              : item?.location || 'Unknown'}
           </Text>
         </View>
 

@@ -18,6 +18,7 @@ import {
   View,
   StyleSheet,
   Linking,
+  Platform,
 } from 'react-native';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
@@ -55,6 +56,7 @@ import ResultsScreenEvent from './src/screens/ResultsScreenEvent';
 import ResultsScreenCommunity from './src/screens/ResultsScreenCommunity';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import ReportScreen from './src/screens/ReportScreen';
+import GetReferral from './src/screens/GetReferral';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -195,7 +197,7 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaProvider style={Platform.OS === 'ios' ? styles.container : {}}>
       <Provider store={store}>
         <PersistGate
           loading={<ActivityIndicator size="large" />}
@@ -225,6 +227,11 @@ export default function App() {
               <Stack.Screen
                 name="Profile"
                 component={ProfileScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="GetReferral"
+                component={GetReferral}
                 options={{headerShown: false}}
               />
               <Stack.Screen
@@ -386,7 +393,7 @@ export default function App() {
           </NavigationContainer>
         </PersistGate>
       </Provider>
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

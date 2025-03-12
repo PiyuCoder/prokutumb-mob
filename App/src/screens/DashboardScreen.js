@@ -12,6 +12,7 @@ import FA6Icon from 'react-native-vector-icons/FontAwesome6';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Communities from './Communities';
 import MenuScreen from './MenuScreen';
+import { Platform } from 'react-native';
 
 // Create the Tab Navigator
 const Tab = createBottomTabNavigator();
@@ -52,7 +53,7 @@ const DashboardScreen = ({navigation}) => {
             const iconSize =
               route.name === 'Network' ? 60 : route.name === 'Match' ? 23 : 30; // Larger size for Network icon
             return (
-              <View style={{alignItems: 'center'}}>
+              <View style={{alignItems: 'center', marginTop: route.name === 'Network' ? 5 : 20}}>
                 <IconComponent name={iconName} size={iconSize} color={color} />
                 {/* <View style={focused ? styles.circle : null}>
                   
@@ -119,21 +120,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center the icon within the circle
     alignItems: 'center',
   },
-  tabBarStyle: {
-    position: 'absolute',
-    bottom: 10,
-    left: 20,
-    right: 20,
-    elevation: 5,
-    backgroundColor: '#ffffff',
-    borderRadius: 40,
-    height: 80,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 10},
-    shadowRadius: 20,
-    opacity: 0.9,
-  },
+    tabBarStyle: {
+      position: 'absolute',
+      bottom: 10,
+      left: 20,
+      right: 20,
+      elevation: 5,
+      backgroundColor: '#ffffff',
+      borderRadius: 40,
+      height: 80,
+      paddingBottom: Platform.OS === 'ios' ? 15 : 0,  // Adjust iOS padding
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowOffset: {width: 0, height: 10},
+      shadowRadius: 20,
+      opacity: 0.9,
+    },
 });
 
 export default DashboardScreen;

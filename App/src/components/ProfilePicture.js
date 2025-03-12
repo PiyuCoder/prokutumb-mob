@@ -32,7 +32,7 @@ const ProfilePicture = ({
       }}>
       <Image
         source={imageSource}
-        defaultSource={require('../assets/default-pp.png')} // iOS only
+        defaultSource={require('../assets/default-cp.png')} // iOS only
         style={{
           width,
           height,
@@ -40,7 +40,7 @@ const ProfilePicture = ({
           // borderWidth: isUser ? 2 : 0,
           // borderColor: isUser ? '' : '',
         }}
-        onError={() => setImageSource(require('../assets/default-pp.png'))} // Android fallback
+        onError={() => setImageSource(require('../assets/default-cp.png'))} // Android fallback
       />
     </View>
   );
