@@ -293,7 +293,7 @@ const ProfileScreen = () => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb.com/posts/${post._id}`;
+      const postUrl = `https://majlisserver.com/backend/posts/${post._id}`;
       const result = await Share.share({
         message: `Check out this post: ${postUrl}`,
       });

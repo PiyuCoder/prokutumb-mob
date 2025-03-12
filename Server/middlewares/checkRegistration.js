@@ -4,11 +4,14 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const nodemailer = require("nodemailer");
+const ReferralSettings = require("../models/ReferralSettings");
+const Otp = require("../models/Otp");
 
-const teamId = "64L4485MY4"; // Apple Developer Team ID
-const clientId = "com.prokutumb.majlis"; // Your App’s Bundle ID (iOS) or Service ID (Web)
-const keyId = "7HSYXFP5ZW"; // Found in Apple Developer Portal
-const privateKeyPath = path.join(__dirname, "AuthKey_7HSYXFP5ZW.p8"); // Path to .p8 file
+const teamId = process.env.APPLE_TEAM_ID;
+const clientId = process.env.APPLE_CLIENT_ID;
+const keyId = process.env.APPLE_KEY_ID;
+const privateKeyPath = path.join(__dirname, "AuthKey_7HSYXFP5ZW.p8");
 
 // Function to generate Apple Client Secret
 function generateAppleClientSecret() {
@@ -121,6 +124,42 @@ exports.checkRegistration = async (req, res, next) => {
   }
 };
 
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+};
+
+const sendEmail = async (recipient, subject, message) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.zoho.in",
+      port: 465,
+      secure: true, // Use SSL
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Majlis: OTP" <${process.env.EMAIL}>`,
+      to: recipient,
+      subject: subject,
+      text: message,
+      html: `<p>${message}</p>`, // Optional: Supports HTML emails
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent to ${recipient}: ${info.messageId}`);
+    return { success: true, message: "Email sent successfully" };
+  } catch (error) {
+    console.error(`❌ Error sending email: ${error.message}`);
+    return { success: false, message: "Failed to send email" };
+  }
+};
+
 exports.checkEmailRegistration = async (req, res, next) => {
   const { email } = req.body;
 
@@ -129,6 +168,17 @@ exports.checkEmailRegistration = async (req, res, next) => {
     if (user) {
       return res.status(200).json({ isRegistered: true });
     } else {
+      // const otp = generateOTP();
+
+      // await Otp.deleteOne({ email });
+
+      // // Save new OTP in DB
+      // const newOtp = new Otp({ email, otp });
+      // await newOtp.save();
+
+      // const message = `Your OTP is: <b>${otp}</b>. It is valid for 10 minutes.`;
+
+      // const result = await sendEmail(email, "Your OTP Code", message);
       return res.status(200).json({ isRegistered: false });
     }
   } catch (error) {
@@ -178,7 +228,10 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
           .json({ success: false, message: "Invalid referral code." });
       }
 
-      if (referredBy.referralCount >= 6) {
+      const settings = await ReferralSettings.findOne();
+      const referralLimit = settings ? settings.referralLimit : 6;
+
+      if (referredBy.referralCount >= referralLimit) {
         return res.status(200).json({
           success: false,
           limitReached: true,

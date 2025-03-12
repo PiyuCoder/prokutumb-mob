@@ -301,7 +301,7 @@ const UserProfile = ({route}) => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb.com/posts/${post._id}`;
+      const postUrl = `https://majlisserver.com/backend/posts/${post._id}`;
       const result = await Share.share({
         subject: 'Check out this post!',
         message: `Check out this post on Majlis: ${postUrl}`,

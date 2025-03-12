@@ -71,7 +71,7 @@ const Post = ({navigation}) => {
 
   const sharePost = async () => {
     try {
-      const postUrl = `https://prokutumb.com/posts/${postId}`;
+      const postUrl = `https://majlisserver.com/backend/posts/${postId}`;
       const result = await Share.share({
         subject: 'Check out this post!',
         message: `Check out this post on Majlis: ${postUrl}`,

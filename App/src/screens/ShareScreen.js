@@ -265,7 +265,7 @@ const ShareScreen = ({navigation}) => {
             }}>
             <QRCode
               // value={`prokutumb://profile/${user?._id}`}
-              value={`https://prokutumb.com/redirect.html?userId=${user?._id}`}
+              value={`https://majlisserver.com/backend/redirect.html?userId=${user?._id}`}
               size={180}
               color="black"
               backgroundColor="transparent"

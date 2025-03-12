@@ -21,6 +21,7 @@ import EntypoIcon from 'react-native-vector-icons/Entypo';
 import Sound from 'react-native-sound';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Loader from '../components/Loader';
+import {PERMISSIONS, RESULTS} from 'react-native-permissions';
 
 const NetworkScreen = ({navigation, route}) => {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
@@ -131,8 +132,11 @@ const NetworkScreen = ({navigation, route}) => {
         console.warn(err);
         return false;
       }
+    } else if (Platform.OS === 'ios') {
+      const result = await request(PERMISSIONS.IOS.MICROPHONE);
+      return result === RESULTS.GRANTED;
     }
-    return true;
+    return false;
   };
 
   const formatTime = dateString => {
@@ -268,17 +272,17 @@ const NetworkScreen = ({navigation, route}) => {
     });
 
     // Play a sound
-    const beep = new Sound('beep.mp3', Sound.MAIN_BUNDLE, error => {
-      if (error) {
-        console.log('Failed to load sound:', error);
-        return;
-      }
-      beep.play(success => {
-        if (!success) {
-          console.log('Sound playback failed.');
-        }
-      });
-    });
+    // const beep = new Sound('beep.mp3', Sound.MAIN_BUNDLE, error => {
+    //   if (error) {
+    //     console.log('Failed to load sound:', error);
+    //     return;
+    //   }
+    //   beep.play(success => {
+    //     if (!success) {
+    //       console.log('Sound playback failed.');
+    //     }
+    //   });
+    // });
     // setMessage('Speak now...');
     try {
       await Voice.start('en-US');

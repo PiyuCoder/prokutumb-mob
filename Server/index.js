@@ -49,7 +49,7 @@ app.get("/auth/callback", async (req, res) => {
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: "https://prokutumb.com/auth/callback",
+        redirect_uri: "https://majlisserver.com/backend/auth/callback",
         client_id: process.env.LINKEDIN_CLIENT_ID,
         client_secret: "WPL_AP1.ItYT2qO32AOtxQV8.KPUExQ==",
       }),
