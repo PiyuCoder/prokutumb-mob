@@ -65,6 +65,17 @@ module.exports = (io, userSocketMap) => {
     checkRegistrationController.checkRegistrationWithCode,
     userController.googleLogin
   );
+  router.post("/signup", userController.signup);
+  router.post(
+    "/check-email-register",
+    checkRegistrationController.checkEmailRegistration
+  );
+  router.post("/login", userController.login);
+  router.post(
+    "/apple-signin",
+    checkRegistrationController.checkRegistrationWithCodeApple,
+    userController.appleLogin
+  );
   router.post(
     "/apple-signin",
     checkRegistrationController.checkRegistrationWithCodeApple,

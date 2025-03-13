@@ -49,7 +49,7 @@ app.get("/auth/callback", async (req, res) => {
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: "https://prokutumb.com/auth/callback",
+        redirect_uri: "https://majlisserver.com/backend/auth/callback",
         client_id: process.env.LINKEDIN_CLIENT_ID,
         client_secret: "WPL_AP1.ItYT2qO32AOtxQV8.KPUExQ==",
       }),
@@ -78,11 +78,60 @@ app.use("/api/communities", communityRouter);
 app.get("/posts/:id", async (req, res) => {
   const { id } = req.params;
   const post = await Feed.findById(id);
-  if (post) {
-    // res.json(post); // API response for post data
-    res.redirect(`prokutumb://post/${post.id}`);
 
-    // Or render an HTML page for web apps
+  if (post) {
+    const appLink = `prokutumb://post/${post.id}`;
+    const playStoreLink = `https://play.google.com/store/apps/details?id=com.majlis.network`;
+    const appStoreLink = `https://apps.apple.com/in/app/majlis-networking/id6741841380`;
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isAndroid = /android/i.test(userAgent);
+    const isIOS = /iphone|ipad|ipod/i.test(userAgent);
+
+    const storeLink = isIOS ? appStoreLink : playStoreLink;
+    const androidIntent = `intent://post/${post.id}#Intent;scheme=prokutumb;package=com.majlis.network;end;`;
+
+    res.send(`
+      <html>
+      <head>
+        <script>
+          function openApp() {
+            var startTime = Date.now();
+            var fallbackTimeout = 2000; // 2 seconds
+
+            function fallback() {
+              var elapsed = Date.now() - startTime;
+              if (elapsed < fallbackTimeout + 100) {
+                window.location.href = "${storeLink}";
+              }
+            }
+
+            // Open the app using deep linking
+            if (${isIOS}) {
+              window.location.href = "${appLink}";
+            } else if (${isAndroid}) {
+              window.location.href = "${androidIntent}";
+            }
+
+            // Start fallback timer
+            setTimeout(fallback, fallbackTimeout);
+
+            // Cancel fallback if user leaves the page (app opened successfully)
+            document.addEventListener("visibilitychange", function() {
+              if (document.hidden) {
+                clearTimeout(fallback);
+              }
+            });
+          }
+
+          window.onload = openApp;
+        </script>
+      </head>
+      <body>
+        <p>Redirecting... If nothing happens, <a href="${storeLink}">click here</a> to download the app.</p>
+      </body>
+      </html>
+    `);
   } else {
     res.status(404).send("Post not found");
   }

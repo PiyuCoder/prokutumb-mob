@@ -235,9 +235,11 @@ const CommunityHomeScreen = ({route}) => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb.com/posts/${post._id}`;
+      const postUrl = `https://majlisserver.com/backend/posts/${post._id}`;
       const result = await Share.share({
-        message: `Check out this post: ${postUrl}`,
+        subject: 'Check out this post!',
+        message: `Check out this post on Majlis: ${postUrl}`,
+        url: postUrl,
       });
 
       if (result.action === Share.sharedAction) {

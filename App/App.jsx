@@ -57,6 +57,7 @@ import ResultsScreenCommunity from './src/screens/ResultsScreenCommunity';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import ReportScreen from './src/screens/ReportScreen';
 import GetReferral from './src/screens/GetReferral';
+import EmailLoginScreen from './src/screens/EmailLoginScreen';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -223,7 +224,16 @@ export default function App() {
                 component={LoginScreen}
                 options={{headerShown: false}}
               />
-              <Stack.Screen name="Signup" component={SignupScreen} />
+              <Stack.Screen
+                name="Signup"
+                component={SignupScreen}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="EmailLogin"
+                component={EmailLoginScreen}
+                options={{headerShown: false}}
+              />
               <Stack.Screen
                 name="Profile"
                 component={ProfileScreen}

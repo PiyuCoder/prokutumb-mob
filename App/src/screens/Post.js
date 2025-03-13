@@ -26,20 +26,20 @@ import {ScrollView} from 'react-native-gesture-handler';
 const Post = ({navigation}) => {
   const route = useRoute();
   const {postId} = route.params;
-  //   const postId = '670f54739e058d4c9784608c';
+  // const postId = '67c74c535d9d2293915ca6cb';
   const [item, setItem] = useState({});
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
   const [openActionPostId, setOpenActionPostId] = useState(null);
+  const [actionModalVisible, setActionModalVisible] = useState(false);
   const [currentComment, setCurrentComment] = useState('');
   const {user} = useSelector(state => state.auth);
   const dispatch = useDispatch();
-    const [actionModalVisible, setActionModalVisible] = useState(false);
-
 
   useEffect(() => {
     const fetchData = async () => {
       const res = await axiosInstance.get(`/api/posts/fetch/${postId}`);
       setItem(res?.data);
+      console.log(res?.data);
     };
     fetchData();
   }, [postId, dispatch]);
@@ -73,9 +73,11 @@ const Post = ({navigation}) => {
 
   const sharePost = async () => {
     try {
-      const postUrl = `https://prokutumb.com/posts/${postId}`;
+      const postUrl = `https://majlisserver.com/backend/posts/${postId}`;
       const result = await Share.share({
-        message: `Check out this post: ${postUrl}`,
+        subject: 'Check out this post!',
+        message: `Check out this post on Majlis: ${postUrl}`,
+        url: postUrl,
       });
 
       if (result.action === Share.sharedAction) {

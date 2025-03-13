@@ -196,7 +196,11 @@ const GoogleSignInButton = ({setIsLoading}) => {
           <TouchableOpacity onPress={handleRegister} style={styles.button}>
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('GetReferral')}>
+          <TouchableOpacity
+            onPress={() => {
+              setOpenReferralInput(false);
+              navigation.navigate('GetReferral');
+            }}>
             <Text
               style={{color: '#289BF6', textAlign: 'center', marginTop: 20}}>
               How to get the code?
@@ -214,7 +218,7 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
+    // marginTop: 20,
   },
   googleIcon: {
     height: 24,
@@ -253,6 +257,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white', // Change as needed
     paddingHorizontal: 20,
     padding: 10,
+    paddingTop: 50,
   },
   input: {
     width: '90%',

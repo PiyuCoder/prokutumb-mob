@@ -96,6 +96,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF33',
     borderRadius: 8,
   },
+  infoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',

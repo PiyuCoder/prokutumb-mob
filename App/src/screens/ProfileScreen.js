@@ -92,7 +92,7 @@ const ProfileScreen = () => {
   const [imageSource, setImageSource] = useState(
     user?.profilePicture
       ? {uri: user?.profilePicture}
-      : require('../assets/default-cp.png'),
+      : require('../assets/default-pp.png'),
   );
 
   console.log('checking user: ', user);
@@ -293,7 +293,7 @@ const ProfileScreen = () => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb.com/posts/${post._id}`;
+      const postUrl = `https://majlisserver.com/backend/posts/${post._id}`;
       const result = await Share.share({
         message: `Check out this post: ${postUrl}`,
       });
@@ -606,10 +606,10 @@ const ProfileScreen = () => {
 
       <ImageBackground
         source={imageSource}
-        defaultSource={require('../assets/default-cp.png')}
+        defaultSource={require('../assets/default-pp.png')}
         style={styles.userProfilePicture}
         imageStyle={styles.profilePictureImage}
-        onError={() => setImageSource(require('../assets/default-cp.png'))}
+        onError={() => setImageSource(require('../assets/default-pp.png'))}
       />
 
       <ScrollView
@@ -862,7 +862,12 @@ const ProfileScreen = () => {
                         color={`${link.color}`}
                       />
                       <Text style={styles.platformName}>{link.platform}:</Text>
-                      <Text style={styles.platformName}>{link.url}</Text>
+                      <Text
+                        style={[styles.platformName, {flexShrink: 1}]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
+                        {link.url}
+                      </Text>
                     </View>
                   ),
               )}

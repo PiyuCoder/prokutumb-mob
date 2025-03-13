@@ -1,4 +1,4 @@
-package com.prokutumb
+package com.majlis.network
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

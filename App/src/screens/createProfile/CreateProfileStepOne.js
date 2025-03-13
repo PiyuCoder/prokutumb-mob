@@ -25,13 +25,6 @@ import {launchImageLibrary} from 'react-native-image-picker';
 
 const interestsList = ['Networking', 'Business', 'Technology', 'Marketing'];
 const skillsList = [
-  'JavaScript',
-  'React',
-  'Node.js',
-  'Python',
-  'Java',
-
-  // Core Business & Professional Skills
   'Leadership & Management',
   'Business Strategy',
   'Marketing & Sales',

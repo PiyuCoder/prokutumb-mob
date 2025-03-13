@@ -22,8 +22,7 @@ const RenderEventCard = ({item, results}) => {
       onPress={() =>
         navigation.navigate('EventHome', {
           eventId: item?._id,
-            whyConnect: results ? item?.output : null,
-
+          whyConnect: results ? item?.output : null,
         })
       }
       style={styles.cardWrapper}>

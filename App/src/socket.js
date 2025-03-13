@@ -1,7 +1,7 @@
 import io from 'socket.io-client';
 
-// const SERVER_URL = 'http://10.0.2.2:3001'; // Or use 'https://prokutumb.com' for deployed
-const SERVER_URL = 'https://prokutumb.com'; // Or use 'https://prokutumb.com' for deployed
+// const SERVER_URL = 'http://10.0.2.2:3001'; // Or use 'https://majlisserver.com/backend' for deployed
+const SERVER_URL = 'https://majlisserver.com/backend'; // Or use 'https://majlisserver.com/backend' for deployed
 
 const socket = io(SERVER_URL, {
   autoConnect: true,

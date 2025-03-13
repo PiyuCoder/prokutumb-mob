@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, Alert, StyleSheet } from 'react-native';
-import appleAuth, { AppleButton } from '@invertase/react-native-apple-authentication';
-import { axiosInstance } from '../api/axios';
+import {View, Alert, StyleSheet} from 'react-native';
+import appleAuth, {
+  AppleButton,
+} from '@invertase/react-native-apple-authentication';
+import {axiosInstance} from '../api/axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loginSuccess } from '../store/slices/authSlice';
-import { useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import {loginSuccess} from '../store/slices/authSlice';
+import {useDispatch} from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
 
-const AppleSignInButton = ({ setIsLoading }) => {
+const AppleSignInButton = ({setIsLoading}) => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
@@ -21,7 +23,7 @@ const AppleSignInButton = ({ setIsLoading }) => {
 
       console.log('Apple Auth Response:', appleAuthRequestResponse);
 
-      const { identityToken, user, fullName, email } = appleAuthRequestResponse;
+      const {identityToken, user, fullName, email} = appleAuthRequestResponse;
 
       // Validate the returned identity token
       if (!identityToken) {
@@ -33,7 +35,9 @@ const AppleSignInButton = ({ setIsLoading }) => {
       const response = await axiosInstance.post('/api/user/apple-signin', {
         token: identityToken,
         userId: user,
-        fullName: fullName.givenName ? `${fullName.givenName} ${fullName.familyName}` : 'Apple User',
+        fullName: fullName.givenName
+          ? `${fullName.givenName} ${fullName.familyName}`
+          : 'Apple User',
         email: email || null,
       });
 
@@ -41,25 +45,28 @@ const AppleSignInButton = ({ setIsLoading }) => {
       console.log('Backend Response:', data);
 
       if (data.success) {
-        const { token, user } = data;
+        const {token, user} = data;
 
         // Store token and user data in AsyncStorage
         await AsyncStorage.setItem('authToken', token);
         await AsyncStorage.setItem('user', JSON.stringify(user));
 
         // Update Redux state
-        dispatch(loginSuccess({ token, user }));
+        dispatch(loginSuccess({token, user}));
         setIsLoading(false);
 
         // Navigate based on profile completion
         if (user?.isProfileComplete) {
           navigation.replace('Dashboard');
         } else {
-          navigation.replace('CreateProfile', { name: user?.name || '' });
+          navigation.replace('CreateProfile', {name: user?.name || ''});
         }
       } else {
         console.error('Backend verification failed:', data.message);
-        Alert.alert('Sign-In Failed', data.message || 'An unknown error occurred.');
+        Alert.alert(
+          'Sign-In Failed',
+          data.message || 'An unknown error occurred.',
+        );
       }
     } catch (error) {
       console.error('Apple Sign-In Error:', error.message);

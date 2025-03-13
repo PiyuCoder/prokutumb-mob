@@ -25,7 +25,7 @@ const EventCard = ({
   const [imageSource, setImageSource] = useState(
     event?.profilePicture
       ? {uri: event?.profilePicture}
-      : require('../assets/default-cp.png'),
+      : require('../assets/default-ep.png'),
   );
   const navigation = useNavigation();
   return (
@@ -35,10 +35,10 @@ const EventCard = ({
       <View style={!isTrending ? styles.userCard : styles.trendingUserCard}>
         <ImageBackground
           source={imageSource}
-          defaultSource={require('../assets/default-cp.png')}
+          defaultSource={require('../assets/default-ep.png')}
           style={[styles.profilePicture, {height: picHeight}]}
           imageStyle={styles.profilePictureImage}
-          onError={() => setImageSource(require('../assets/default-cp.png'))}
+          onError={() => setImageSource(require('../assets/default-ep.png'))}
         />
         <View
           // className=" blur-3xl backdrop-blur-3xl bg-[#2d264bc4]"

@@ -36,14 +36,14 @@ const EventScreen = ({navigation, route}) => {
   const [imageSource, setImageSource] = useState(
     event?.profilePicture
       ? {uri: event?.profilePicture}
-      : require('../assets/default-cp.png'),
+      : require('../assets/default-ep.png'),
   );
 
   useEffect(() => {
     if (event?.profilePicture) {
       setImageSource({uri: event?.profilePicture});
     } else {
-      setImageSource(require('../assets/default-cp.png'));
+      setImageSource(require('../assets/default-ep.png'));
     }
   }, [event?.profilePicture]);
 
@@ -122,10 +122,10 @@ const EventScreen = ({navigation, route}) => {
 
       <ImageBackground
         source={imageSource}
-        defaultSource={require('../assets/default-cp.png')}
+        defaultSource={require('../assets/default-ep.png')}
         style={styles.eventProfilePicture}
         imageStyle={styles.profilePictureImage}
-        onError={() => setImageSource(require('../assets/default-cp.png'))}
+        onError={() => setImageSource(require('../assets/default-ep.png'))}
       />
       <View
         style={{

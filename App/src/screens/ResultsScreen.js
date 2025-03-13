@@ -11,7 +11,7 @@ import RenderUserCard from '../components/RenderUserCard';
 const ResultsScreen = ({route, navigation}) => {
   const {results} = route.params; // Get results from navigation
 
-    console.log('results: ', results);
+  console.log('results: ', results);
 
   return (
     <ScrollView style={styles.container}>

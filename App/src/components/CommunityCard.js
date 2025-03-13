@@ -23,6 +23,11 @@ const CommunityCard = ({
   isTrending,
 }) => {
   const [isActionModalVisible, setActionModalVisible] = useState(false);
+  const [imageSource, setImageSource] = useState(
+    community?.profilePicture
+      ? {uri: community.profilePicture}
+      : require('../assets/default-cp.png'),
+  );
   const {user} = useSelector(state => state.auth);
   const navigation = useNavigation();
   return (
@@ -31,13 +36,11 @@ const CommunityCard = ({
       style={[styles.cardWrapper, {height, width}]}>
       <View style={!isTrending ? styles.userCard : styles.trendingUserCard}>
         <Image
-          source={{
-            uri:
-              community?.profilePicture ||
-              'https://cdn.pixabay.com/photo/2016/11/23/15/48/audience-1853662_640.jpg',
-          }}
+          source={imageSource}
+          defaultSource={require('../assets/default-cp.png')}
           style={[styles.profilePicture, {height: picHeight}]}
           imageStyle={styles.profilePictureImage}
+          onError={() => setImageSource(require('../assets/default-cp.png'))}
         />
         <View style={isTrending ? styles.trendingOverlay : {padding: 6}}>
           <View>
@@ -48,7 +51,7 @@ const CommunityCard = ({
                 styles.userName,
                 {color: isTrending ? 'white' : 'black'},
               ]}>
-              {community.name}
+              {community?.name}
             </Text>
             <View
               style={{
@@ -92,7 +95,7 @@ const CommunityCard = ({
                   onPress={() => {
                     setActionModalVisible(false);
                     navigation.navigate('CommunityHome', {
-                      communityId: community._id,
+                      communityId: community?._id,
                     });
                   }}>
                   <Text style={styles.dropdownItemText}>View</Text>
@@ -111,27 +114,28 @@ const CommunityCard = ({
                 fontWeight: '400',
                 fontSize: 12,
               }}>
-              {community.members.length + 1} Members
+              {community.members?.length + 1} Members
             </Text>
           </View>
-          {community?.createdBy?._id !== user?._id &&
-            !community?.members?.includes(user?._id) && (
-              <TouchableOpacity
-                onPress={onPress}
-                style={[
-                  styles.Btn,
-                  {
-                    padding: isTrending ? 9 : 4,
-                    alignSelf: isTrending ? 'auto' : 'center',
-                  },
-                ]}>
-                <Text style={[styles.BtnText]}>
-                  {community?.joinRequests?.some(req => req._id == user?._id)
-                    ? 'Requested'
-                    : 'Join'}
-                </Text>
-              </TouchableOpacity>
-            )}
+          {community?.createdBy?._id !== user?._id
+            ? !community?.members?.includes(user?._id) && (
+                <TouchableOpacity
+                  onPress={onPress}
+                  style={[
+                    styles.Btn,
+                    {
+                      padding: isTrending ? 9 : 4,
+                      alignSelf: isTrending ? 'auto' : 'center',
+                    },
+                  ]}>
+                  <Text style={[styles.BtnText]}>
+                    {community?.joinRequests?.some(req => req._id == user?._id)
+                      ? 'Requested'
+                      : 'Join'}
+                  </Text>
+                </TouchableOpacity>
+              )
+            : null}
           <View
             style={{
               flexDirection: 'row',

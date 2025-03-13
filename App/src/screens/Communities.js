@@ -53,7 +53,13 @@ import {useFocusEffect} from '@react-navigation/native';
 
 export default function Communities({navigation, route}) {
   const [communities, setCommunities] = useState([]);
+  const [trendingCommunities, setTrendingCommunities] = useState([]);
+  const [communitiesYouMayLike, setCommunitiesYouMayLike] = useState([]);
+  const [communitiesForYou, setCommunitiesForYou] = useState([]);
   const [events, setEvents] = useState([]);
+  const [eventsYouMayLike, setEventsYouMayLike] = useState([]);
+  const [eventsForYou, setEventsForYou] = useState([]);
+  const [trendingEvents, setTrendingEvents] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isEvent, setIsEvent] = useState(
     route.params?.screen === 'Communities' ? false : true,
@@ -71,9 +77,12 @@ export default function Communities({navigation, route}) {
       setLoading(true);
       try {
         if (user?._id) {
-          const res = await axiosInstance.get('/api/communities');
+          const res = await axiosInstance.get(`/api/communities/${user?._id}`);
           if (res.status === 200) {
-            setCommunities(res?.data?.data || []);
+            setCommunities(res?.data?.allCommunities || []);
+            setCommunitiesYouMayLike(res?.data?.communitiesYouMayLike || []);
+            setCommunitiesForYou(res?.data?.communitiesForYou || []);
+            setTrendingCommunities(res?.data?.trendingCommunities || []);
           }
         }
       } catch (error) {
@@ -84,10 +93,13 @@ export default function Communities({navigation, route}) {
     const fetchEvents = async () => {
       try {
         const res = await axiosInstance.get(
-          '/api/communities/events/fetchAllEvents',
+          `/api/communities/events/fetchAllEvents/${user?._id}`,
         );
         if (res.status === 200) {
-          setEvents(res?.data?.data || []);
+          setEvents(res?.data?.allEvents || []);
+          setEventsForYou(res?.data?.forYou || []);
+          setEventsYouMayLike(res?.data?.youMayLike || []);
+          setTrendingEvents(res?.data?.trending || []);
         }
       } catch (error) {
         console.error('Error fetching events:', error.message);
@@ -160,9 +172,33 @@ export default function Communities({navigation, route}) {
     ? communities.filter(comm => comm?.category === category)
     : communities;
 
+  const filteredCommunitiesForYou = category
+    ? communitiesForYou.filter(comm => comm?.category === category)
+    : communitiesForYou;
+
+  const filteredCommunitiesYouMayLike = category
+    ? communitiesYouMayLike.filter(comm => comm?.category === category)
+    : communitiesYouMayLike;
+
+  const filteredTrendingCommunities = category
+    ? trendingCommunities.filter(comm => comm?.category === category)
+    : trendingCommunities;
+
   const filteredEvents = category
     ? events.filter(ev => ev?.category === category)
     : events;
+
+  const filteredEventsForYou = category
+    ? eventsForYou.filter(ev => ev?.category === category)
+    : eventsForYou;
+
+  const filteredEventsYouMayLike = category
+    ? eventsYouMayLike.filter(ev => ev?.category === category)
+    : eventsYouMayLike;
+
+  const filteredTrendingEvents = category
+    ? trendingEvents.filter(ev => ev?.category === category)
+    : trendingEvents;
 
   const myCommunities = communities?.filter(
     community => community.createdBy?._id === user?._id,
@@ -256,7 +292,7 @@ export default function Communities({navigation, route}) {
       <ScrollView
         contentContainerStyle={{paddingHorizontal: 10, marginBottom: 20}}
         horizontal>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 7}}>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 1}}>
           {[
             {name: 'Networking', color: '#EDE9FF'},
             {name: 'Business', color: '#FFF5D7'},
@@ -328,6 +364,16 @@ export default function Communities({navigation, route}) {
         <MaterialIcons name="keyboard-arrow-down" size={15} color="#333538" />
       </View> */}
 
+      {category !== '' ? (
+        isEvent ? (
+          <>{renderHorizontalList(filteredEvents, 'Result (Events)')}</>
+        ) : (
+          <>
+            {renderHorizontalList(filteredCommunities, 'Result (Communities)')}
+          </>
+        )
+      ) : null}
+
       {isEvent ? (
         modalType === 'myEvents' ? (
           <>
@@ -336,9 +382,12 @@ export default function Communities({navigation, route}) {
           </>
         ) : (
           <>
-            {renderHorizontalList(filteredEvents, 'Trending Events')}
-            {renderHorizontalList(filteredEvents, 'Events for you')}
-            {renderHorizontalList(filteredEvents, 'Events you May Like')}
+            {renderHorizontalList(filteredTrendingEvents, 'Trending Events')}
+            {renderHorizontalList(filteredEventsForYou, 'Events for you')}
+            {renderHorizontalList(
+              filteredEventsYouMayLike,
+              'Events you May Like',
+            )}
           </>
         )
       ) : modalType === 'myCommunities' ? (
@@ -348,10 +397,18 @@ export default function Communities({navigation, route}) {
         </>
       ) : (
         <>
-          {renderHorizontalList(filteredCommunities, 'Trending Communities')}
-          {renderHorizontalList(filteredCommunities, 'Communities for you')}
           {renderHorizontalList(
-            filteredCommunities,
+            filteredTrendingCommunities?.length > 0
+              ? filteredTrendingCommunities
+              : filteredCommunities,
+            'Trending Communities',
+          )}
+          {renderHorizontalList(
+            filteredCommunitiesForYou,
+            'Communities for you',
+          )}
+          {renderHorizontalList(
+            filteredCommunitiesYouMayLike,
             'Communities you May Like',
           )}
         </>
@@ -415,10 +472,10 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 5,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     backgroundColor: '#EDEDED',
     borderRadius: 10,
-    marginHorizontal: 5,
+    marginHorizontal: 3,
   },
 
   filterButtonText: {

@@ -14,6 +14,7 @@ import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ProfilePicture from '../components/ProfilePicture';
+import {useSelector} from 'react-redux';
 
 const ConnectionsScreen = ({route}) => {
   const {userId} = route.params;
@@ -21,6 +22,7 @@ const ConnectionsScreen = ({route}) => {
   const [connections, setConnections] = useState([]);
   const [filteredConnections, setFilteredConnections] = useState([]);
   const navigation = useNavigation();
+  const {user} = useSelector(state => state.auth);
 
   // Fetch connections
   useEffect(() => {
@@ -121,9 +123,11 @@ const ConnectionsScreen = ({route}) => {
         renderItem={({item}) => (
           <TouchableOpacity
             onPress={() => {
-              navigation.navigate('UserProfile', {
-                userId: item._id,
-              });
+              user?._id === item._id
+                ? navigation.navigate('Profile')
+                : navigation.navigate('UserProfile', {
+                    userId: item._id,
+                  });
             }}>
             <View style={styles.friendItem}>
               <ProfilePicture

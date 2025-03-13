@@ -9,6 +9,8 @@ import {
   TextInput,
   Keyboard,
   ScrollView,
+  ImageBackground,
+  KeyboardAvoidingView,
 } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 import Voice from '@react-native-voice/voice';
@@ -21,6 +23,8 @@ import EntypoIcon from 'react-native-vector-icons/Entypo';
 import Sound from 'react-native-sound';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Loader from '../components/Loader';
+import {PERMISSIONS, RESULTS} from 'react-native-permissions';
+import LottieView from 'lottie-react-native';
 
 const NetworkScreen = ({navigation, route}) => {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
@@ -112,30 +116,31 @@ const NetworkScreen = ({navigation, route}) => {
     };
   }, []);
 
-    const requestMicrophonePermission = async () => {
-        if (Platform.OS === 'android') {
-          try {
-            const granted = await PermissionsAndroid.request(
-              PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-              {
-                title: 'Microphone Permission',
-                message: 'This app needs access to your microphone to recognize speech.',
-                buttonNeutral: 'Ask Me Later',
-                buttonNegative: 'Cancel',
-                buttonPositive: 'OK',
-              }
-            );
-            return granted === PermissionsAndroid.RESULTS.GRANTED;
-          } catch (err) {
-            console.warn(err);
-            return false;
-          }
-        } else if (Platform.OS === 'ios') {
-          const result = await request(PERMISSIONS.IOS.MICROPHONE);
-          return result === RESULTS.GRANTED;
-        }
+  const requestMicrophonePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Microphone Permission',
+            message:
+              'This app needs access to your microphone to recognize speech.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
         return false;
-      };
+      }
+    } else if (Platform.OS === 'ios') {
+      const result = await request(PERMISSIONS.IOS.MICROPHONE);
+      return result === RESULTS.GRANTED;
+    }
+    return false;
+  };
 
   const formatTime = dateString => {
     const date = new Date(dateString);
@@ -270,17 +275,17 @@ const NetworkScreen = ({navigation, route}) => {
     });
 
     // Play a sound
-    const beep = new Sound('beep.mp3', Sound.MAIN_BUNDLE, error => {
-      if (error) {
-        console.log('Failed to load sound:', error);
-        return;
-      }
-      beep.play(success => {
-        if (!success) {
-          console.log('Sound playback failed.');
-        }
-      });
-    });
+    // const beep = new Sound('beep.mp3', Sound.MAIN_BUNDLE, error => {
+    //   if (error) {
+    //     console.log('Failed to load sound:', error);
+    //     return;
+    //   }
+    //   beep.play(success => {
+    //     if (!success) {
+    //       console.log('Sound playback failed.');
+    //     }
+    //   });
+    // });
     // setMessage('Speak now...');
     try {
       await Voice.start('en-US');
@@ -299,152 +304,169 @@ const NetworkScreen = ({navigation, route}) => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor={'#A274FF'} barStyle={'light-content'} />
-      <Loader isLoading={isFetching} />
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.iconButtons}>
-        <EntypoIcon name="chevron-left" size={20} color="white" />
-      </TouchableOpacity>
-      <View style={styles.chatContainer}>
-        <Text style={styles.chatText}>
-          You're talking with <Text style={{color: 'white'}}>MajlisAI</Text>
-        </Text>
-      </View>
-      <ScrollView ref={scrollViewRef}>
-        <View
-          style={[
-            styles.container,
-            {paddingBottom: isKeyboardVisible ? 10 : 150},
-          ]}>
-          {messages.map((msg, index) => (
-            <View key={index} style={styles.messageContainer}>
-              <Text style={[styles.messageText, styles.userMessage]}>
-                {msg.query}
-              </Text>
-              <Text style={styles.queryTimeText}>
-                {formatTime(msg.createdAt)}
-              </Text>
-              <TouchableOpacity
-                disabled={
-                  !msg?.response?.length || msg.response[0]?.type === 4 // Disable if response is empty or type is 4
-                }
-                onPress={() => {
-                  if (!msg?.response?.length || msg.response[0]?.type === 4)
-                    return; // Prevent navigation if type is 4
-
-                  const firstResponseType = msg.response[0]?.type?.toString(); // Ensure type is a string
-
-                  let screenName = 'ResultsScreen'; // Default to profile
-                  if (firstResponseType === '3') {
-                    screenName = 'ResultsScreenCommunity';
-                  } else if (firstResponseType === '2') {
-                    screenName = 'ResultsScreenEvent';
-                  }
-
-                  navigation.navigate(screenName, {results: msg.response});
-                }}>
-                <Text style={[styles.messageText, styles.aiMessage]}>
-                  {msg?.loading
-                    ? '....'
-                    : msg?.response?.length
-                    ? msg.response[0]?.type === 4 // If type is 4, show the first response's output
-                      ? msg.response[0].output
-                      : `You have ${msg?.response?.length || 0} results.`
-                    : 'Sorry! There were no relevant responses for your query.'}
-                  {msg?.response?.length > 0 && msg.response[0]?.type !== 4 && (
-                    <Text style={{color: 'blue'}}> Click to view</Text>
-                  )}
+    <ImageBackground
+      source={require('../assets/chatbot_bg.png')}
+      style={{flex: 1, resizeMode: 'cover', justifyContent: 'center'}}>
+      <View style={styles.container}>
+        <StatusBar backgroundColor={'#A274FF'} barStyle={'light-content'} />
+        <Loader isLoading={isFetching} />
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.iconButtons}>
+          <EntypoIcon name="chevron-left" size={20} color="white" />
+        </TouchableOpacity>
+        <View style={styles.chatContainer}>
+          <Text style={styles.chatText}>
+            You're talking with <Text style={{color: 'white'}}>MajlisAI</Text>
+          </Text>
+        </View>
+        <ScrollView ref={scrollViewRef}>
+          <View
+            style={[
+              styles.container,
+              {paddingBottom: isKeyboardVisible ? 10 : 150},
+            ]}>
+            {messages.map((msg, index) => (
+              <View key={index} style={styles.messageContainer}>
+                <Text style={[styles.messageText, styles.userMessage]}>
+                  {msg.query}
                 </Text>
-              </TouchableOpacity>
+                <Text style={styles.queryTimeText}>
+                  {formatTime(msg.createdAt)}
+                </Text>
+                <TouchableOpacity
+                  disabled={
+                    !msg?.response?.length || msg.response[0]?.type === 4 // Disable if response is empty or type is 4
+                  }
+                  onPress={() => {
+                    if (!msg?.response?.length || msg.response[0]?.type === 4)
+                      return; // Prevent navigation if type is 4
 
-              <Text style={styles.timeText}>{formatTime(msg.createdAt)}</Text>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+                    const firstResponseType = msg.response[0]?.type?.toString(); // Ensure type is a string
 
-      {isKeyboardVisible && (
-        <View style={[styles.inputContainer]}>
-          <TextInput
-            autoFocus
-            style={styles.textInput}
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Type your message"
-            onSubmitEditing={() => {
-              sendMessage(message);
-              Keyboard.dismiss();
-            }}
-          />
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={() => {
-              sendMessage(message);
-              Keyboard.dismiss();
-            }}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+                    let screenName = 'ResultsScreen'; // Default to profile
+                    if (firstResponseType === '3') {
+                      screenName = 'ResultsScreenCommunity';
+                    } else if (firstResponseType === '2') {
+                      screenName = 'ResultsScreenEvent';
+                    }
 
-      {!isKeyboardVisible && (
-        <View style={styles.floatingContainer}>
-          <View style={styles.floatingSubContainer}>
-            <View className="bg-white flex-1 h-20 rounded-l-full rounded-tr-full flex items-center justify-center">
+                    navigation.navigate(screenName, {results: msg.response});
+                  }}>
+                  <Text style={[styles.messageText, styles.aiMessage]}>
+                    {msg?.loading ? (
+                      <LottieView
+                        source={require('../assets/loading.json')}
+                        autoPlay
+                        loop
+                        style={{width: 50, height: 50}}
+                      />
+                    ) : msg?.response?.length ? (
+                      msg.response[0]?.type === 4 ? ( // If type is 4, show the first response's output
+                        msg.response[0].output
+                      ) : (
+                        `You have ${msg?.response?.length || 0} results.`
+                      )
+                    ) : (
+                      'Sorry! There were no relevant responses for your query.'
+                    )}
+                    {msg?.response?.length > 0 &&
+                      msg.response[0]?.type !== 4 && (
+                        <Text style={{color: 'blue'}}> Click to view</Text>
+                      )}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={styles.timeText}>{formatTime(msg.createdAt)}</Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+
+        {isKeyboardVisible && (
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <View style={[styles.inputContainer]}>
+              <TextInput
+                autoFocus
+                style={styles.textInput}
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Type your message"
+                onSubmitEditing={() => {
+                  sendMessage(message);
+                  Keyboard.dismiss();
+                }}
+              />
               <TouchableOpacity
-                onPress={openAttachmentPicker}
-                style={styles.button}>
-                {/* <Image
+                style={styles.sendButton}
+                onPress={() => {
+                  sendMessage(message);
+                  Keyboard.dismiss();
+                }}>
+                <Text style={styles.sendButtonText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        )}
+
+        {!isKeyboardVisible && (
+          <View style={styles.floatingContainer}>
+            <View style={styles.floatingSubContainer}>
+              <View className="bg-white flex-1 h-20 rounded-l-full rounded-tr-full flex items-center justify-center">
+                <TouchableOpacity
+                  onPress={openAttachmentPicker}
+                  style={styles.button}>
+                  {/* <Image
                 source={require('../assets/icons/attachment.png')}
                 style={styles.icon}
               /> */}
-                <EntypoIcon name="attachment" size={30} color="#4B164C" />
-              </TouchableOpacity>
-            </View>
-            <View className="bg-white flex-1 h-20 rounded-r-full rounded-tl-full flex items-center justify-center">
-              <TouchableOpacity
-                onPress={() => setKeyboardVisible(prev => !prev)}
-                style={styles.button}>
-                {/* <Image
+                  <EntypoIcon name="attachment" size={30} color="#4B164C" />
+                </TouchableOpacity>
+              </View>
+              <View className="bg-white flex-1 h-20 rounded-r-full rounded-tl-full flex items-center justify-center">
+                <TouchableOpacity
+                  onPress={() => setKeyboardVisible(prev => !prev)}
+                  style={styles.button}>
+                  {/* <Image
                 source={require('../assets/icons/keyboard.png')}
                 style={styles.icon}
               /> */}
-                <FAIcon name="keyboard-o" size={30} color="#4B164C" />
+                  <FAIcon name="keyboard-o" size={30} color="#4B164C" />
+                </TouchableOpacity>
+              </View>
+              <View
+                style={{
+                  position: 'absolute',
+                  backgroundColor: 'white',
+                  height: 54,
+                  width: 150,
+                  left: '50%',
+                  bottom: 0,
+                  transform: [{translateX: -75}],
+                }}
+              />
+            </View>
+
+            <View style={styles.micButtonWrapper}>
+              <TouchableOpacity
+                onPressIn={startVoiceRecognition} // Start recording on press
+                onPressOut={stopVoiceRecognition}
+                style={styles.micButton}>
+                <Icon name="mic-outline" size={30} color="white" />
               </TouchableOpacity>
             </View>
-            <View
-              style={{
-                position: 'absolute',
-                backgroundColor: 'white',
-                height: 54,
-                width: 150,
-                left: '50%',
-                bottom: 0,
-                transform: [{translateX: -75}],
-              }}
-            />
           </View>
-
-          <View style={styles.micButtonWrapper}>
-            <TouchableOpacity
-              onPressIn={startVoiceRecognition} // Start recording on press
-              onPressOut={stopVoiceRecognition}
-              style={styles.micButton}>
-              <Icon name="mic-outline" size={30} color="white" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-    </View>
+        )}
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#A274FF',
+    // backgroundColor: '#A274FF',
   },
   chatContainer: {
     // width: '100%',
@@ -561,10 +583,21 @@ const styles = StyleSheet.create({
     color: 'white',
     borderRadius: 10,
     borderBottomLeftRadius: 0,
-    elevation: 10,
     maxWidth: '70%',
     margin: 3,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 10, // Works only on Android
+      },
+    }),
   },
+
   aiMessage: {
     padding: 8,
     paddingHorizontal: 10,
@@ -573,9 +606,19 @@ const styles = StyleSheet.create({
     color: 'black',
     borderRadius: 10,
     borderTopLeftRadius: 0,
-    elevation: 10,
     maxWidth: '70%',
     margin: 3,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 10, // Works only on Android
+      },
+    }),
   },
 
   messageText: {

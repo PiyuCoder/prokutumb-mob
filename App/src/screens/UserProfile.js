@@ -70,7 +70,7 @@ const UserProfile = ({route}) => {
   const [imageSource, setImageSource] = useState(
     user?.profilePicture
       ? {uri: user?.profilePicture}
-      : require('../assets/default-cp.png'),
+      : require('../assets/default-pp.png'),
   );
 
   // Hide the status bar when the screen is rendered
@@ -87,7 +87,7 @@ const UserProfile = ({route}) => {
     if (user?.profilePicture) {
       setImageSource({uri: user?.profilePicture});
     } else {
-      setImageSource(require('../assets/default-cp.png'));
+      setImageSource(require('../assets/default-pp.png'));
     }
   }, [user?.profilePicture]);
 
@@ -301,9 +301,11 @@ const UserProfile = ({route}) => {
 
   const sharePost = async post => {
     try {
-      const postUrl = `https://prokutumb.com/posts/${post._id}`;
+      const postUrl = `https://majlisserver.com/backend/posts/${post._id}`;
       const result = await Share.share({
-        message: `Check out this post: ${postUrl}`,
+        subject: 'Check out this post!',
+        message: `Check out this post on Majlis: ${postUrl}`,
+        url: postUrl,
       });
 
       if (result.action === Share.sharedAction) {
@@ -579,10 +581,10 @@ const UserProfile = ({route}) => {
       )}
       <ImageBackground
         source={imageSource}
-        defaultSource={require('../assets/default-cp.png')}
+        defaultSource={require('../assets/default-pp.png')}
         style={styles.userProfilePicture}
         imageStyle={styles.profilePictureImage}
-        onError={() => setImageSource(require('../assets/default-cp.png'))}
+        onError={() => setImageSource(require('../assets/default-pp.png'))}
       />
 
       <ScrollView
@@ -907,7 +909,12 @@ const UserProfile = ({route}) => {
                   <View key={index} style={styles.linkContainer}>
                     <Entypo name={link.logo} size={20} color={link.color} />
                     <Text style={styles.platformName}>{link.platform}:</Text>
-                    <Text style={styles.platformName}>{link.url}</Text>
+                    <Text
+                      style={[styles.platformName, {flexShrink: 1}]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {link.url}
+                    </Text>
                   </View>
                 ))}
 
