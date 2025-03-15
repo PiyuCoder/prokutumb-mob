@@ -18,11 +18,12 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {axiosInstance} from '../api/axios';
 import Loader from '../components/Loader';
-import {useEffect, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import {logout} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {disconnectSocket} from '../socket';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {useFocusEffect} from '@react-navigation/native';
 
 const features = [
   {
@@ -62,26 +63,42 @@ const MenuScreen = ({navigation}) => {
   const [error, setError] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  useEffect(() => {
-    const fetchCommunitiesAndEvents = async () => {
-      try {
-        const response = await axiosInstance.get(
-          `/api/user/${user?._id}/communities-events`,
-        );
-        setCommunities(response.data.communities);
-        setEvents(response.data.events);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true; // Prevent state updates if component unmounts
 
-    if (user?._id) {
-      fetchCommunitiesAndEvents();
-    }
-  }, [user?._id]);
+      const fetchCommunitiesAndEvents = async () => {
+        try {
+          setLoading(true); // Ensure loading state is updated
+          const response = await axiosInstance.get(
+            `/api/user/${user?._id}/communities-events`,
+          );
+
+          if (isActive) {
+            setCommunities(response.data.communities);
+            setEvents(response.data.events);
+          }
+        } catch (err) {
+          if (isActive) {
+            console.error('Error fetching data:', err);
+            setError(err.message);
+          }
+        } finally {
+          if (isActive) {
+            setLoading(false);
+          }
+        }
+      };
+
+      if (user?._id) {
+        fetchCommunitiesAndEvents();
+      }
+
+      return () => {
+        isActive = false; // Cleanup function to avoid updating state after unmount
+      };
+    }, [user?._id]), // Dependencies for `useCallback`
+  );
 
   const handleLogout = async () => {
     await GoogleSignin.signOut();
@@ -104,7 +121,16 @@ const MenuScreen = ({navigation}) => {
             : navigation.navigate('EventHome', {eventId: item._id})
         }
         style={styles.card}>
-        <Image source={{uri: item.profilePicture}} style={styles.cardImage} />
+        <Image
+          source={
+            item.profilePicture
+              ? {uri: item.profilePicture}
+              : require('../assets/default-cp.png')
+          }
+          defaultSource={require('../assets/default-cp.png')}
+          // onError={() => setImageSource(require('../assets/default-cp.png'))}
+          style={styles.cardImage}
+        />
       </TouchableOpacity>
       <Text numberOfLines={1} ellipsizeMode="tail" style={styles.cardText}>
         {item.name}
@@ -280,7 +306,7 @@ const MenuScreen = ({navigation}) => {
             </TouchableOpacity>
           </View>
           <FlatList
-            data={communities}
+            data={communities?.slice(0, 5)}
             renderItem={item => renderCard(item, 'community')}
             keyExtractor={item => item?._id}
             horizontal
@@ -310,7 +336,7 @@ const MenuScreen = ({navigation}) => {
             </TouchableOpacity>
           </View>
           <FlatList
-            data={events}
+            data={events.slice(0, 5)}
             renderItem={item => renderCard(item, 'event')}
             keyExtractor={item => item?._id}
             horizontal

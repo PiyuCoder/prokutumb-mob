@@ -629,6 +629,7 @@ exports.fetchAllEvents = async (req, res) => {
       {
         $project: {
           name: 1,
+          members: 1, // Include members array
           membersCount: { $size: "$members" }, // Count members array length
           address: 1,
           startDate: 1,
@@ -655,6 +656,7 @@ exports.fetchAllEvents = async (req, res) => {
       {
         $project: {
           name: 1,
+          members: 1, // Ensure members array is included in the final result
           membersCount: 1,
           address: 1,
           startDate: 1,

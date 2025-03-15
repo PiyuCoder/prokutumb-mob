@@ -11,6 +11,7 @@ import {
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
+import {useSelector} from 'react-redux';
 
 const EventCard = ({
   event,
@@ -28,6 +29,8 @@ const EventCard = ({
       : require('../assets/default-ep.png'),
   );
   const navigation = useNavigation();
+  const {user} = useSelector(state => state.auth);
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -161,6 +164,7 @@ const EventCard = ({
                     fontWeight: '500',
                     fontSize: 18,
                     textAlign: 'left',
+                    marginRight: 3,
                   }}>
                   Free
                 </Text>
@@ -176,6 +180,10 @@ const EventCard = ({
                   <Text style={{fontSize: 16, color: '#EC441E'}}>Free</Text>
                 </View>
               )}
+              {event?.members?.includes(user?._id) &&
+                event?.createdBy?._id !== user?._id && (
+                  <Ionicons name="checkmark-circle" size={25} color="#A274FF" />
+                )}
             </View>
           )}
         </View>

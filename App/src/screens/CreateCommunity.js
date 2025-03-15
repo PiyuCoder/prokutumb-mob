@@ -23,6 +23,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useSelector} from 'react-redux';
 import {Picker} from '@react-native-picker/picker';
 import TimezoneDropdown from '../components/TimezoneDropdown';
+import Loader from '../components/Loader';
 
 const CreateCommunity = ({navigation}) => {
   const {user} = useSelector(state => state.auth);
@@ -37,6 +38,7 @@ const CreateCommunity = ({navigation}) => {
   const [isFreeMembership, setFreeMembership] = useState(true);
   const [isPreview, setIsPreview] = useState(false);
   const [category, setCategory] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const [step, setStep] = useState(1);
 
@@ -131,6 +133,7 @@ const CreateCommunity = ({navigation}) => {
       timezone
     ) {
       try {
+        setLoading(true);
         const formData = new FormData();
         formData.append('name', communityName);
         formData.append('communityType', communityType);
@@ -138,11 +141,12 @@ const CreateCommunity = ({navigation}) => {
         formData.append('location', communityLocation);
         formData.append('description', description);
         formData.append('category', category);
-        formData.append('profilePicture', {
-          uri: profilePic,
-          type: 'image/jpeg',
-          name: 'profile.jpg',
-        });
+        if (profilePic)
+          formData.append('profilePicture', {
+            uri: profilePic,
+            type: 'image/jpeg',
+            name: 'profile.jpg',
+          });
         formData.append('createdBy', user?._id);
 
         const res = await axiosInstanceForm.post('/api/communities', formData);
@@ -159,6 +163,8 @@ const CreateCommunity = ({navigation}) => {
         }
       } catch (error) {
         console.error('Error creating community:', error.message);
+      } finally {
+        setLoading(false);
       }
     } else {
       alert('Please fill all fields');
@@ -250,6 +256,7 @@ const CreateCommunity = ({navigation}) => {
   return (
     <ScrollView ref={formRef} style={styles.container}>
       <StatusBar hidden />
+      <Loader isLoading={loading} />
       <View
         style={{
           flexDirection: 'row',

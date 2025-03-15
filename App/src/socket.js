@@ -1,12 +1,15 @@
 import io from 'socket.io-client';
 
 // const SERVER_URL = 'http://10.0.2.2:3001'; // Or use 'https://majlisserver.com/backend' for deployed
-const SERVER_URL = 'https://majlisserver.com/backend'; // Or use 'https://majlisserver.com/backend' for deployed
+const SERVER_URL = 'https://majlisserver.com'; // Or use 'https://majlisserver.com/backend' for deployed
 
 const socket = io(SERVER_URL, {
   autoConnect: true,
   transports: ['websocket'],
   upgrade: false,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 2000,
 });
 
 export const connectSocket = () => {

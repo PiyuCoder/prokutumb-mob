@@ -228,17 +228,20 @@ exports.checkRegistrationWithCode = async (req, res, next) => {
           .json({ success: false, message: "Invalid referral code." });
       }
 
-      const settings = await ReferralSettings.findOne();
-      const referralLimit = settings ? settings.referralLimit : 6;
-
-      if (referredBy.referralCount >= referralLimit) {
+      // Check referral limit
+      if (
+        (code === "MAJLIS" && referredBy.referralCount >= 10000) || // MAJLIS has 10k limit
+        (code !== "MAJLIS" && referredBy.referralCount >= 6) // Other codes have 6 limit
+      ) {
         return res.status(200).json({
           success: false,
           limitReached: true,
           message: "Referral limit reached.",
         });
       }
+
       const referralCode = await generateReferralCode();
+
       // Register the new user
       const newUser = new Member({
         name: userInfo.name,

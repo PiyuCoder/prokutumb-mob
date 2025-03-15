@@ -10,13 +10,16 @@ import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import Barcode from '@kichiyaki/react-native-barcode-generator';
 import Feather from 'react-native-vector-icons/Feather';
+import {useSelector} from 'react-redux';
 
 const Ticket = ({navigation, route}) => {
   const {item} = route?.params;
+  const {user} = useSelector(state => state.auth);
   const qrValue = JSON.stringify({
-    id: item?.buyer?._id,
-    name: item?.buyer?.name,
+    id: user?._id,
+    name: user?.name,
   });
+
   return (
     <LinearGradient colors={['#91B5FD', '#F0DDFF']} style={styles.container}>
       <StatusBar hidden />
@@ -40,14 +43,19 @@ const Ticket = ({navigation, route}) => {
 
         <View style={{marginTop: 10, paddingHorizontal: 10}}>
           <Text style={styles.ticketTitle}>{item?.name}</Text>
-          <Text style={styles.ticketDescription}>{item?.description}</Text>
+          <Text
+            numberOfLines={2} // Limits the text to one line
+            ellipsizeMode="tail"
+            style={styles.ticketDescription}>
+            {item?.description}
+          </Text>
         </View>
 
         {/* User Info & Event Type */}
         <View style={styles.infoContainer}>
           <View>
             <Text style={styles.eventInfo}>Name</Text>
-            <Text style={styles.detail}>{item?.buyer?.name || 'N/A'}</Text>
+            <Text style={styles.detail}>{user?.name || 'N/A'}</Text>
           </View>
           <View>
             <Text style={styles.eventInfo}>Type</Text>
@@ -58,7 +66,7 @@ const Ticket = ({navigation, route}) => {
         {/* Event Details */}
         <View style={styles.detailsContainer}>
           <Text style={styles.eventInfo}>
-            📅 {item?.startDate} - {item?.endDate}
+            📅 {item?.startDate} {item?.endDate ? `- ${item?.endDate}` : ''}
           </Text>
           <Text style={styles.eventInfo}>
             ⏰ {item?.startTime} - {item?.endTime} ({item?.timezone})
@@ -89,7 +97,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     // marginBottom: 16,
-    padding: 10,
+    paddingVertical: 10,
   },
   backButton: {
     padding: 10,
@@ -113,9 +121,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginBottom: 10,
     borderRadius: 18,
-    width: 370,
+    width: 380,
     alignSelf: 'center',
-    marginRight: 15,
+    marginHorizontal: 15,
+    maxHeight: '90%',
   },
   ticketTitle: {
     fontSize: 18,
