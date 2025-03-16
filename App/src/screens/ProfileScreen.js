@@ -18,6 +18,9 @@ import {
   Animated,
   Share,
   Alert,
+  Pressable,
+  Clipboard,
+  ToastAndroid,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import axios from 'axios';
@@ -207,7 +210,7 @@ const ProfileScreen = () => {
   };
 
   const formatDate = dateString => {
-    const options = {year: 'numeric', month: 'short', day: 'numeric'};
+    const options = {year: 'numeric', month: 'short'};
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
@@ -343,6 +346,11 @@ const ProfileScreen = () => {
     } else {
       alert('Please enter post content.');
     }
+  };
+
+  const handleCopy = url => {
+    Clipboard.setString(url); // Copy URL to clipboard
+    ToastAndroid.show('URL copied!', ToastAndroid.SHORT); // Show confirmation (Android)
   };
 
   const handleEditPost = post => {
@@ -824,7 +832,7 @@ const ProfileScreen = () => {
               <View
                 style={{
                   flexDirection: 'row',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   gap: 10,
                   marginTop: 10,
                 }}>
@@ -855,20 +863,26 @@ const ProfileScreen = () => {
               {user?.socialLinks?.map(
                 (link, index) =>
                   link?.url?.length > 1 && (
-                    <View key={index} style={styles.linkContainer}>
-                      <Entypo
-                        name={`${link.logo}`}
-                        size={20}
-                        color={`${link.color}`}
-                      />
-                      <Text style={styles.platformName}>{link.platform}:</Text>
-                      <Text
-                        style={[styles.platformName, {flexShrink: 1}]}
-                        numberOfLines={1}
-                        ellipsizeMode="tail">
-                        {link.url}
-                      </Text>
-                    </View>
+                    <Pressable
+                      key={index}
+                      onLongPress={() => handleCopy(link.url)}>
+                      <View style={styles.linkContainer}>
+                        <Entypo
+                          name={`${link.logo}`}
+                          size={20}
+                          color={`${link.color}`}
+                        />
+                        <Text style={styles.platformName}>
+                          {link.platform}:
+                        </Text>
+                        <Text
+                          style={[styles.platformName, {flexShrink: 1}]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail">
+                          {link.url}
+                        </Text>
+                      </View>
+                    </Pressable>
                   ),
               )}
               {/* Experience Section */}
@@ -887,22 +901,30 @@ const ProfileScreen = () => {
                               display: 'flex',
                               flexDirection: 'row',
                               justifyContent: 'space-between',
-                              alignItems: 'center',
+                              alignItems: 'flex-start',
+                              flexWrap: 'wrap',
+                              gap: 7,
                             }}>
-                            <Text
-                              style={[
-                                styles.experienceCompany,
-                                {color: '#2D3F7B'},
-                              ]}>
-                              {exp.company}
-                            </Text>
+                            <View style={{flex: 1}}>
+                              <Text
+                                style={[
+                                  styles.experienceCompany,
+                                  {color: '#2D3F7B', flexShrink: 1},
+                                ]}>
+                                {exp.company}
+                              </Text>
+                            </View>
 
                             <Text
                               style={[
                                 styles.experienceDuration,
-                                {color: '#2D3F7B'},
+                                {
+                                  color: '#2D3F7B',
+                                  textAlign: 'right',
+                                  marginLeft: 10,
+                                },
                               ]}>
-                              {formatDate(exp.startDate)}-
+                              {formatDate(exp.startDate)} -{' '}
                               {exp.isPresent
                                 ? 'Present'
                                 : formatDate(exp.endDate)}
@@ -940,12 +962,14 @@ const ProfileScreen = () => {
                               display: 'flex',
                               flexDirection: 'row',
                               justifyContent: 'space-between',
-                              alignItems: 'center',
+                              alignItems: 'flex-start',
+                              flexWrap: 'wrap',
+                              gap: 7,
                             }}>
                             <Text
                               style={[
                                 styles.experienceCompany,
-                                {color: '#2D3F7B'},
+                                {color: '#2D3F7B', flexShrink: 1},
                               ]}>
                               {edu.school}
                             </Text>

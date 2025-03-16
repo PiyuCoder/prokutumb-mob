@@ -1,28 +1,31 @@
 import React from 'react';
-import {View, ActivityIndicator, StyleSheet} from 'react-native';
+import {
+  Modal,
+  View,
+  ActivityIndicator,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
+
+const {width, height} = Dimensions.get('window'); // Get full screen dimensions
 
 const Loader = ({isLoading}) => {
-  if (!isLoading) return null;
-
   return (
-    <View style={styles.loaderContainer}>
-      <ActivityIndicator size="large" color="#A274FF" />
-    </View>
+    <Modal visible={isLoading} transparent animationType="fade">
+      <View style={styles.overlay}>
+        <ActivityIndicator size="large" color="#A274FF" />
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  loaderContainer: {
-    flex: 1,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  overlay: {
+    width,
+    height,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)', // Semi-transparent background
-    zIndex: 50, // Ensure it appears above other components
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', // Semi-transparent overlay
   },
 });
 

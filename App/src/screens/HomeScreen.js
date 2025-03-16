@@ -823,7 +823,10 @@ const HomeScreen = ({navigation}) => {
       />
       {/* Sidebar */}
       {isSidebarVisible && (
-        <SideNavigationScreen setIsSidebarVisible={setIsSidebarVisible} />
+        <SideNavigationScreen
+          setIsSidebarVisible={setIsSidebarVisible}
+          navigation={navigation}
+        />
       )}
       {/* Modal for adding post */}
 

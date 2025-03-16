@@ -40,20 +40,20 @@ exports.fetchCommunities = async (req, res) => {
           postCount: { $sum: 1 }, // Count posts per community
         },
       },
-      { $sort: { postCount: -1 } }, // Sort by highest post count
-      { $limit: 10 }, // Get top 10 trending communities
+      { $sort: { postCount: -1 } },
+      { $limit: 10 },
       {
         $lookup: {
-          from: "communitymobs", // Collection storing communities
+          from: "communitymobs",
           localField: "_id",
           foreignField: "_id",
           as: "communityDetails",
         },
       },
-      { $unwind: "$communityDetails" }, // Convert array into object
+      { $unwind: "$communityDetails" },
       {
         $lookup: {
-          from: "members", // Collection storing user data
+          from: "members",
           localField: "communityDetails.createdBy",
           foreignField: "_id",
           as: "createdByDetails",
@@ -62,7 +62,7 @@ exports.fetchCommunities = async (req, res) => {
       {
         $unwind: {
           path: "$createdByDetails",
-          preserveNullAndEmptyArrays: true, // Keep null values if creator info is missing
+          preserveNullAndEmptyArrays: true,
         },
       },
       {
@@ -75,6 +75,7 @@ exports.fetchCommunities = async (req, res) => {
             _id: "$createdByDetails._id",
             name: "$createdByDetails.name",
           },
+          joinRequests: "$communityDetails.joinRequests", // Ensure joinRequests is passed
         },
       },
     ]);
@@ -375,7 +376,7 @@ exports.joinCommunity = (io, userSocketMap) => async (req, res) => {
       recipientId: community.createdBy._id, // The owner of the community
       senderId: userId, // The user making the join request
       message: `${sender.name} has requested to join your community "${community.name}".`,
-      type: "join request",
+      type: "join_request",
       isCommunity: true,
       communityId: communityId,
     });
@@ -416,7 +417,8 @@ exports.acceptRequest = async (req, res) => {
     const { communityId } = req.params;
     const { senderId } = req.body;
 
-    console.log(communityId, senderId);
+    // Extract the actual _id from senderId
+    const senderIdStr = senderId._id.toString(); // Fix here
 
     // Fetch the community
     const community = await Communitymob.findById(communityId);
@@ -426,12 +428,15 @@ exports.acceptRequest = async (req, res) => {
         .json({ success: false, message: "Community not found" });
     }
 
-    // Check if the sender has a pending request
+    console.log("Join Requests:", community.joinRequests);
+
+    // Find request index
     const requestIndex = community.joinRequests.findIndex(
-      (req) => req._id.toString() === senderId.toString()
+      (request) => request._id.toString() === senderIdStr
     );
 
-    console.log(requestIndex);
+    console.log("Request Index:", requestIndex);
+
     if (requestIndex === -1) {
       return res.status(400).json({
         success: false,
@@ -439,14 +444,18 @@ exports.acceptRequest = async (req, res) => {
       });
     }
 
-    // Add the sender to the members list and remove from joinRequests
-    community.members.push(senderId);
+    // Add sender to members & remove from joinRequests
+    community.members.push(senderIdStr);
     community.joinRequests.splice(requestIndex, 1);
     await community.save();
 
-    // Update the notification as "read"
+    // Mark notification as read
     const notification = await NotificationMob.findOneAndUpdate(
-      { senderId, type: "join request", recipientId: community.createdBy },
+      {
+        senderId: senderIdStr,
+        type: "join_request",
+        recipientId: community.createdBy,
+      },
       { status: "read" }
     ).populate("senderId", "name profilePicture");
 

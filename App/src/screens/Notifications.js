@@ -11,14 +11,16 @@ import {
   ToastAndroid,
 } from 'react-native';
 import ProfilePicture from '../components/ProfilePicture';
+import Loader from '../components/Loader';
 
 const Notifications = ({navigation}) => {
   const userId = useSelector(state => state.auth?.user?._id);
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      setLoading(true);
       try {
         const response = await axiosInstance.get(
           `/api/notifications/${userId}`,
@@ -35,8 +37,13 @@ const Notifications = ({navigation}) => {
     fetchNotifications();
   }, [userId]);
 
-  const handleNotificationClick = notificationId => {
-    handleMarkAsRead(notificationId);
+  const handleNotificationClick = notification => {
+    handleMarkAsRead(notification?._id);
+    if (notification?.type === 'connection request') {
+      navigation.navigate('UserProfile', {
+        userId: notification?.senderId?._id,
+      });
+    }
   };
 
   const handleMarkAsRead = async notificationId => {
@@ -64,7 +71,8 @@ const Notifications = ({navigation}) => {
         return;
       }
 
-      if (notification?.isCommunity) {
+      setLoading(true);
+      if (notification?.type === 'join_request') {
         const res = await axiosInstance.put(
           `/api/communities/accept/${notification?.communityId}`,
           {senderId: notification?.senderId},
@@ -91,6 +99,8 @@ const Notifications = ({navigation}) => {
       }
     } catch (error) {
       console.error('Error accepting request:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,6 +123,7 @@ const Notifications = ({navigation}) => {
 
   return (
     <ScrollView style={styles.container}>
+      <Loader isLoading={loading} />
       <Text style={styles.header}>Notifications</Text>
       {notifications?.length === 0 ? (
         <Text style={styles.noNotificationsText}>No notifications</Text>
@@ -122,11 +133,11 @@ const Notifications = ({navigation}) => {
             <TouchableOpacity
               key={notification._id}
               onPress={() =>
-                notification.type === 'join request'
+                notification.type === 'join_request'
                   ? navigation.navigate('UserProfile', {
                       userId: notification?.senderId?._id,
                     })
-                  : handleNotificationClick(notification?._id)
+                  : handleNotificationClick(notification)
               }>
               <View
                 style={[
@@ -147,7 +158,7 @@ const Notifications = ({navigation}) => {
                   {/* <Text style={styles.timestamp}>
                     {new Date(notification.timestamp).toLocaleString()}
                   </Text> */}
-                  {notification.type === 'join request' &&
+                  {notification.type === 'join_request' &&
                     notification.status === 'unread' && (
                       <View style={styles.actionButtons}>
                         <TouchableOpacity

@@ -478,15 +478,16 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 5,
-    paddingHorizontal: 12,
+    paddingHorizontal: 9,
     backgroundColor: '#EDEDED',
     borderRadius: 10,
     marginHorizontal: 3,
+    flex: 1,
   },
 
   filterButtonText: {
     color: '#000',
-    fontSize: 14,
+    fontSize: 13,
   },
   activeFilterButtonText: {
     color: 'white',

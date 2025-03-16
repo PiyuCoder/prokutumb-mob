@@ -7,23 +7,27 @@ const ProfilePicture = ({
   height,
   borderRadius,
   marginRight,
-  story,
-  isUser,
-  borderColor,
-  padding,
 }) => {
-  const [imageSource, setImageSource] = useState({uri: profilePictureUri});
+  const defaultImage = require('../assets/default-pp.png');
+
+  const [imageSource, setImageSource] = useState(
+    profilePictureUri ? {uri: profilePictureUri} : defaultImage,
+  );
 
   useEffect(() => {
-    setImageSource({uri: profilePictureUri});
+    if (profilePictureUri) {
+      setImageSource({uri: profilePictureUri});
+    } else {
+      setImageSource(defaultImage);
+    }
   }, [profilePictureUri]);
 
   return (
     <View
       style={{
         backgroundColor: 'white',
-        width: width,
-        height: height,
+        width,
+        height,
         borderRadius: width / 2,
         marginRight,
         elevation: 2,
@@ -32,15 +36,13 @@ const ProfilePicture = ({
       }}>
       <Image
         source={imageSource}
-        defaultSource={require('../assets/default-pp.png')} // iOS only
+        defaultSource={defaultImage} // iOS only fallback
         style={{
           width,
           height,
           borderRadius,
-          // borderWidth: isUser ? 2 : 0,
-          // borderColor: isUser ? '' : '',
         }}
-        onError={() => setImageSource(require('../assets/default-pp.png'))} // Android fallback
+        onError={() => setImageSource(defaultImage)} // Android & iOS fallback
       />
     </View>
   );
