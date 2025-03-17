@@ -1,5 +1,5 @@
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -46,27 +46,42 @@ const MessageScreen = () => {
     // };
   }, [user?._id]);
 
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setLoading(true);
-        const res = await axiosInstance.get(
-          `/api/user/conversations/${user?._id}`,
-        );
-        if (res.data.success) {
-          console.log(res.data.frequentContacts);
-          setConversations(res.data.conversations);
-          setFrequentContacts(res.data.frequentContacts);
-        }
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true; // Track component mount status
 
-    fetchConversations();
-  }, [user?._id]);
+      const fetchConversations = async () => {
+        try {
+          setLoading(true);
+          const res = await axiosInstance.get(
+            `/api/user/conversations/${user?._id}`,
+          );
+
+          if (isActive && res.data.success) {
+            console.log(res.data.frequentContacts);
+            setConversations(res.data.conversations);
+            setFrequentContacts(res.data.frequentContacts);
+          }
+        } catch (error) {
+          if (isActive) {
+            console.error('Error fetching conversations:', error);
+          }
+        } finally {
+          if (isActive) {
+            setLoading(false);
+          }
+        }
+      };
+
+      if (user?._id) {
+        fetchConversations();
+      }
+
+      return () => {
+        isActive = false; // Cleanup function to avoid state updates after unmount
+      };
+    }, [user?._id]), // Dependency array
+  );
 
   const isUserOnline = userId => onlineStatus[userId];
 

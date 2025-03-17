@@ -249,7 +249,7 @@ export const acceptRequest = createAsyncThunk(
 );
 
 export const updateAsyncStorage = async user => {
-  console.log('Updating user in AsyncStorage:', user);
+  // console.log('Updating user in AsyncStorage:', user);
 
   try {
     await AsyncStorage.setItem('user', JSON.stringify(user));
@@ -257,7 +257,7 @@ export const updateAsyncStorage = async user => {
 
     // Retrieve and log the data for verification
     const storedUser = await AsyncStorage.getItem('user');
-    console.log('Retrieved user from AsyncStorage:', JSON.parse(storedUser));
+    // console.log('Retrieved user from AsyncStorage:', JSON.parse(storedUser));
   } catch (error) {
     console.error('Failed to update AsyncStorage:', error);
   }

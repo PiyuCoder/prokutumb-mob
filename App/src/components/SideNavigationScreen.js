@@ -33,9 +33,9 @@ const SideNavigationScreen = ({setIsSidebarVisible}) => {
   // Close Sidebar
   const closeSidebar = option => {
     if (option === 'Communities') {
-      navigation.navigate('Communities', {screen: 'Communities'});
+      navigation.navigate('Match', {screen: 'Communities'});
     } else if (option === 'Events') {
-      navigation.navigate('Communities', {screen: 'Events'});
+      navigation.navigate('Match', {screen: 'Events'});
     } else if (option === 'Share') {
       navigation.navigate('ShareScreen');
     }

@@ -79,11 +79,12 @@ const CreateProfileStepFour = ({navigation, route}) => {
 
     const formData = new FormData();
     formData.append('name', profileData.name);
-    formData.append('profilePicture', {
-      uri: profileData.profilePicture,
-      type: 'image/jpeg', // or the appropriate type
-      name: 'profilePicture.jpg',
-    });
+    if (profileData.profilePicture)
+      formData.append('profilePicture', {
+        uri: profileData.profilePicture,
+        type: 'image/jpeg', // or the appropriate type
+        name: 'profilePicture.jpg',
+      });
     formData.append('interests', JSON.stringify(profileData.interests));
     formData.append('about', profileData.about);
     formData.append('location', profileData.location);

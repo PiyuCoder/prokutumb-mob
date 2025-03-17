@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import Svg, {Circle} from 'react-native-svg';
 
 import proku from '../assets/splash-logo.png';
 import AppleSignInButton from '../components/AppleSignInButton';
+import {useFocusEffect} from '@react-navigation/native';
 
 const LoginScreen = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -28,24 +29,41 @@ const LoginScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      const token = await AsyncStorage.getItem('authToken');
-      const user = await AsyncStorage.getItem('user');
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-      if (token && user) {
-        const parsedUser = JSON.parse(user);
-        console.log('isProfileComplete: ', parsedUser.isProfileComplete);
-        // Dispatch loginSuccess with existing token and user
-        dispatch(loginSuccess({token, user: JSON.parse(user)}));
-        if (parsedUser?.isProfileComplete) navigation.replace('Dashboard');
-        else navigation.replace('CreateProfile');
-      }
-      setIsLoading(false);
-    };
+      const checkLoginStatus = async () => {
+        try {
+          const token = await AsyncStorage.getItem('authToken');
+          const user = await AsyncStorage.getItem('user');
 
-    checkLoginStatus();
-  }, [navigation]);
+          if (token && user) {
+            const parsedUser = JSON.parse(user);
+            console.log('isProfileComplete:', parsedUser.isProfileComplete);
+
+            dispatch(loginSuccess({token, user: parsedUser}));
+
+            if (isActive) {
+              navigation.replace(
+                parsedUser?.isProfileComplete ? 'Dashboard' : 'CreateProfile',
+              );
+            }
+          }
+        } catch (error) {
+          console.error('Error checking login status:', error);
+        } finally {
+          if (isActive) setIsLoading(false);
+        }
+      };
+
+      checkLoginStatus();
+
+      return () => {
+        isActive = false;
+      };
+    }, [navigation, dispatch]),
+  );
 
   const handleLogin = async () => {
     try {
@@ -80,7 +98,9 @@ const LoginScreen = ({navigation}) => {
       />
 
       <GoogleSignInButton setIsLoading={setIsLoading} />
-      {Platform.OS === 'ios' && <AppleSignInButton setIsLoading={setIsLoading}/>}
+      {Platform.OS === 'ios' && (
+        <AppleSignInButton setIsLoading={setIsLoading} />
+      )}
       <TouchableOpacity
         style={styles.loginButton}
         onPress={() => navigation.navigate('EmailLogin')}>

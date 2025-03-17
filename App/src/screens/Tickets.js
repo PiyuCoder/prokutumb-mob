@@ -81,7 +81,8 @@ const Tickets = ({navigation}) => {
         {/* Event Details */}
         <View style={styles.detailsContainer}>
           <Text style={styles.eventInfo}>
-            📅 {item?.event?.startDate} - {item?.event?.endDate}
+            📅 {item?.event?.startDate}{' '}
+            {item?.endDate ? `- ${item?.endDate}` : ''}
           </Text>
           <Text style={styles.eventInfo}>
             ⏰ {item?.event?.startTime} - {item?.event?.endTime} (
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     // marginBottom: 16,
-    padding: 10,
+    paddingVertical: 10,
   },
   backButton: {
     padding: 10,
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     width: 370,
     alignSelf: 'center',
-    marginRight: 15,
+    marginHorizontal: 15,
   },
   ticketTitle: {
     fontSize: 18,

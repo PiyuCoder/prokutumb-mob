@@ -17,7 +17,8 @@ const notificationSchema = new mongoose.Schema(
       required: true,
     },
     type: {
-      type: String, // Type of notification (e.g., "connection request", "message", "call")
+      type: String,
+      enum: ["connection request", "message", "join_request"], // Allowed notification types
       required: true,
     },
     isCommunity: {

@@ -358,7 +358,9 @@ exports.getUserCommunitiesAndEvents = async (req, res) => {
     const communities = await Communitymob.find({
       createdBy: userId,
       isDraft: false,
-    }).populate("createdBy", "name profilePicture");
+    })
+      .populate("createdBy", "name profilePicture")
+      .limit(5);
 
     // Extract community IDs
     const communityIds = communities.map((community) => community._id);
@@ -368,7 +370,7 @@ exports.getUserCommunitiesAndEvents = async (req, res) => {
       events = await Event.find({
         community: { $in: communityIds },
         isDraft: false,
-      });
+      }).limit(5);
     }
 
     res.status(200).json({

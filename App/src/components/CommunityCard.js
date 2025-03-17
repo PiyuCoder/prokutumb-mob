@@ -30,6 +30,7 @@ const CommunityCard = ({
   );
   const {user} = useSelector(state => state.auth);
   const navigation = useNavigation();
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -129,7 +130,9 @@ const CommunityCard = ({
                     },
                   ]}>
                   <Text style={[styles.BtnText]}>
-                    {community?.joinRequests?.some(req => req._id == user?._id)
+                    {community?.joinRequests?.some(
+                      req => String(req._id) === String(user?._id),
+                    )
                       ? 'Requested'
                       : 'Join'}
                   </Text>

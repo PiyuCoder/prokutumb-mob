@@ -7,12 +7,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect} from 'react';
 import {useSelector} from 'react-redux';
 
 const SuccessCreation = ({navigation, route}) => {
   const {isEvent, isRegistered} = route?.params;
   const {user} = useSelector(state => state.auth);
+  const event = route?.params?.event || {};
+  const [timer, setTimer] = React.useState(3);
 
   const sharePost = async () => {
     try {
@@ -34,6 +36,23 @@ const SuccessCreation = ({navigation, route}) => {
       console.error('Error sharing post:', error);
     }
   };
+
+  useEffect(() => {
+    if (isRegistered) {
+      setTimeout(() => {
+        navigation.replace('TicketScreen', {item: event});
+      }, 3000);
+    }
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimer(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timer]);
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
@@ -77,32 +96,44 @@ const SuccessCreation = ({navigation, route}) => {
           Share
         </Text>
       </TouchableOpacity> */}
-      <TouchableOpacity
-        onPress={() => {
-          navigation.navigate('Dashboard', {
-            screen: 'Communities',
-            params: {screen: isEvent ? 'Events' : 'Communities'},
-          });
-        }}
-        style={{
-          backgroundColor: 'white',
-          padding: 14,
-          alignSelf: 'center',
-          borderRadius: 10,
-          width: 200,
-          marginTop: 30,
-          borderWidth: 2,
-        }}>
+      {!isRegistered ? (
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate('Dashboard', {
+              screen: 'Communities',
+              params: {screen: isEvent ? 'Events' : 'Communities'},
+            });
+          }}
+          style={{
+            backgroundColor: 'white',
+            padding: 14,
+            alignSelf: 'center',
+            borderRadius: 10,
+            width: 200,
+            marginTop: 30,
+            borderWidth: 2,
+          }}>
+          <Text
+            style={{
+              color: 'black',
+              fontWeight: '500',
+              fontSize: 16,
+              textAlign: 'center',
+            }}>
+            Close
+          </Text>
+        </TouchableOpacity>
+      ) : (
         <Text
           style={{
-            color: 'black',
-            fontWeight: '500',
-            fontSize: 16,
             textAlign: 'center',
+            color: 'gray',
+            fontSize: 16,
+            marginTop: 15,
           }}>
-          Close
+          Generating ticket in {timer}
         </Text>
-      </TouchableOpacity>
+      )}
     </View>
   );
 };

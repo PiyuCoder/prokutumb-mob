@@ -156,7 +156,7 @@ const CommunityHomeScreen = ({route}) => {
           `/api/communities/${communityId}/${user?._id}`,
         );
         if (res.status === 200) {
-          console.log(res.data.data);
+          // console.log(res.data.data);
           setCommunity(res?.data?.data || []); // Adjust based on backend response
           dispatch(setPosts(res?.data?.posts || []));
           setMembers(res?.data?.data?.members);
@@ -620,93 +620,97 @@ const CommunityHomeScreen = ({route}) => {
           <Text style={{color: 'white', paddingStart: 10}}>
             @{community?.createdBy?.name}
           </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: 16,
-              paddingStart: 10,
-            }}>
-            {!community.members?.includes(user?._id) &&
-              community.createdBy?._id !== user?._id && (
-                <TouchableOpacity
-                  disabled={community?.joinRequests?.some(
-                    req => req._id == user?._id,
-                  )}
-                  onPress={() => {
-                    dispatch(
-                      requestToJoinCommunity({
-                        userId: user?._id,
-                        communityId,
-                      }),
-                    ).then(action => {
-                      console.log('Request sent', action.payload);
-                      if (requestToJoinCommunity.fulfilled.match(action)) {
+          {!isLoading && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 16,
+                paddingStart: 10,
+              }}>
+              {!community.members?.includes(user?._id) &&
+                community.createdBy?._id !== user?._id && (
+                  <TouchableOpacity
+                    disabled={community?.joinRequests?.some(
+                      req => req._id == user?._id,
+                    )}
+                    onPress={() => {
+                      dispatch(
+                        requestToJoinCommunity({
+                          userId: user?._id,
+                          communityId,
+                        }),
+                      ).then(action => {
                         console.log('Request sent', action.payload);
-                        setCommunity(action.payload?.data);
-                      }
-                    });
-                  }}
-                  style={{
-                    backgroundColor: '#A274FF',
-                    padding: 7,
-                    width: 120,
-                    borderRadius: 7,
-                    marginTop: 10,
-                    // flex: 1,
-                  }}>
-                  <Text
+                        if (requestToJoinCommunity.fulfilled.match(action)) {
+                          console.log('Request sent', action.payload);
+                          setCommunity(action.payload?.data);
+                        }
+                      });
+                    }}
                     style={{
-                      color: 'white',
-                      fontWeight: '500',
-                      textAlign: 'center',
+                      backgroundColor: '#A274FF',
+                      padding: 7,
+                      width: 120,
+                      borderRadius: 7,
+                      marginTop: 10,
+                      // flex: 1,
                     }}>
-                    {community?.joinRequests?.some(req => req._id == user?._id)
-                      ? 'Requested'
-                      : '+Join'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            {community.members?.includes(user?._id) ||
-              (community.createdBy?._id === user?._id && (
-                <TouchableOpacity
-                  disabled={community?.joinRequests?.some(
-                    req => req._id == user?._id,
-                  )}
-                  onPress={() => setModalVisible(true)}
-                  style={{
-                    backgroundColor: '#A274FF',
-                    padding: 7,
-                    width: 120,
-                    borderRadius: 7,
-                    marginTop: 10,
-                    // flex: 1,
-                  }}>
-                  <Text
+                    <Text
+                      style={{
+                        color: 'white',
+                        fontWeight: '500',
+                        textAlign: 'center',
+                      }}>
+                      {community?.joinRequests?.some(
+                        req => req._id == user?._id,
+                      )
+                        ? 'Requested'
+                        : '+Join'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              {community.members?.includes(user?._id) ||
+                (community.createdBy?._id === user?._id && (
+                  <TouchableOpacity
+                    disabled={community?.joinRequests?.some(
+                      req => req._id == user?._id,
+                    )}
+                    onPress={() => setModalVisible(true)}
                     style={{
-                      color: 'white',
-                      fontWeight: '500',
-                      textAlign: 'center',
+                      backgroundColor: '#A274FF',
+                      padding: 7,
+                      width: 120,
+                      borderRadius: 7,
+                      marginTop: 10,
+                      // flex: 1,
                     }}>
-                    Add Post
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            <View style={{width: 40}}></View>
+                    <Text
+                      style={{
+                        color: 'white',
+                        fontWeight: '500',
+                        textAlign: 'center',
+                      }}>
+                      Add Post
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              <View style={{width: 40}}></View>
 
-            <View>
-              <Text style={{color: 'white'}}>
-                {community?.members?.length + 1}
-              </Text>
-              <Text style={{color: 'white'}}>Members</Text>
+              <View>
+                <Text style={{color: 'white'}}>
+                  {community?.members?.length + 1}
+                </Text>
+                <Text style={{color: 'white'}}>Members</Text>
+              </View>
+              <View>
+                <Text style={{color: 'white'}}>{events?.length || 0}</Text>
+                <Text style={{color: 'white'}}> Events</Text>
+              </View>
+              <View style={{width: 40}}></View>
             </View>
-            <View>
-              <Text style={{color: 'white'}}>{events?.length || 0}</Text>
-              <Text style={{color: 'white'}}> Events</Text>
-            </View>
-            <View style={{width: 40}}></View>
-          </View>
+          )}
           <View
             style={{
               flexDirection: 'row',

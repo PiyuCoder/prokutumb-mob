@@ -80,6 +80,7 @@ const EventScreen = ({navigation, route}) => {
       navigation.replace('SuccessCreation', {
         isEvent: false,
         isRegistered: true,
+        event,
       });
     }
   };
@@ -97,6 +98,10 @@ const EventScreen = ({navigation, route}) => {
       console.error('Error while following the user:', error);
     }
   };
+
+  if (loading) {
+    return <Loader isLoading={loading} />;
+  }
 
   return (
     <ScrollView style={{flex: 1, backgroundColor: 'white'}}>

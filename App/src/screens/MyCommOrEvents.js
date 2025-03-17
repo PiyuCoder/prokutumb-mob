@@ -40,6 +40,7 @@ const MyCommOrEvents = ({navigation, route}) => {
 
   useEffect(() => {
     const fetchCommunitiesAndEvents = async () => {
+      setLoading(true);
       try {
         const response = await axiosInstance.get(
           `/api/user/${userId}/communities-events`,
@@ -146,7 +147,7 @@ const MyCommOrEvents = ({navigation, route}) => {
       <ScrollView
         contentContainerStyle={{paddingHorizontal: 10, marginBottom: 20}}
         horizontal>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 7}}>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
           {[
             {name: 'Networking', color: '#EDE9FF'},
             {name: 'Business', color: '#FFF5D7'},
@@ -244,15 +245,16 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 5,
-    paddingHorizontal: 16,
+    paddingHorizontal: 9,
     backgroundColor: '#EDEDED',
     borderRadius: 10,
     marginHorizontal: 5,
+    flex: 1,
   },
 
   filterButtonText: {
     color: '#000',
-    fontSize: 14,
+    fontSize: 13,
   },
   activeFilterButtonText: {
     color: 'white',

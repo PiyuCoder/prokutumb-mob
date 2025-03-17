@@ -13,6 +13,8 @@ import {
   TextInput,
   Animated,
   ToastAndroid,
+  Pressable,
+  Clipboard,
 } from 'react-native';
 import LinearGradientR from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
@@ -165,6 +167,11 @@ const UserProfile = ({route}) => {
     } catch (error) {
       console.error('Error fetching search results:', error);
     }
+  };
+
+  const handleCopy = url => {
+    Clipboard.setString(url); // Copy URL to clipboard
+    ToastAndroid.show('URL copied!', ToastAndroid.SHORT); // Show confirmation (Android)
   };
 
   const toggleCommentSection = postId => {
@@ -611,132 +618,138 @@ const UserProfile = ({route}) => {
               marginTop: 16,
               paddingHorizontal: 10,
             }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginTop: 16,
-                gap: 10,
-              }}>
-              <View>
-                {connectionStatus === 'Accept/Decline' && (
-                  <View
-                    style={{
-                      // flexDirection: 'row',
-                      // marginTop: 10,
-                      gap: 15,
-                      // paddingHorizontal: 30,
-                    }}>
-                    <TouchableOpacity
-                      onPress={handleAccept}
+            {!loading && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: 16,
+                  gap: 10,
+                }}>
+                <View>
+                  {connectionStatus === 'Accept/Decline' && (
+                    <View
                       style={{
-                        backgroundColor: '#A274FF',
-                        padding: 8,
-                        paddingHorizontal: 16,
-                        borderRadius: 30,
-                        // flex: 1,
+                        // flexDirection: 'row',
+                        // marginTop: 10,
+                        gap: 15,
+                        // paddingHorizontal: 30,
                       }}>
+                      <TouchableOpacity
+                        onPress={handleAccept}
+                        style={{
+                          backgroundColor: '#A274FF',
+                          padding: 8,
+                          paddingHorizontal: 16,
+                          borderRadius: 30,
+                          // flex: 1,
+                        }}>
+                        <Text className="text-white font-bold text-center">
+                          Accept
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleDecline}
+                        style={{
+                          backgroundColor: 'white',
+                          padding: 8,
+                          paddingHorizontal: 16,
+                          borderRadius: 30,
+                          borderWidth: 1.4,
+                          borderColor: '#585C60',
+                          // flex: 1,
+                        }}>
+                        <Text
+                          style={{
+                            color: '#585C60',
+                            textAlign: 'center',
+                            fontWeight: '500',
+                          }}>
+                          Reject
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {connectionStatus === 'Connect' && (
+                    <TouchableOpacity
+                      onPress={handleConnect}
+                      style={styles.btn}>
                       <Text className="text-white font-bold text-center">
-                        Accept
+                        {connectionStatus}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={handleDecline}
-                      style={{
-                        backgroundColor: 'white',
-                        padding: 8,
-                        paddingHorizontal: 16,
-                        borderRadius: 30,
-                        borderWidth: 1.4,
-                        borderColor: '#585C60',
-                        // flex: 1,
-                      }}>
+                  )}
+                  {connectionStatus === 'Pending' && (
+                    <View style={styles.btn}>
                       <Text
                         style={{
-                          color: '#585C60',
+                          color: 'white',
                           textAlign: 'center',
                           fontWeight: '500',
                         }}>
-                        Reject
+                        Pending
                       </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                    </View>
+                  )}
+                </View>
 
-                {connectionStatus === 'Connect' && (
-                  <TouchableOpacity onPress={handleConnect} style={styles.btn}>
-                    <Text className="text-white font-bold text-center">
-                      {connectionStatus}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                {connectionStatus === 'Pending' && (
-                  <View style={styles.btn}>
-                    <Text
-                      style={{
-                        color: 'white',
-                        textAlign: 'center',
-                        fontWeight: '500',
-                      }}>
-                      Pending
-                    </Text>
-                  </View>
-                )}
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('Chat', {
+                      name: user.name,
+                      userId,
+                      profilePicture: user.profilePicture,
+                    })
+                  }
+                  style={{
+                    backgroundColor: 'black',
+                    padding: 10,
+                    borderWidth: 1,
+                    borderColor: '#888888',
+                    borderRadius: 7,
+                  }}>
+                  <Feather name="mail" size={20} color="#888888" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Connections', {userId})}>
+                  <Text
+                    style={{
+                      color: 'white',
+                      fontSize: 22,
+                      fontWeight: '500',
+                    }}>
+                    {user?.friends?.length}
+                  </Text>
+                  <Text
+                    style={{color: 'white', fontWeight: '500', fontSize: 12}}>
+                    Connections
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('MyCommOrEvents', {
+                      screen: 'Communities',
+                      userId,
+                    })
+                  }>
+                  <Text
+                    style={{
+                      color: 'white',
+                      fontSize: 22,
+                      fontWeight: '500',
+                    }}>
+                    {communityCount}
+                  </Text>
+                  <Text
+                    style={{color: 'white', fontWeight: '500', fontSize: 12}}>
+                    Communities
+                  </Text>
+                </TouchableOpacity>
               </View>
-
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('Chat', {
-                    name: user.name,
-                    userId,
-                    profilePicture: user.profilePicture,
-                  })
-                }
-                style={{
-                  backgroundColor: 'black',
-                  padding: 10,
-                  borderWidth: 1,
-                  borderColor: '#888888',
-                  borderRadius: 7,
-                }}>
-                <Feather name="mail" size={20} color="#888888" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Connections', {userId})}>
-                <Text
-                  style={{
-                    color: 'white',
-                    fontSize: 22,
-                    fontWeight: '500',
-                  }}>
-                  {user?.friends?.length}
-                </Text>
-                <Text style={{color: 'white', fontWeight: '500', fontSize: 12}}>
-                  Connections
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('MyCommOrEvents', {
-                    screen: 'Communities',
-                    userId,
-                  })
-                }>
-                <Text
-                  style={{
-                    color: 'white',
-                    fontSize: 22,
-                    fontWeight: '500',
-                  }}>
-                  {communityCount}
-                </Text>
-                <Text style={{color: 'white', fontWeight: '500', fontSize: 12}}>
-                  Communities
-                </Text>
-              </TouchableOpacity>
-            </View>
+            )}
 
             <View style={{position: 'relative', zIndex: 100}}>
               {/* <TouchableOpacity
@@ -875,7 +888,7 @@ const UserProfile = ({route}) => {
               <View
                 style={{
                   flexDirection: 'row',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   gap: 10,
                   marginTop: 10,
                 }}>
@@ -906,16 +919,20 @@ const UserProfile = ({route}) => {
               {user?.socialLinks
                 ?.filter(link => link?.url?.length > 1) // Ensure only valid items are mapped
                 ?.map((link, index) => (
-                  <View key={index} style={styles.linkContainer}>
-                    <Entypo name={link.logo} size={20} color={link.color} />
-                    <Text style={styles.platformName}>{link.platform}:</Text>
-                    <Text
-                      style={[styles.platformName, {flexShrink: 1}]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail">
-                      {link.url}
-                    </Text>
-                  </View>
+                  <Pressable
+                    key={index}
+                    onLongPress={() => handleCopy(link.url)}>
+                    <View key={index} style={styles.linkContainer}>
+                      <Entypo name={link.logo} size={20} color={link.color} />
+                      <Text style={styles.platformName}>{link.platform}:</Text>
+                      <Text
+                        style={[styles.platformName, {flexShrink: 1}]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
+                        {link.url}
+                      </Text>
+                    </View>
+                  </Pressable>
                 ))}
 
               {/* Experience Section */}
@@ -935,12 +952,14 @@ const UserProfile = ({route}) => {
                             display: 'flex',
                             flexDirection: 'row',
                             justifyContent: 'space-between',
-                            alignItems: 'center',
+                            alignItems: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: 7,
                           }}>
                           <Text
                             style={[
                               styles.experienceCompany,
-                              {color: '#2D3F7B'},
+                              {color: '#2D3F7B', flexShrink: 1},
                             ]}>
                             {exp.company}
                           </Text>
@@ -985,12 +1004,14 @@ const UserProfile = ({route}) => {
                             display: 'flex',
                             flexDirection: 'row',
                             justifyContent: 'space-between',
-                            alignItems: 'center',
+                            alignItems: 'flex-start',
+                            flexWrap: 'wrap',
+                            gap: 7,
                           }}>
                           <Text
                             style={[
                               styles.experienceCompany,
-                              {color: '#2D3F7B'},
+                              {color: '#2D3F7B', flexShrink: 1},
                             ]}>
                             {edu.school}
                           </Text>

@@ -115,13 +115,40 @@ export default function Communities({navigation, route}) {
   useFocusEffect(
     useCallback(() => {
       fetchData(); // Refresh data when screen is focused
-    }, [user?._id, isEvent]),
+    }, [user?._id]),
   );
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
   };
+
+  const renderItem = useCallback(
+    ({item, title}) =>
+      isEvent ? (
+        <EventCard
+          isTrending={title.includes('Trending')}
+          event={item}
+          height={title.includes('Trending') ? 250 : 280}
+          width={title.includes('Trending') ? 390 : 220}
+          picHeight={title.includes('Trending') ? '100%' : 130}
+          full
+          onPress={() => navigation.navigate('EventHome', {eventId: item._id})}
+        />
+      ) : (
+        <CommunityCard
+          isTrending={title.includes('Trending')}
+          community={item}
+          onPress={() =>
+            navigation.navigate('CommunityHome', {communityId: item._id})
+          }
+          height={title.includes('Trending') ? 250 : 280}
+          width={title.includes('Trending') ? 390 : 220}
+          picHeight={title.includes('Trending') ? '100%' : 130}
+        />
+      ),
+    [isEvent, navigation], // Do NOT include `title` (as it's dynamic)
+  );
 
   const renderHorizontalList = (data, title) => (
     <View style={[styles.sectionWrapper]}>
@@ -130,32 +157,7 @@ export default function Communities({navigation, route}) {
         data={data}
         horizontal
         keyExtractor={item => item._id}
-        renderItem={({item}) =>
-          !isEvent ? (
-            <CommunityCard
-              isTrending={title.includes('Trending')}
-              community={item}
-              onPress={() =>
-                navigation.navigate('CommunityHome', {communityId: item._id})
-              }
-              height={title.includes('Trending') ? 250 : 280}
-              width={title.includes('Trending') ? 390 : 220}
-              picHeight={title.includes('Trending') ? '100%' : 130}
-            />
-          ) : (
-            <EventCard
-              isTrending={title.includes('Trending')}
-              event={item}
-              height={title.includes('Trending') ? 250 : 280}
-              width={title.includes('Trending') ? 390 : 220}
-              picHeight={title.includes('Trending') ? '100%' : 130}
-              full
-              onPress={() =>
-                navigation.navigate('EventHome', {eventId: item._id})
-              }
-            />
-          )
-        }
+        renderItem={({item}) => renderItem({item, title})} // Pass `title` correctly
         ListEmptyComponent={
           <Text style={styles.noUsersText}>
             No {isEvent ? 'Events' : 'Communities'} found
@@ -280,7 +282,12 @@ export default function Communities({navigation, route}) {
                 </Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.dropdownItem}>
+            <TouchableOpacity
+              onPress={() => {
+                setActionModalVisible(false);
+                navigation.navigate('HelpScreen');
+              }}
+              style={styles.dropdownItem}>
               <Text style={[styles.dropdownItemText, {color: 'red'}]}>
                 Report
               </Text>
@@ -289,9 +296,7 @@ export default function Communities({navigation, route}) {
         )}
       </View>
 
-      <ScrollView
-        contentContainerStyle={{paddingHorizontal: 10, marginBottom: 20}}
-        horizontal>
+      <View style={{paddingHorizontal: 10, marginBottom: 20}}>
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 1}}>
           {[
             {name: 'Networking', color: '#EDE9FF'},
@@ -306,6 +311,7 @@ export default function Communities({navigation, route}) {
                 {
                   backgroundColor:
                     category === cat.name ? '#A274FF' : cat.color,
+                  flexGrow: 1,
                 },
               ]}
               onPress={() =>
@@ -321,7 +327,7 @@ export default function Communities({navigation, route}) {
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
+      </View>
       <View style={{flexDirection: 'row', marginBottom: 20}}>
         <TouchableOpacity
           onPress={() => {
@@ -472,15 +478,16 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 5,
-    paddingHorizontal: 12,
+    paddingHorizontal: 9,
     backgroundColor: '#EDEDED',
     borderRadius: 10,
     marginHorizontal: 3,
+    flex: 1,
   },
 
   filterButtonText: {
     color: '#000',
-    fontSize: 14,
+    fontSize: 13,
   },
   activeFilterButtonText: {
     color: 'white',
@@ -544,13 +551,18 @@ const styles = StyleSheet.create({
     width: 160,
     backgroundColor: '#FFF',
     borderRadius: 8,
-    elevation: 20, // Adds shadow for Android
-    shadowColor: 'black', // Adds shadow for iOS
+
+    // 👇 Fix stacking issue on iOS
+    zIndex: 999, // Ensure dropdown is above everything
+    elevation: 20, // Works for Android
+
+    // Shadow for iOS
+    shadowColor: 'black',
     shadowOpacity: 0.3,
     shadowOffset: {width: 3, height: 3},
     shadowRadius: 1,
-    zIndex: 2, // Ensures the dropdown is on top of other elements
   },
+
   dropdownItem: {
     padding: 15,
     // borderBottomWidth: 1,
