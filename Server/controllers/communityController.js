@@ -187,7 +187,7 @@ exports.createCommunity = (io, userSocketMap) => async (req, res) => {
 
     // Handle profile picture upload
     if (req.file) {
-      profilePicture = `https://${req.get("host")}/uploads/${
+      profilePicture = `https://${req.get("host")}/backend/uploads/${
         req.file.filename
       }`;
 
@@ -289,7 +289,7 @@ exports.createDraftCommunity = async (req, res) => {
 
     // Handle profile picture upload
     if (req.file) {
-      profilePicture = `https://${req.get("host")}/uploads/${
+      profilePicture = `https://${req.get("host")}/backend/uploads/${
         req.file.filename
       }`;
 
@@ -751,7 +751,7 @@ exports.createEvent = (io, userSocketMap) => async (req, res) => {
     // Handle profile picture upload
     if (req.file) {
       // Save new profile picture
-      profilePicture = `https://${req.get("host")}/uploads/${
+      profilePicture = `https://${req.get("host")}/backend/uploads/${
         req.file.filename
       }`;
 
@@ -860,7 +860,7 @@ exports.createDraftEvent = async (req, res) => {
     // Handle profile picture upload
     if (req.file) {
       // Save new profile picture
-      profilePicture = `https://${req.get("host")}/uploads/${
+      profilePicture = `https://${req.get("host")}/backend/uploads/${
         req.file.filename
       }`;
 

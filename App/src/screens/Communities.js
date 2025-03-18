@@ -296,8 +296,8 @@ export default function Communities({navigation, route}) {
         )}
       </View>
 
-      <View style={{paddingHorizontal: 10, marginBottom: 20}}>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 1}}>
+      <ScrollView style={{paddingHorizontal: 10, marginBottom: 20}} horizontal>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
           {[
             {name: 'Networking', color: '#EDE9FF'},
             {name: 'Business', color: '#FFF5D7'},
@@ -311,7 +311,6 @@ export default function Communities({navigation, route}) {
                 {
                   backgroundColor:
                     category === cat.name ? '#A274FF' : cat.color,
-                  flexGrow: 1,
                 },
               ]}
               onPress={() =>
@@ -327,7 +326,7 @@ export default function Communities({navigation, route}) {
             </TouchableOpacity>
           ))}
         </View>
-      </View>
+      </ScrollView>
       <View style={{flexDirection: 'row', marginBottom: 20}}>
         <TouchableOpacity
           onPress={() => {

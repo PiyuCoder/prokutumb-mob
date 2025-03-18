@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ProfilePicture from '../components/ProfilePicture';
 import {useSelector} from 'react-redux';
+import Loader from '../components/Loader';
 
 const ConnectionsScreen = ({route}) => {
   const {userId} = route.params;
@@ -23,7 +24,7 @@ const ConnectionsScreen = ({route}) => {
   const [filteredConnections, setFilteredConnections] = useState([]);
   const navigation = useNavigation();
   const {user} = useSelector(state => state.auth);
-
+  const [loading, setLoading] = useState(true);
   // Fetch connections
   useEffect(() => {
     const fetchConnections = async () => {
@@ -33,6 +34,8 @@ const ConnectionsScreen = ({route}) => {
         setFilteredConnections(response.data); // Display all connections initially
       } catch (error) {
         console.error('Error fetching connections:', error);
+      } finally {
+        setLoading(false);
       }
     };
     if (userId) fetchConnections();
@@ -93,6 +96,7 @@ const ConnectionsScreen = ({route}) => {
 
   return (
     <View style={styles.container}>
+      <Loader isLoading={loading} />
       {/* Header */}
       <View
         style={{

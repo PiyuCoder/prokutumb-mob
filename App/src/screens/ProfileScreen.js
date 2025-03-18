@@ -98,7 +98,7 @@ const ProfileScreen = () => {
       : require('../assets/default-pp.png'),
   );
 
-  console.log('checking user: ', user);
+  // console.log('checking user: ', user);
 
   // Fetch user info from external APIs (LinkedIn, etc.)
   const fetchUserInfo = async () => {
@@ -662,7 +662,7 @@ const ProfileScreen = () => {
                     fontSize: 22,
                     fontWeight: '500',
                   }}>
-                  {user?.friends?.length}
+                  {userInfo?.friends}
                 </Text>
                 <Text style={{color: 'white', fontWeight: '500'}}>
                   Connections

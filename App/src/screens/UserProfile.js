@@ -259,7 +259,7 @@ const UserProfile = ({route}) => {
   };
 
   const handleConnect = async () => {
-    // setLoading(true)
+    setLoading(true);
     try {
       if (connectionStatus === 'Connect') {
         await axiosInstance.post('/api/user/send-connection-request', {
@@ -270,6 +270,8 @@ const UserProfile = ({route}) => {
       }
     } catch (error) {
       console.error('Error sending connection request:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

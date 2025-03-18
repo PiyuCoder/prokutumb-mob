@@ -40,6 +40,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
   const navigation = useNavigation();
   const [openReferralInput, setOpenReferralInput] = useState(false);
   const [referralCode, setReferralCode] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     try {
@@ -93,13 +94,14 @@ const GoogleSignInButton = ({setIsLoading}) => {
         setError('Play Services not available');
       } else {
         setError('Google sign-in failed');
+        setIsLoading(false);
       }
     }
   };
 
   const handleRegister = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       // Get tokens from GoogleSignin
       const tokens = await GoogleSignin.getTokens();
       const accessToken = tokens.accessToken; // Access token for backend
@@ -114,7 +116,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
                 'Referral Code Expired',
                 'Please enter a valid referral code',
               );
-              setIsLoading(false);
+              setLoading(false);
               return;
             }
             const {token, user} = action.payload; // Assuming payload contains token and user
@@ -125,7 +127,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
 
             // Dispatch the loginSuccess action to update Redux state
             dispatch(loginSuccess({token, user}));
-            setIsLoading(false);
+            setLoading(false);
             setOpenReferralInput(false);
 
             if (user?.isProfileComplete) {
@@ -137,7 +139,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
             }
           } else {
             setError(action.payload.message || 'Login failed');
-            setIsLoading(false);
+            setLoading(false);
           }
         },
       );
@@ -151,12 +153,14 @@ const GoogleSignInButton = ({setIsLoading}) => {
         setError('Play Services not available');
       } else {
         setError('Google sign-in failed');
+        setIsLoading(false);
       }
     }
   };
 
   return (
     <View style={styles.container}>
+      {error && <Text style={styles.errorText}>{error}</Text>}
       <TouchableOpacity onPress={handleGoogleLogin} style={styles.customButton}>
         <View
           style={{
@@ -208,8 +212,6 @@ const GoogleSignInButton = ({setIsLoading}) => {
           </TouchableOpacity>
         </View>
       </Modal>
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
@@ -218,7 +220,7 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'space-between',
     alignItems: 'center',
-    // marginTop: 20,
+    marginTop: 20,
   },
   googleIcon: {
     height: 24,
@@ -246,7 +248,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   errorText: {
-    marginTop: 10,
+    marginBottom: 10,
     color: 'red',
     textAlign: 'center',
   },
