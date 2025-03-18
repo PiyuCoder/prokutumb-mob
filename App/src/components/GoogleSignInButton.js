@@ -93,6 +93,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
         setError('Play Services not available');
       } else {
         setError('Google sign-in failed');
+        setIsLoading(false);
       }
     }
   };
@@ -151,12 +152,14 @@ const GoogleSignInButton = ({setIsLoading}) => {
         setError('Play Services not available');
       } else {
         setError('Google sign-in failed');
+        setIsLoading(false);
       }
     }
   };
 
   return (
     <View style={styles.container}>
+      {error && <Text style={styles.errorText}>{error}</Text>}
       <TouchableOpacity onPress={handleGoogleLogin} style={styles.customButton}>
         <View
           style={{
@@ -208,8 +211,6 @@ const GoogleSignInButton = ({setIsLoading}) => {
           </TouchableOpacity>
         </View>
       </Modal>
-
-      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'space-between',
     alignItems: 'center',
-    // marginTop: 20,
+    marginTop: 20,
   },
   googleIcon: {
     height: 24,
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   errorText: {
-    marginTop: 10,
+    marginBottom: 10,
     color: 'red',
     textAlign: 'center',
   },

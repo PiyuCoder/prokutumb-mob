@@ -8,7 +8,7 @@ const ProfilePicture = ({
   borderRadius,
   marginRight,
 }) => {
-  const defaultImage = require('../assets/default-pp.png');
+  const defaultImage = require('../assets/default-dp.png');
 
   const [imageSource, setImageSource] = useState(
     profilePictureUri ? {uri: profilePictureUri} : defaultImage,
