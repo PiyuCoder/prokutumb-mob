@@ -40,6 +40,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
   const navigation = useNavigation();
   const [openReferralInput, setOpenReferralInput] = useState(false);
   const [referralCode, setReferralCode] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     try {
@@ -100,7 +101,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
 
   const handleRegister = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       // Get tokens from GoogleSignin
       const tokens = await GoogleSignin.getTokens();
       const accessToken = tokens.accessToken; // Access token for backend
@@ -115,7 +116,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
                 'Referral Code Expired',
                 'Please enter a valid referral code',
               );
-              setIsLoading(false);
+              setLoading(false);
               return;
             }
             const {token, user} = action.payload; // Assuming payload contains token and user
@@ -126,7 +127,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
 
             // Dispatch the loginSuccess action to update Redux state
             dispatch(loginSuccess({token, user}));
-            setIsLoading(false);
+            setLoading(false);
             setOpenReferralInput(false);
 
             if (user?.isProfileComplete) {
@@ -138,7 +139,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
             }
           } else {
             setError(action.payload.message || 'Login failed');
-            setIsLoading(false);
+            setLoading(false);
           }
         },
       );

@@ -221,6 +221,7 @@ exports.fetchUserInfo = async (req, res) => {
       success: true,
       info: {
         education: user.education,
+        friends: user.friends.length,
         communities: {
           createdCount: createdCommunitiesCount,
           memberCount: memberCommunitiesCount,
@@ -440,7 +441,7 @@ exports.createProfile = async (req, res) => {
 
     let profilePicture;
     if (req.file) {
-      profilePicture = `https://${req.get("host")}/uploads/dp/${
+      profilePicture = `https://${req.get("host")}/backend/uploads/dp/${
         req.file.filename
       }`;
     }
@@ -488,12 +489,12 @@ exports.editProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // console.log(req.files?.profilePicture, req.files?.coverPicture);
+    console.log(req.files?.profilePicture, req.files?.coverPicture);
     // Handle Profile Picture Update
     if (req.files?.profilePicture) {
-      const newProfilePicture = `https://${req.get("host")}/uploads/dp/${
-        req.files.profilePicture[0].filename
-      }`;
+      const newProfilePicture = `https://${req.get(
+        "host"
+      )}/backend/uploads/dp/${req.files.profilePicture[0].filename}`;
 
       // Delete the old profile picture
       if (user.profilePicture?.includes("/uploads/dp/")) {
@@ -512,7 +513,7 @@ exports.editProfile = async (req, res) => {
 
     // Handle Cover Picture Update
     if (req.files?.coverPicture) {
-      const newCoverPicture = `https://${req.get("host")}/uploads/dp/${
+      const newCoverPicture = `https://${req.get("host")}/backend/uploads/dp/${
         req.files.coverPicture[0].filename
       }`;
 

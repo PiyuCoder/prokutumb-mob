@@ -61,8 +61,18 @@ const CreateProfileStepFour = ({navigation, route}) => {
   useEffect(() => {
     setLoading(false);
   }, []);
-  const onSubmit = () => {
+
+  const validateImageURL = async url => {
+    try {
+      const response = await fetch(url, {method: 'HEAD'});
+      return response.ok; // True if URL is valid, false if it's broken
+    } catch (error) {
+      return false; // Broken or unreachable URL
+    }
+  };
+  const onSubmit = async () => {
     setLoading(true);
+    console.log('profileData: ', profileData);
     // Check if any field is empty
     const hasEmptyFields = socialLinkes.some(
       link => link.url === '@' || !link.url,
@@ -78,13 +88,22 @@ const CreateProfileStepFour = ({navigation, route}) => {
     // }
 
     const formData = new FormData();
+
+    if (profileData.profilePicture) {
+      const isValid = await validateImageURL(profileData.profilePicture);
+
+      if (isValid) {
+        formData.append('profilePicture', {
+          uri: profileData.profilePicture,
+          type: 'image/jpeg',
+          name: 'profilePicture.jpg',
+        });
+      } else {
+        console.warn('Invalid profile picture URL. Skipping upload.');
+      }
+    }
     formData.append('name', profileData.name);
-    if (profileData.profilePicture)
-      formData.append('profilePicture', {
-        uri: profileData.profilePicture,
-        type: 'image/jpeg', // or the appropriate type
-        name: 'profilePicture.jpg',
-      });
+
     formData.append('interests', JSON.stringify(profileData.interests));
     formData.append('about', profileData.about);
     formData.append('location', profileData.location);
