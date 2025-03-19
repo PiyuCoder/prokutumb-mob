@@ -704,6 +704,12 @@ exports.sendRequest = (io, userSocketMap) => async (req, res) => {
       return res.status(404).json({ error: "Receiver not found" });
     }
 
+    const sender = await Member.findById(senderId);
+    if (!sender) {
+      return res.status(404).json({ error: "Sender not found" });
+    }
+
+    const senderName = sender.name;
     // Add request to receiver's connection requests
     receiver.friendRequests.push({ fromUser: senderId });
     await receiver.save();
