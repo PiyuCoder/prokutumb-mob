@@ -1,5 +1,6 @@
 import {LogLevel, OneSignal} from 'react-native-onesignal';
 import {ONESIGNAL_APP_ID} from '@env';
+import {navigationRef} from '../App';
 
 export const oneSignalInitiate = () => {
   // Remove this method to stop OneSignal Debugging
@@ -14,6 +15,19 @@ export const oneSignalInitiate = () => {
 
   // Method for listening for notification clicks
   OneSignal.Notifications.addEventListener('click', event => {
-    console.log('OneSignal: notification clicked:', event);
+    const additionalData = event?.notification?.additionalData;
+    const screen = additionalData?.screen;
+    const params = additionalData?.params || {};
+
+    console.log(additionalData);
+
+    if (screen && navigationRef.current) {
+      console.log(`Navigating to ${screen} with params:`, params);
+      navigationRef.current.navigate(screen, params);
+    } else {
+      console.log(
+        'Navigation failed: Screen name not found in additionalData.',
+      );
+    }
   });
 };

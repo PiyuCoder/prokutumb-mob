@@ -70,7 +70,12 @@ const socketHandler = (io, userSocketMap) => {
           "New Message!",
           `${senderName}: ${text}`,
           "message",
-          "Chat"
+          "Chat",
+          {
+            userId: sender,
+            name: senderName,
+            profilePicture: senderUser?.profilePicture,
+          }
         );
       } catch (error) {
         console.error("Error sending message:", error);

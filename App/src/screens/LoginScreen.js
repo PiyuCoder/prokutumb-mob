@@ -22,6 +22,7 @@ import Svg, {Circle} from 'react-native-svg';
 import proku from '../assets/splash-logo.png';
 import AppleSignInButton from '../components/AppleSignInButton';
 import {useFocusEffect} from '@react-navigation/native';
+import {OneSignal} from 'react-native-onesignal';
 
 const LoginScreen = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -43,6 +44,8 @@ const LoginScreen = ({navigation}) => {
             console.log('isProfileComplete:', parsedUser.isProfileComplete);
 
             dispatch(loginSuccess({token, user: parsedUser}));
+
+            if (parsedUser?._id) OneSignal.login(parsedUser?._id);
 
             if (isActive) {
               navigation.replace(

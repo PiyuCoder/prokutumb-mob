@@ -734,7 +734,8 @@ exports.sendRequest = (io, userSocketMap) => async (req, res) => {
       "New Friend Request!",
       `${senderName} has sent you a friend request.`,
       "friend_request",
-      "Notifications"
+      "Notifications",
+      {}
     );
 
     res.status(200).json({ message: "Connection request sent successfully." });
