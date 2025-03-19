@@ -3,7 +3,7 @@ import {Provider} from 'react-redux';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import store, {persistor} from './src/store/store';
 import {createStackNavigator} from '@react-navigation/stack';
-// import {createDrawerNavigator} from '@react-navigation/drawer';
+import {OneSignal} from 'react-native-onesignal';
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -58,6 +58,7 @@ import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import ReportScreen from './src/screens/ReportScreen';
 import GetReferral from './src/screens/GetReferral';
 import EmailLoginScreen from './src/screens/EmailLoginScreen';
+import {oneSignalInitiate} from './src/onesignal';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -108,12 +109,17 @@ export default function App() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    oneSignalInitiate();
+  }, []);
+
   // Socket connection and handling incoming call event
   useEffect(() => {
     if (!socket || !user?._id) return;
 
     if (user?._id) {
       connectSocket();
+      OneSignal.login(user?._id);
       socket.on('connect', () => {
         console.log('Connected to socket:', socket.id);
       });

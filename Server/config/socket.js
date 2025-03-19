@@ -1,4 +1,6 @@
+const Member = require("../models/Member");
 const Message = require("../models/Message");
+const sendPushNotification = require("./oneSignal");
 
 const onlineUsers = {};
 
@@ -57,6 +59,19 @@ const socketHandler = (io, userSocketMap) => {
         } else {
           console.log(`Recipient ${recipient} is not connected`);
         }
+
+        const senderUser = await Member.findById(sender);
+        const senderName = senderUser ? senderUser.name : "Someone";
+
+        // ✅ Send OneSignal Push Notification
+        await sendPushNotification(
+          recipient,
+          sender,
+          "New Message!",
+          `${senderName}: ${text}`,
+          "message",
+          "Chat"
+        );
       } catch (error) {
         console.error("Error sending message:", error);
       }

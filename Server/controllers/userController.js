@@ -11,6 +11,7 @@ const Event = require("../models/Event");
 const axios = require("axios");
 const CommPost = require("../models/CommPost");
 const bcrypt = require("bcryptjs");
+const sendPushNotification = require("../config/oneSignal");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -727,6 +728,14 @@ exports.sendRequest = (io, userSocketMap) => async (req, res) => {
         `Sent notification to ${receiverId} about the new connection request.`
       );
     }
+    await sendPushNotification(
+      receiverId,
+      senderId,
+      "New Friend Request!",
+      `${senderName} has sent you a friend request.`,
+      "friend_request",
+      "Notifications"
+    );
 
     res.status(200).json({ message: "Connection request sent successfully." });
   } catch (error) {
