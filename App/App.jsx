@@ -3,7 +3,6 @@ import {Provider} from 'react-redux';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import store, {persistor} from './src/store/store';
 import {createStackNavigator} from '@react-navigation/stack';
-import {OneSignal} from 'react-native-onesignal';
 import {
   NavigationContainer,
   createNavigationContainerRef,
@@ -62,7 +61,7 @@ import {oneSignalInitiate} from './src/onesignal';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
-const navigationRef = React.createRef();
+export const navigationRef = React.createRef();
 const linking = {
   prefixes: ['prokutumb://'],
   config: {
@@ -119,7 +118,6 @@ export default function App() {
 
     if (user?._id) {
       connectSocket();
-      OneSignal.login(user?._id);
       socket.on('connect', () => {
         console.log('Connected to socket:', socket.id);
       });

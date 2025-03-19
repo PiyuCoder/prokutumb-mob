@@ -52,6 +52,7 @@ import SideNavigationScreen from '../components/SideNavigationScreen';
 import SearchPeople from '../components/SearchPeople';
 import Video from 'react-native-video';
 import SelectModal from '../components/SelectModal';
+import {OneSignal} from 'react-native-onesignal';
 
 const {width, height} = Dimensions.get('window');
 const tagList = ['Networking', 'Business', 'Technology', 'Marketing'];
@@ -297,6 +298,10 @@ const HomeScreen = ({navigation}) => {
       {cancelable: true},
     );
   };
+
+  useEffect(() => {
+    if (user?._id) OneSignal.login(user?._id);
+  }, [user?._id]);
 
   console.log(selectedMedia);
   const renderPost = ({item}) => (

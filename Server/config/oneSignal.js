@@ -7,7 +7,8 @@ const sendPushNotification = async (
   title,
   message,
   type,
-  screen
+  screen,
+  params // Added params argument
 ) => {
   try {
     await axios.post(
@@ -21,6 +22,7 @@ const sendPushNotification = async (
           type, // Notification type (friend_request, message, community_join_request)
           sender_id: senderId,
           screen, // Screen to navigate on notification click
+          params, // Pass additional parameters (userId, name, profilePicture, etc.)
         },
       },
       {
