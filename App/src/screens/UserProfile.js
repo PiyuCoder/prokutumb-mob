@@ -107,7 +107,7 @@ const UserProfile = ({route}) => {
         );
 
         if (res.data.success) {
-          // console.log('Fetched user: ', res.data.user);
+          console.log('Fetched user: ', res.data);
           setUser(res?.data?.user);
 
           setUserPosts(res.data.posts);
@@ -118,21 +118,12 @@ const UserProfile = ({route}) => {
           // Check if they are already connected
           if (res.data.isAlreadyConnected) {
             setConnectionStatus('Message');
+          } else if (res.data.requestSent) {
+            setConnectionStatus('Pending');
+          } else if (res.data.requestReceived) {
+            setConnectionStatus('Accept/Decline');
           } else {
-            const requestSent = res.data.user?.friendRequests?.some(
-              request => request?.fromUser === currentUser?._id,
-            );
-            const requestReceived = currentUser.friendRequests?.some(
-              request => request?.fromUser === userId,
-            );
-
-            if (requestSent) {
-              setConnectionStatus('Pending');
-            } else if (requestReceived) {
-              setConnectionStatus('Accept/Decline');
-            } else {
-              setConnectionStatus('Connect');
-            }
+            setConnectionStatus('Connect');
           }
         } else if (res.status === 400) {
           ToastAndroid.show('User not found', ToastAndroid.SHORT);

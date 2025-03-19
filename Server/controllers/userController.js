@@ -286,7 +286,7 @@ exports.fetchUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid or missing userId" });
     }
 
-    // Fetch user details
+    // Fetch user and current user
     const user = await Member.findById(userId);
     const currentUser = await Member.findById(currentUserId);
 
@@ -306,9 +306,18 @@ exports.fetchUser = async (req, res) => {
       isDraft: false,
     });
 
-    // Check if the current user is already connected
+    // 🔥 Fix: Ensure isAlreadyConnected works correctly
     const isAlreadyConnected = user.friends.some(
-      (friend) => friend._id.toString() === currentUserId.toString()
+      (friend) => friend.toString() === currentUserId.toString()
+    );
+
+    // 🔥 Fix: Ensure friend requests are checked correctly
+    const requestSent = currentUser?.friendRequests?.some(
+      (request) => request?.fromUser?.toString() === userId.toString()
+    );
+
+    const requestReceived = user?.friendRequests?.some(
+      (request) => request?.fromUser?.toString() === currentUserId.toString()
     );
 
     // Fetch user's posts
@@ -326,12 +335,15 @@ exports.fetchUser = async (req, res) => {
 
     // Combine counts for total communities associated with the user
     const totalCommunities = createdCommunitiesCount + memberCommunitiesCount;
+
     // Return user details and posts
     res.status(200).json({
       success: true,
       user,
       posts,
       isAlreadyConnected,
+      requestSent,
+      requestReceived,
       similarityScore,
       socialAvgScore: getRandomScore(),
       communities: {
