@@ -118,9 +118,9 @@ const UserProfile = ({route}) => {
           // Check if they are already connected
           if (res.data.isAlreadyConnected) {
             setConnectionStatus('Message');
-          } else if (res.data.requestSent) {
-            setConnectionStatus('Pending');
           } else if (res.data.requestReceived) {
+            setConnectionStatus('Pending');
+          } else if (res.data.requestSent) {
             setConnectionStatus('Accept/Decline');
           } else {
             setConnectionStatus('Connect');
