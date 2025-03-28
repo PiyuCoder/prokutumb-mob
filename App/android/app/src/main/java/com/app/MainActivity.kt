@@ -1,4 +1,4 @@
-package com.majlis.network
+package com.majlis.network.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

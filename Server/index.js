@@ -81,7 +81,7 @@ app.get("/posts/:id", async (req, res) => {
 
   if (post) {
     const appLink = `prokutumb://post/${post.id}`;
-    const playStoreLink = `https://play.google.com/store/apps/details?id=com.majlis.network`;
+    const playStoreLink = `https://play.google.com/store/apps/details?id=com.majlis.network.app`;
     const appStoreLink = `https://apps.apple.com/in/app/majlis-networking/id6741841380`;
 
     const userAgent = req.headers["user-agent"] || "";
@@ -89,7 +89,7 @@ app.get("/posts/:id", async (req, res) => {
     const isIOS = /iphone|ipad|ipod/i.test(userAgent);
 
     const storeLink = isIOS ? appStoreLink : playStoreLink;
-    const androidIntent = `intent://post/${post.id}#Intent;scheme=prokutumb;package=com.majlis.network;end;`;
+    const androidIntent = `intent://post/${post.id}#Intent;scheme=prokutumb;package=com.majlis.network.app;end;`;
 
     res.send(`
       <html>
