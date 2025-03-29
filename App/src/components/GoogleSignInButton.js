@@ -21,6 +21,7 @@ import googleIcon from '../assets/google.png';
 import {loginSuccess} from '../store/slices/authSlice';
 import {axiosInstance} from '../api/axios';
 import {TextInput} from 'react-native-gesture-handler';
+import Loader from './Loader';
 
 GoogleSignin.configure({
   webClientId:
@@ -161,6 +162,7 @@ const GoogleSignInButton = ({setIsLoading}) => {
   return (
     <View style={styles.container}>
       {error && <Text style={styles.errorText}>{error}</Text>}
+      <Loader isLoading={loading} />
       <TouchableOpacity onPress={handleGoogleLogin} style={styles.customButton}>
         <View
           style={{

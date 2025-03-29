@@ -322,7 +322,7 @@ const HomeScreen = ({navigation}) => {
         }}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <ProfilePicture
-            profilePictureUri={item.user.profilePicture}
+            profilePictureUri={item.user?.profilePicture}
             width={40}
             height={40}
             borderRadius={20}
@@ -330,9 +330,9 @@ const HomeScreen = ({navigation}) => {
           />
           <Text
             onPress={() =>
-              user?._id === item.user._id
+              user?._id === item.user?._id
                 ? navigation.navigate('Profile')
-                : handleUserPress(item.user._id)
+                : handleUserPress(item.user?._id)
             }
             style={{
               fontWeight: 'bold',
@@ -340,10 +340,10 @@ const HomeScreen = ({navigation}) => {
               fontFamily: 'Inter_24pt-Bold',
               fontSize: 15,
             }}>
-            {item.user.name}
+            {item.user?.name}
           </Text>
         </View>
-        {user?._id === item.user._id && (
+        {user?._id === item.user?._id && (
           <View style={{position: 'relative', zIndex: 100}}>
             <TouchableOpacity
               style={styles.iconButtons}

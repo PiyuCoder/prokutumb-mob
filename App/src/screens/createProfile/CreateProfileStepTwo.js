@@ -236,7 +236,9 @@ const CreateProfileStepTwo = ({navigation, route}) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
-          <Text style={styles.submitButtonText}>Save</Text>
+          <Text style={styles.submitButtonText}>
+            {!experiences[0].company ? 'Skip' : 'Save'}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

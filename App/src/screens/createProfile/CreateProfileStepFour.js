@@ -15,6 +15,7 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import {useDispatch, useSelector} from 'react-redux';
 import {saveProfile, setSocialLinks} from '../../store/slices/profileSlice';
 import Loader from '../../components/Loader';
+import {CommonActions} from '@react-navigation/native';
 
 const platformsList = [
   {name: 'Facebook', logo: 'facebook', color: '#0073DE'},
@@ -34,7 +35,7 @@ const CreateProfileStepFour = ({navigation, route}) => {
       ? [
           {
             platform: 'Instagram',
-            url: '@',
+            url: '',
             logo: 'instagram',
             color: '#C74C4D',
           },
@@ -51,7 +52,7 @@ const CreateProfileStepFour = ({navigation, route}) => {
         ...socialLinkes,
         {
           platform: platform.name,
-          url: '@',
+          url: '',
           logo: platform.logo,
           color: platform.color,
         },
@@ -116,7 +117,14 @@ const CreateProfileStepFour = ({navigation, route}) => {
     dispatch(saveProfile(formData)).then(action => {
       if (saveProfile.fulfilled.match(action)) {
         setLoading(false);
-        navigation.replace('Dashboard');
+        // navigation.replace('Dashboard');
+
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{name: 'Dashboard'}], // Set Dashboard as the only screen
+          }),
+        );
       }
     });
   };
@@ -161,6 +169,7 @@ const CreateProfileStepFour = ({navigation, route}) => {
             <Entypo name={`${link.logo}`} size={20} color={`${link.color}`} />
             <Text style={styles.platformName}>{link.platform}</Text>
             <TextInput
+              autoFocus
               value={link.url}
               onChangeText={text => handleInput(index, text)}
               style={styles.urlInput}
@@ -174,7 +183,9 @@ const CreateProfileStepFour = ({navigation, route}) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
-          <Text style={styles.submitButtonText}>Save</Text>
+          <Text style={styles.submitButtonText}>
+            {!socialLinkes[0].url ? 'Skip & Save' : 'Save'}
+          </Text>
         </TouchableOpacity>
       </View>
       <Modal visible={isModalVisible} transparent={true} animationType="slide">

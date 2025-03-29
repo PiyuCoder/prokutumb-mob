@@ -1,7 +1,7 @@
 import io from 'socket.io-client';
 
-const SERVER_URL = 'https://prokutumb-mob.onrender.com';
-// const SERVER_URL = 'https://majlisserver.com';
+// const SERVER_URL = 'https://prokutumb-mob.onrender.com';
+const SERVER_URL = 'https://majlisserver.com';
 
 const socket = io(SERVER_URL, {
   autoConnect: true,

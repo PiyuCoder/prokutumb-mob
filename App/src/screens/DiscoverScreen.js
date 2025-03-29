@@ -250,7 +250,7 @@ const DiscoverScreen = ({navigation}) => {
     try {
       setLoading(true);
       const res = await axiosInstance.get(
-        `/api/user/people-you-may-know/67b0882bd798eefabc12108e`,
+        `/api/user/people-you-may-know/${user?._id}`,
       );
       setPeople(res?.data || []);
     } catch (error) {

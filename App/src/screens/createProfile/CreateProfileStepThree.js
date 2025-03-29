@@ -238,7 +238,9 @@ const CreateProfileStepThree = ({navigation, route}) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
-          <Text style={styles.submitButtonText}>Save</Text>
+          <Text style={styles.submitButtonText}>
+            {!educations[0].school ? 'Skip' : 'Save'}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

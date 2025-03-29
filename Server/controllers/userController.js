@@ -97,7 +97,10 @@ exports.signup = async (req, res) => {
         .json({ success: false, message: "Invalid referral code." });
     }
 
-    if (referredBy.referralCount >= 6) {
+    if (
+      (code === "MAJLIS" && referredBy.referralCount >= 10000) || // MAJLIS has 10k limit
+      (code !== "MAJLIS" && referredBy.referralCount >= 6) // Other codes have 6 limit
+    ) {
       return res.status(200).json({
         success: false,
         limitReached: true,
@@ -477,6 +480,8 @@ exports.createProfile = async (req, res) => {
     user.isProfileComplete = true;
 
     await user.save();
+
+    console.log("user", user);
 
     res.status(200).json({
       message: "Profile created successfully",
@@ -1014,11 +1019,23 @@ exports.fetchConversations = async (req, res) => {
         },
       },
       {
+        $addFields: {
+          senderDetails: { $arrayElemAt: ["$senderDetails", 0] },
+          recipientDetails: { $arrayElemAt: ["$recipientDetails", 0] },
+        },
+      },
+      {
+        $match: {
+          senderDetails: { $ne: null },
+          recipientDetails: { $ne: null },
+        },
+      },
+      {
         $project: {
           _id: 0,
           message: "$latestMessage",
-          senderDetails: { $arrayElemAt: ["$senderDetails", 0] },
-          recipientDetails: { $arrayElemAt: ["$recipientDetails", 0] },
+          senderDetails: 1,
+          recipientDetails: 1,
         },
       },
     ]);
@@ -1049,12 +1066,6 @@ exports.fetchConversations = async (req, res) => {
         },
       },
       {
-        $sort: { messageCount: -1, lastContacted: -1 }, // Sort by most frequent and recent
-      },
-      {
-        $limit: 10, // Limit the results
-      },
-      {
         $lookup: {
           from: "members",
           localField: "_id.contact",
@@ -1063,7 +1074,16 @@ exports.fetchConversations = async (req, res) => {
         },
       },
       {
-        $unwind: "$contactInfo",
+        $unwind: {
+          path: "$contactInfo",
+          preserveNullAndEmptyArrays: false, // Remove entries where contactInfo is null
+        },
+      },
+      {
+        $sort: { messageCount: -1, lastContacted: -1 }, // Sort by most frequent and recent
+      },
+      {
+        $limit: 10, // Limit the results
       },
       {
         $project: {

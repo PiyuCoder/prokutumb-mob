@@ -365,7 +365,7 @@ const UserProfile = ({route}) => {
         }}>
         <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
           <ProfilePicture
-            profilePictureUri={item.user.profilePicture}
+            profilePictureUri={item.user?.profilePicture}
             width={40}
             height={40}
             borderRadius={20}
@@ -373,15 +373,15 @@ const UserProfile = ({route}) => {
           />
           <Text
             onPress={() =>
-              currentUser?._id === item.user._id
+              currentUser?._id === item.user?._id
                 ? navigation.navigate('Profile')
-                : handleUserPress(item.user._id)
+                : handleUserPress(item.user?._id)
             }
             style={{fontWeight: 'bold', color: '#19295C'}}>
-            {item.user.name}
+            {item.user?.name}
           </Text>
         </View>
-        {currentUser?._id === item.user._id && (
+        {currentUser?._id === item.user?._id && (
           <View style={{position: 'relative', zIndex: 100}}>
             <TouchableOpacity
               style={styles.iconButtons}
