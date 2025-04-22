@@ -1,4 +1,4 @@
-package com.majlis.network
+package com.majlis.network.app
 
 import android.app.Application
 import com.facebook.react.PackageList

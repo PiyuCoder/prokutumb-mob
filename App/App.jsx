@@ -58,6 +58,7 @@ import ReportScreen from './src/screens/ReportScreen';
 import GetReferral from './src/screens/GetReferral';
 import EmailLoginScreen from './src/screens/EmailLoginScreen';
 import {oneSignalInitiate} from './src/onesignal';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 
 const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
@@ -321,6 +322,11 @@ export default function App() {
               <Stack.Screen
                 name="Notifications"
                 component={Notifications}
+                options={{headerShown: false}}
+              />
+              <Stack.Screen
+                name="ForgotPassword"
+                component={ForgotPasswordScreen}
                 options={{headerShown: false}}
               />
               {/* <Stack.Screen

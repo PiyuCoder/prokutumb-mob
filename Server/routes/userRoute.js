@@ -70,6 +70,9 @@ module.exports = (io, userSocketMap) => {
     "/check-email-register",
     checkRegistrationController.checkEmailRegistration
   );
+  router.post("/verify-otp", userController.verifyOtp);
+  router.post("/request-reset", userController.requestPasswordReset);
+  router.post("/reset-password", userController.resetPassword);
   router.post("/login", userController.login);
   router.post(
     "/apple-signin",

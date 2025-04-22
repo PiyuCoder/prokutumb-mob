@@ -13,7 +13,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import ProfilePicture from '../components/ProfilePicture';
 import {useDispatch, useSelector} from 'react-redux';
-import {populateProfile} from '../store/slices/profileSlice';
+import {deleteProfile, populateProfile} from '../store/slices/profileSlice';
 import Entypo from 'react-native-vector-icons/Entypo';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {axiosInstance} from '../api/axios';
@@ -165,6 +165,7 @@ const MenuScreen = ({navigation}) => {
       setLoading(true);
       const res = await axiosInstance.delete(`/api/user/${user?._id}`);
       if (res?.status === 200) {
+        dispatch(deleteProfile());
         handleLogout();
       }
     } catch (error) {

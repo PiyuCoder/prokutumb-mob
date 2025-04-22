@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -11,55 +11,21 @@ import {
   Image,
 } from 'react-native';
 import {axiosInstance} from '../api/axios';
-
 import proku from '../assets/splash-logo.png';
 import Loader from '../components/Loader';
+import passwordValidator from '../constants/auth';
 
 const SignupScreen = ({navigation}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [openReferralInput, setOpenReferralInput] = useState(false);
   const [referralCode, setReferralCode] = useState('');
+  const [otp, setOtp] = useState('');
+
   const [loading, setLoading] = useState(false);
-
-  const handleRegister = async () => {
-    try {
-      if (!referralCode) {
-        Alert.alert('Error', 'Please fill the referral code.');
-        return;
-      }
-
-      setLoading(true);
-
-      // Register user
-      const res = await axiosInstance.post('/api/user/signup', {
-        name,
-        email,
-        password,
-        code: referralCode,
-      });
-
-      if (res.data.success) {
-        Alert.alert('Success', 'User registered successfully', [
-          {text: 'OK', onPress: () => navigation.navigate('EmailLogin')},
-        ]);
-        // Close modal
-        setOpenReferralInput(false);
-      } else {
-        if (res?.data?.limitReached)
-          Alert.alert(
-            'Referral Code Expired',
-            'Please enter a valid referral code',
-          );
-        else Alert.alert('Invalid', `${res.data?.message}`);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [openReferralInput, setOpenReferralInput] = useState(false);
 
   const checkRegistration = async () => {
     if (!name || !email || !password) {
@@ -70,19 +36,79 @@ const SignupScreen = ({navigation}) => {
       Alert.alert('Error', 'Please enter a valid email');
       return;
     }
+
+    if (!passwordValidator(password, Alert)) return;
+
     setLoading(true);
     try {
-      // Check if user is registered
       const res = await axiosInstance.post('/api/user/check-email-register', {
         email,
       });
 
       if (res.data.isRegistered) {
-        // User is already registered
         Alert.alert('Error', 'User already registered. Please login.');
       } else {
-        // User is not registered
+        setShowEmailConfirmModal(true);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.post('/api/user/verify-otp', {
+        email,
+        otp,
+      });
+
+      if (res.data.success) {
+        Alert.alert('Success', 'OTP verified!');
+        setShowOTPModal(false);
         setOpenReferralInput(true);
+      } else {
+        Alert.alert('Error', res.data.message || 'Invalid OTP');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong');
+      console.error('OTP verification error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      if (!referralCode) {
+        Alert.alert('Error', 'Please fill the referral code.');
+        return;
+      }
+
+      setLoading(true);
+
+      const res = await axiosInstance.post('/api/user/signup', {
+        name,
+        email,
+        password,
+        code: referralCode,
+      });
+
+      if (res.data.success) {
+        setOpenReferralInput(false);
+        Alert.alert('Success', 'User registered successfully!');
+        navigation.navigate('EmailLogin');
+      } else {
+        if (res?.data?.limitReached) {
+          Alert.alert(
+            'Referral Code Expired',
+            'Please enter a valid referral code',
+          );
+        } else {
+          Alert.alert('Invalid', `${res.data?.message}`);
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Try again later.');
@@ -105,7 +131,6 @@ const SignupScreen = ({navigation}) => {
         value={name}
         onChangeText={setName}
       />
-
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -114,7 +139,6 @@ const SignupScreen = ({navigation}) => {
         onChangeText={setEmail}
         keyboardType="email-address"
       />
-
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -123,7 +147,16 @@ const SignupScreen = ({navigation}) => {
         onChangeText={setPassword}
         secureTextEntry
       />
-
+      <Text
+        style={{
+          color: 'white',
+          marginBottom: 10,
+          marginHorizontal: 30,
+          fontSize: 10,
+        }}>
+        Password must be at least 6 characters long and contain at least one
+        uppercase letter, one lowercase letter, and one number.
+      </Text>
       <TouchableOpacity onPress={checkRegistration} style={styles.button}>
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
@@ -132,29 +165,74 @@ const SignupScreen = ({navigation}) => {
         <Text style={styles.link}>Already have an account? Login</Text>
       </TouchableOpacity>
 
-      <Modal
-        visible={openReferralInput}
-        transparent={false} // Ensures full screen
-        animationType="slide" // Optional: Adds smooth transition
-      >
+      {/* Email Consent Modal */}
+      <Modal visible={showEmailConfirmModal} transparent animationType="slide">
         <View style={styles.modalContainer}>
-          <Text
-            style={{
-              color: 'black',
-              fontWeight: '700',
-              fontSize: 35,
-              marginBottom: 25,
+          <Text style={styles.modalHeader}>Email Verification Consent</Text>
+          <Text style={styles.modalText}>
+            By proceeding, you consent to receiving an email for account
+            verification. This will include a One-Time Password (OTP) to confirm
+            your email address. You can opt-out of receiving future emails at
+            any time through the app's settings.
+          </Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              setShowEmailConfirmModal(false);
+              setShowOTPModal(true);
             }}>
-            Enter Referral Code
+            <Text style={styles.buttonText}>Yes, Send OTP</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowEmailConfirmModal(false)}
+            style={{marginTop: 20}}>
+            <Text style={{color: '#289BF6'}}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* OTP Modal */}
+      <Modal visible={showOTPModal} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalHeader}>Enter OTP</Text>
+          <Text style={styles.modalText}>
+            Please check your email for the OTP. Enter it below to verify your
+            account.
           </Text>
           <TextInput
+            value={otp}
+            onChangeText={setOtp}
+            keyboardType="number-pad"
+            maxLength={6}
+            placeholder="6-digit OTP"
+            placeholderTextColor="gray"
+            style={styles.referInput}
+          />
+          <TouchableOpacity style={styles.button} onPress={verifyOtp}>
+            <Text style={styles.buttonText}>Verify OTP</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowOTPModal(false)}
+            style={{marginTop: 20}}>
+            <Text style={{color: '#289BF6'}}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* Referral Code Modal */}
+      <Modal
+        visible={openReferralInput}
+        transparent={false}
+        animationType="slide">
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalHeader}>Enter Referral Code</Text>
+          <TextInput
             value={referralCode}
-            onChangeText={text => setReferralCode(text)}
+            onChangeText={setReferralCode}
             style={styles.referInput}
             placeholder="Referral Code"
-            placeholderTextColor={'gray'}
+            placeholderTextColor="gray"
           />
-
           <TouchableOpacity
             disabled={loading}
             onPress={handleRegister}
@@ -237,9 +315,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: 'white', // Change as needed
+    backgroundColor: 'white',
     paddingHorizontal: 20,
     padding: 10,
     paddingTop: 50,
+  },
+  modalHeader: {
+    color: 'black',
+    fontWeight: '700',
+    fontSize: 24,
+    marginBottom: 25,
+    textAlign: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    color: 'gray',
+    marginBottom: 30,
+    textAlign: 'center',
   },
 });

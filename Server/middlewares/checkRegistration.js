@@ -7,6 +7,9 @@ const path = require("path");
 const nodemailer = require("nodemailer");
 const ReferralSettings = require("../models/ReferralSettings");
 const Otp = require("../models/Otp");
+// const sendEmail = require("../config/oneSignal");
+const { sendOtpEmail } = require("../config/oneSignal");
+const { registerEmail } = require("../config/oneSignal");
 
 const teamId = process.env.APPLE_TEAM_ID;
 const clientId = process.env.APPLE_CLIENT_ID;
@@ -128,38 +131,6 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
 };
 
-const sendEmail = async (recipient, subject, message) => {
-  try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.zoho.in",
-      port: 465,
-      secure: true, // Use SSL
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    const mailOptions = {
-      from: `"Majlis: OTP" <${process.env.EMAIL}>`,
-      to: recipient,
-      subject: subject,
-      text: message,
-      html: `<p>${message}</p>`, // Optional: Supports HTML emails
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent to ${recipient}: ${info.messageId}`);
-    return { success: true, message: "Email sent successfully" };
-  } catch (error) {
-    console.error(`❌ Error sending email: ${error.message}`);
-    return { success: false, message: "Failed to send email" };
-  }
-};
-
 exports.checkEmailRegistration = async (req, res, next) => {
   const { email } = req.body;
 
@@ -168,17 +139,21 @@ exports.checkEmailRegistration = async (req, res, next) => {
     if (user) {
       return res.status(200).json({ isRegistered: true });
     } else {
-      // const otp = generateOTP();
+      const otp = generateOTP();
 
-      // await Otp.deleteOne({ email });
+      await Otp.deleteOne({ email });
 
       // // Save new OTP in DB
-      // const newOtp = new Otp({ email, otp });
-      // await newOtp.save();
+      const newOtp = new Otp({ email, otp });
+      await newOtp.save();
 
-      // const message = `Your OTP is: <b>${otp}</b>. It is valid for 10 minutes.`;
+      const message = `Your OTP is: <b>${otp}</b>. It is valid for 10 minutes.`;
 
-      // const result = await sendEmail(email, "Your OTP Code", message);
+      const subscribed = await registerEmail(email);
+      if (subscribed.success) {
+        const result = await sendOtpEmail(email, otp);
+        // console.log("OTP sent successfully:", result);
+      }
       return res.status(200).json({ isRegistered: false });
     }
   } catch (error) {

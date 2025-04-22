@@ -73,6 +73,17 @@ const profileSlice = createSlice({
     populateProfile: (state, action) => {
       return {...state, ...action.payload};
     },
+    deleteProfile: state => {
+      state.name = '';
+      state.profilePicture = '';
+      state.location = '';
+      state.interests = [];
+      state.about = '';
+      state.skills = [];
+      state.experience = [];
+      state.education = [];
+      state.socialLinks = [];
+    },
   },
   extraReducers: builder => {
     builder
@@ -106,6 +117,7 @@ export const {
   setSocialLinks,
   createProfileFailure,
   populateProfile,
+  deleteProfile,
 } = profileSlice.actions;
 
 export default profileSlice.reducer;

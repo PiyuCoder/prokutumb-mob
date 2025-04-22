@@ -11,7 +11,8 @@ const Event = require("../models/Event");
 const axios = require("axios");
 const CommPost = require("../models/CommPost");
 const bcrypt = require("bcryptjs");
-const sendPushNotification = require("../config/oneSignal");
+const { sendOtpEmail } = require("../config/oneSignal");
+const Otp = require("../models/Otp");
 
 exports.googleLogin = (req, res) => {
   const user = req.user;
@@ -32,6 +33,80 @@ exports.googleLogin = (req, res) => {
     user,
   });
 };
+
+exports.verifyOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  try {
+    const record = await Otp.findOne({ email });
+
+    if (!record) {
+      return res.status(400).json({
+        success: false,
+        message: "No OTP found. Please request again.",
+      });
+    }
+
+    if (record.otp !== otp) {
+      return res.status(400).json({ success: false, message: "Incorrect OTP" });
+    }
+
+    // Optional: remove OTP after successful verification
+    await Otp.deleteOne({ email });
+
+    res.status(200).json({ success: true, message: "OTP verified" });
+  } catch (err) {
+    console.error("Error verifying OTP:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+exports.requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+  try {
+    // ✅ Check if user exists
+    const user = await Member.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No user found with this email address.",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await Otp.deleteOne({ email }); // Remove any old OTP
+    await new Otp({ email, otp }).save();
+
+    await sendOtpEmail(email, otp);
+    res.json({ success: true, message: "OTP sent to email." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to send OTP" });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  try {
+    const otpRecord = await Otp.findOne({ email });
+    if (!otpRecord || otpRecord.otp !== otp) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid or expired OTP" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await Member.updateOne({ email }, { password: hashedPassword });
+    await Otp.deleteOne({ email }); // cleanup
+
+    res.json({ success: true, message: "Password reset successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 exports.appleLogin = (req, res) => {
   try {
     const user = req.user;
