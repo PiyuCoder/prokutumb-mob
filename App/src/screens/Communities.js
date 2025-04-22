@@ -211,6 +211,8 @@ export default function Communities({navigation, route}) {
       community.createdBy?._id !== user?._id,
   );
 
+  console.log('Events: ', events);
+
   const myEvents = events?.filter(event => event.createdBy?._id === user?._id);
   const joinedEvents = events?.filter(
     event =>

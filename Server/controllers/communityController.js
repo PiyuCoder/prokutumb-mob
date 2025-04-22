@@ -604,8 +604,11 @@ exports.fetchTickets = async (req, res) => {
 exports.fetchAllEvents = async (req, res) => {
   try {
     const { userId } = req.params;
-
-    const allEvents = await Event.find();
+    //populate members and createdBy fields
+    const allEvents = await Event.find()
+      .populate("members", "_id")
+      .populate("createdBy", "name profilePicture")
+      .sort({ createdAt: -1 });
 
     // Fetch user interests and location
     const user = await Member.findById(userId).select("interests location");
@@ -617,20 +620,26 @@ exports.fetchAllEvents = async (req, res) => {
 
     // "For You" Events - Events where the user is already a member
     const forYouEvents = await Event.find({
-      members: userId, // User is in the members array
+      members: {
+        $in: user.friends, // At least one friend is a member
+        $nin: [userId], // But the user is NOT a member
+      },
+      isDraft: false, // Optional: exclude drafts
     })
       .populate("createdBy", "name")
+      .limit(5) // Limit to 5 events
       .sort({ createdAt: -1 });
 
     // "You May Like" Events - Based on user interests or location
     const youMayLikeEvents = await Event.find({
       $or: [
-        { interests: { $in: user.interests } }, // Match user interests
+        { category: { $in: user.interests } }, // Match user interests
         { location: user.location }, // Match user location
       ],
       members: { $ne: userId }, // Exclude events the user is already a member of
     })
       .populate("createdBy", "name")
+      .limit(5) // Limit to 5 events
       .sort({ membersCount: -1 }); // Sort by most members
 
     // "Trending" Events - Based on the highest number of members
