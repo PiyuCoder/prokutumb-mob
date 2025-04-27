@@ -11,7 +11,7 @@ const Event = require("../models/Event");
 const axios = require("axios");
 const CommPost = require("../models/CommPost");
 const bcrypt = require("bcryptjs");
-const { sendOtpEmail } = require("../config/oneSignal");
+const { sendOtpEmail, sendPushNotification } = require("../config/oneSignal");
 const Otp = require("../models/Otp");
 
 exports.googleLogin = (req, res) => {
