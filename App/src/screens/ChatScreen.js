@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {axiosInstance} from '../api/axios';
 import ProfilePicture from '../components/ProfilePicture';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import {useFocusEffect} from '@react-navigation/native';
 
 const ChatScreen = ({route, navigation}) => {
   const {name, userId, profilePicture} = route.params;
@@ -26,18 +27,25 @@ const ChatScreen = ({route, navigation}) => {
 
   const flatListRef = useRef();
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      console.log('test');
-      const res = await axiosInstance.get(
-        `/api/user/fetchMessages/${user?._id}/${userId}`,
-      );
-      if (res.data.success) {
-        setMessages(res.data.messages);
-      }
-    };
-    fetchMessages();
-  }, [messages.length]);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchMessages = async () => {
+        try {
+          console.log('Fetching messages...');
+          const res = await axiosInstance.get(
+            `/api/user/fetchMessages/${user?._id}/${userId}`,
+          );
+          if (res.data.success) {
+            setMessages(res.data.messages);
+          }
+        } catch (error) {
+          console.error('Error fetching messages:', error);
+        }
+      };
+
+      fetchMessages();
+    }, [user?._id, userId]), // Depend on user ID changes instead of messages.length
+  );
 
   useEffect(() => {
     // Listen for incoming messages
