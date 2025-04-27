@@ -1,6 +1,6 @@
 const Member = require("../models/Member");
 const Message = require("../models/Message");
-const sendPushNotification = require("./oneSignal");
+const { sendPushNotification } = require("./oneSignal");
 
 const onlineUsers = {};
 
