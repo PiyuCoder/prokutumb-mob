@@ -17,7 +17,6 @@ const storage = multer.diskStorage({
 
 const uploadPictures = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
 }).fields([
   { name: "profilePicture", maxCount: 1 },
   { name: "coverPicture", maxCount: 1 },
@@ -48,7 +47,6 @@ const upload = multer({
       cb(new Error("Only images are allowed!"));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 module.exports = (io, userSocketMap) => {

@@ -29,7 +29,6 @@ const upload = multer({
       cb(new Error("Only images are allowed!"));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 const storagePost = multer.memoryStorage();

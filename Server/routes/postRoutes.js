@@ -4,7 +4,10 @@ const postController = require("../controllers/postController");
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB limit
+});
 
 router.post("/", upload.single("media"), postController.createPost);
 router.put("/:postId", upload.single("media"), postController.editPost);

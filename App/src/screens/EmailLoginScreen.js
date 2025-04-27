@@ -62,6 +62,7 @@ const EmailLoginScreen = ({navigation}) => {
       }
     } catch (error) {
       Alert.alert('Error', 'Please try again later');
+      console.log(error);
     } finally {
       setLoading(false);
     }

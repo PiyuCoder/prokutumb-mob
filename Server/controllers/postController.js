@@ -30,6 +30,8 @@ exports.createPost = async (req, res) => {
     if (req.file) {
       const fileType = req.file.mimetype.split("/")[0]; // 'image' or 'video'
 
+      console.log(req.file);
+
       // Upload file to Cloudinary
       let result;
       if (fileType === "image") {
@@ -60,6 +62,8 @@ exports.createPost = async (req, res) => {
       "user",
       "name profilePicture"
     );
+
+    console.log("Post created:", populatedPost);
 
     res.status(201).json(populatedPost);
   } catch (error) {
