@@ -1,3 +1,4 @@
+const { sendPushNotification } = require("../config/oneSignal");
 const Feed = require("../models/Feed");
 const Member = require("../models/Member");
 const cloudinary = require("../utils/cloudinary");
@@ -266,6 +267,7 @@ exports.incerementPostShare = async (req, res) => {
 exports.addComment = async (req, res) => {
   try {
     const { userId, content } = req.body;
+    console.log("adding comment:", userId, content);
 
     // Find the post by ID
     const post = await Feed.findById(req.params.postId);
@@ -287,15 +289,31 @@ exports.addComment = async (req, res) => {
     // Populate the user details for the newly added comment
     const populatedPost = await Feed.findById(post._id).populate({
       path: "comments.user",
-      select: "name profilePicture", // Select only name and profilePicture fields
+      select: "name profilePicture",
     });
 
-    // Get the last comment added (the one just added)
     const lastComment =
       populatedPost.comments[populatedPost.comments.length - 1];
 
-    res.json(lastComment); // Return the newly added comment with user details
+    // 🔔 Send push notification to post owner (if not commenting on own post)
+    if (userId !== post.user.toString()) {
+      const senderUser = await Member.findById(userId).select(
+        "name profilePicture"
+      );
+      await sendPushNotification(
+        post.user.toString(), // receiverId
+        userId, // senderId
+        "New Comment", // title
+        `${senderUser.name} commented on your post`, // message
+        "comment", // type
+        "Post", // screen to open on click
+        { postId: post._id } // params
+      );
+    }
+
+    res.json(lastComment);
   } catch (error) {
+    console.error("Add comment error:", error);
     res.status(500).json({ error: error.message });
   }
 };

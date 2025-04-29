@@ -22,6 +22,7 @@ import {
 import {axiosInstance} from '../api/axios';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import {ScrollView} from 'react-native-gesture-handler';
+import {setPosts} from '../store/slices/commPostSlice';
 
 const Post = ({navigation}) => {
   const route = useRoute();
@@ -32,13 +33,16 @@ const Post = ({navigation}) => {
   const [openActionPostId, setOpenActionPostId] = useState(null);
   const [actionModalVisible, setActionModalVisible] = useState(false);
   const [currentComment, setCurrentComment] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const {user} = useSelector(state => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       const res = await axiosInstance.get(`/api/posts/fetch/${postId}`);
       setItem(res?.data);
+      setIsLoading(false);
       console.log(res?.data);
     };
     fetchData();
@@ -68,6 +72,30 @@ const Post = ({navigation}) => {
         ],
       });
       setCurrentComment(''); // Clear input
+    }
+  };
+
+  const handleUserPress = id => {
+    navigation.navigate('UserProfile', {userId: id});
+  };
+
+  const handleLike = post => {
+    if (item) {
+      // Toggle like logic
+      if (post.likes.includes(user?._id)) {
+        post.likes = post.likes.filter(id => id !== user?._id);
+      } else {
+        post.likes.push(user?._id);
+      }
+
+      const updatedPost = {
+        ...post,
+        likes: post.likes,
+      };
+      setItem(updatedPost); // Update local state
+
+      // Dispatch Redux action to update global state
+      dispatch(likePost({postId: post._id, userId: user?._id}));
     }
   };
 
@@ -244,11 +272,7 @@ const Post = ({navigation}) => {
 
           {/* Post Actions: Likes, Comments, Views, and Share */}
           <View style={styles.postActions}>
-            <TouchableOpacity
-              onPress={() => {
-                dispatch(likePost({userId: user?._id, postId}));
-              }}
-              style={styles.actionButton}>
+            <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
               {/* <Image
                 source={item?.likes?.includes(user?._id) ? likedIcon : likeIcon}
                 style={styles.actionIcon}
@@ -306,7 +330,13 @@ const Post = ({navigation}) => {
                       marginRight={10}
                     />
                     <View>
-                      <Text style={styles.commentUserName}>
+                      <Text
+                        onPress={() =>
+                          user?._id === comment?.user?._id
+                            ? navigation.navigate('Profile')
+                            : handleUserPress(comment.user?._id)
+                        }
+                        style={styles.commentUserName}>
                         {comment.user?.name}
                       </Text>
                       <Text style={styles.commentContent}>

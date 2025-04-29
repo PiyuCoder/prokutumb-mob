@@ -192,9 +192,11 @@ const MessageScreen = () => {
                       />
                     )}
                   </View>
-
-                  <Text style={styles.conversationMessage}>
-                    {item.message.text}
+                  {/* Truncate text */}
+                  <Text style={[styles.conversationMessage, {maxWidth: '80%'}]}>
+                    {item?.message?.text.length > 30
+                      ? item?.message?.text.slice(0, 30) + '...'
+                      : item?.message?.text}
                   </Text>
                 </View>
               </View>

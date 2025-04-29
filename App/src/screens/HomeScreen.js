@@ -303,7 +303,6 @@ const HomeScreen = ({navigation}) => {
     if (user?._id) OneSignal.login(user?._id);
   }, [user?._id]);
 
-  console.log(selectedMedia);
   const renderPost = ({item}) => (
     <View
       style={{
@@ -494,7 +493,13 @@ const HomeScreen = ({navigation}) => {
                   marginRight={10}
                 />
                 <View>
-                  <Text style={styles.commentUserName}>
+                  <Text
+                    onPress={() =>
+                      user?._id === comment?.user?._id
+                        ? navigation.navigate('Profile')
+                        : handleUserPress(comment?.user?._id)
+                    }
+                    style={styles.commentUserName}>
                     {comment.user?.name}
                   </Text>
                   <Text style={styles.commentContent}>{comment.content}</Text>

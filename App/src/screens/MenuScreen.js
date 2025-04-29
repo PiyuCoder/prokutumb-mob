@@ -75,6 +75,7 @@ const MenuScreen = ({navigation}) => {
           );
 
           if (isActive) {
+            console.log(response.data.communities);
             setCommunities(response.data.communities);
             setEvents(response.data.events);
           }
@@ -125,9 +126,15 @@ const MenuScreen = ({navigation}) => {
           source={
             item.profilePicture
               ? {uri: item.profilePicture}
+              : type === 'community'
+              ? require('../assets/default-cp.png')
+              : require('../assets/default-ep.png')
+          }
+          defaultSource={
+            item.profilePicture
+              ? {uri: item.profilePicture}
               : require('../assets/default-cp.png')
           }
-          defaultSource={require('../assets/default-cp.png')}
           // onError={() => setImageSource(require('../assets/default-cp.png'))}
           style={styles.cardImage}
         />

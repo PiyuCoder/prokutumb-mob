@@ -19,6 +19,24 @@ import {follow, updateAsyncStorage} from '../store/slices/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import Loader from '../components/Loader';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import MapView, {Marker} from 'react-native-maps';
+import axios from 'axios';
+import OnlineEventPulse from '../components/OnlineEventPulse';
+import {GOOGLE_API_KEY} from '@env';
+
+dayjs.extend(customParseFormat);
+
+const getCoordinatesFromAddress = async address => {
+  const apiKey = GOOGLE_API_KEY;
+  const encodedAddress = encodeURIComponent(address);
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
+
+  const res = await axios.get(url);
+  const location = res.data.results[0]?.geometry?.location;
+  return location ? {latitude: location.lat, longitude: location.lng} : null;
+};
 
 const EventScreen = ({navigation, route}) => {
   const {eventId} = route.params;
@@ -27,6 +45,10 @@ const EventScreen = ({navigation, route}) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [event, setEvent] = useState({});
+  const [mapCoords, setMapCoords] = useState({
+    latitude: 25.2048,
+    longitude: 55.2708,
+  });
 
   const [isFollowing, setIsFollowing] = useState(
     user?.following?.includes(event?.createdBy?._id) || false,
@@ -48,6 +70,20 @@ const EventScreen = ({navigation, route}) => {
   }, [event?.profilePicture]);
 
   useEffect(() => {
+    const fetchCoordinates = async () => {
+      if (event?.address) {
+        const coords = await getCoordinatesFromAddress(event.address);
+        console.log('Coordinates:', coords);
+        if (coords) {
+          setMapCoords(coords);
+        }
+      }
+    };
+
+    fetchCoordinates();
+  }, [event?.address]);
+
+  useEffect(() => {
     const fetchEvent = async () => {
       setLoading(true);
       try {
@@ -67,7 +103,12 @@ const EventScreen = ({navigation, route}) => {
     fetchEvent();
   }, [eventId]);
 
-  // console.log(event);
+  const eventDateTime = dayjs(
+    `${event.startDate} ${event.startTime}`,
+    'MM/D/YYYY hh:mm A', // your format: 03/2/2025 9:45 AM
+  );
+
+  const isEventExpired = eventDateTime.isBefore(dayjs());
 
   const bookSeat = async () => {
     if (event?.createdBy?._id === user?._id) return;
@@ -200,9 +241,9 @@ const EventScreen = ({navigation, route}) => {
         </View>
       </View>
       <TouchableOpacity
-        onPress={() =>
-          navigation.navigate('Network', {queryType: 'event', id: eventId})
-        }
+        // onPress={() =>
+        //   navigation.navigate('Network', {queryType: 'event', id: eventId})
+        // }
         style={{padding: 20, paddingHorizontal: 60}}>
         <Text
           style={{
@@ -224,7 +265,7 @@ const EventScreen = ({navigation, route}) => {
             ]}
           />
         </View>
-        <Text
+        {/* <Text
           style={{
             marginTop: 10,
             textAlign: 'center',
@@ -232,7 +273,7 @@ const EventScreen = ({navigation, route}) => {
             fontSize: 16,
           }}>
           Click to know more
-        </Text>
+        </Text> */}
       </TouchableOpacity>
       {whyConnect && (
         <View style={[styles.card, {width: '100%', marginTop: 30}]}>
@@ -284,14 +325,46 @@ const EventScreen = ({navigation, route}) => {
         }}>
         Venue & Location
       </Text>
-      <View
-        style={{
-          height: 180,
-          width: '90%',
-          backgroundColor: '#F5F5F5',
-          alignSelf: 'center',
-          borderRadius: 15,
-        }}></View>
+      {event?.eventType === 'Physical' ? (
+        <MapView
+          style={{
+            height: 180,
+            width: '90%',
+            alignSelf: 'center',
+            borderRadius: 15,
+          }}
+          region={{
+            latitude: mapCoords?.latitude || 25.2048, // safer with optional chaining
+            longitude: mapCoords?.longitude || 55.2708,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+          showsUserLocation={false}
+          scrollEnabled={false}
+          zoomEnabled={false}>
+          <Marker
+            coordinate={{
+              latitude: mapCoords?.latitude || 25.2048,
+              longitude: mapCoords?.longitude || 55.2708,
+            }}
+            title="Event Venue"
+            description={event?.address || 'Venue Address'}
+          />
+        </MapView>
+      ) : (
+        <View
+          style={{
+            height: 180,
+            width: '90%',
+            alignSelf: 'center',
+            borderRadius: 15,
+            backgroundColor: '#F5F5F5',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <OnlineEventPulse />
+        </View>
+      )}
 
       <View
         style={{
@@ -304,26 +377,35 @@ const EventScreen = ({navigation, route}) => {
           marginBottom: 20,
         }}>
         <View>
-          <Text style={{color: 'black'}}>Start from</Text>
+          <Text style={{color: 'black'}}>Starts from</Text>
           <Text style={{color: 'black', fontWeight: '500', fontSize: 15}}>
             Free $0.00
           </Text>
         </View>
-        {!event?.members?.find(mem => mem._id === user?._id) ? (
+        {isEventExpired ? (
+          <View
+            style={{
+              backgroundColor: 'gray',
+              padding: 10,
+              borderRadius: 40,
+              paddingHorizontal: 25,
+              alignItems: 'center',
+            }}>
+            <Text style={[styles.BtnText, {letterSpacing: 1, color: 'white'}]}>
+              Ended
+            </Text>
+          </View>
+        ) : !event?.members?.find(mem => mem._id === user?._id) ? (
           <TouchableOpacity
             disabled={event?.createdBy?._id === user?._id}
             onPress={bookSeat}
-            style={
-              event?.createdBy?._id === user?._id
-                ? {display: 'none'}
-                : {
-                    backgroundColor: '#761CBC',
-                    padding: 10,
-                    borderRadius: 40,
-                    paddingHorizontal: 25,
-                    alignItems: 'center',
-                  }
-            }>
+            style={{
+              backgroundColor: '#761CBC',
+              padding: 10,
+              borderRadius: 40,
+              paddingHorizontal: 25,
+              alignItems: 'center',
+            }}>
             <Text style={[styles.BtnText, {letterSpacing: 1}]}>
               {event?.createdBy?._id === user?._id ? 'Preview' : 'Buy Ticket'}
             </Text>
@@ -378,13 +460,14 @@ const styles = StyleSheet.create({
   },
   headerBtn: {
     padding: 5,
-    backgroundColor: '#ffffff3e',
+    backgroundColor: 'black',
     height: 40,
     width: 40,
     borderRadius: 7,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
+    elevation: 10,
+    opacity: 0.7,
   },
   eventProfilePicture: {
     width: '100%',

@@ -520,7 +520,13 @@ const CommunityHomeScreen = ({route}) => {
                   marginRight={10}
                 />
                 <View>
-                  <Text style={styles.commentUserName}>
+                  <Text
+                    onPress={() =>
+                      user?._id === comment.user?._id
+                        ? navigation.navigate('Profile')
+                        : handleUserPress(comment.user?._id)
+                    }
+                    style={styles.commentUserName}>
                     {comment.user?.name}
                   </Text>
                   <Text style={styles.commentContent}>{comment.content}</Text>

@@ -1093,6 +1093,7 @@ exports.incerementPostShare = async (req, res) => {
 
 exports.addComment = async (req, res) => {
   try {
+    console.log("adding comment:");
     const { userId, content } = req.body;
 
     // Find the post by ID

@@ -344,7 +344,9 @@ const UserProfile = ({route}) => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  console.log('Posts: ', userPosts);
+  const handleUserPress = id => {
+    navigation.navigate('UserProfile', {userId: id});
+  };
 
   const renderPost = item => (
     <View
@@ -521,7 +523,13 @@ const UserProfile = ({route}) => {
                   marginRight={10}
                 />
                 <View>
-                  <Text style={styles.commentUserName}>
+                  <Text
+                    onPress={() =>
+                      user?._id === comment?.user?._id
+                        ? navigation.navigate('Profile')
+                        : handleUserPress(comment?.user?._id)
+                    }
+                    style={styles.commentUserName}>
                     {comment.user?.name}
                   </Text>
                   <Text style={styles.commentContent}>{comment.content}</Text>

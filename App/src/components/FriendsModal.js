@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
   friendName: {
     fontSize: 16,
     fontWeight: '500',
+    color: 'black',
   },
   emptyMessage: {
     textAlign: 'center',

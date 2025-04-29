@@ -10,6 +10,7 @@ const sendPushNotification = async (
   screen,
   params // Added params argument
 ) => {
+  console.log(receiverId, senderId, title, message, type, screen, params);
   try {
     await axios.post(
       "https://onesignal.com/api/v1/notifications",
